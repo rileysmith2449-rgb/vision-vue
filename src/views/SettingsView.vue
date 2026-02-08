@@ -3,6 +3,8 @@
     <Header title="Settings" subtitle="Customize your experience" />
 
     <div class="settings-grid">
+      <PlaidLink />
+
       <Card title="Appearance" subtitle="Toggle between light and dark mode">
         <div class="setting-row">
           <div class="setting-info">
@@ -15,6 +17,85 @@
               <Sun v-else :size="12" stroke-width="2" />
             </span>
           </button>
+        </div>
+      </Card>
+
+      <Card title="Income" subtitle="Your annual income for tax calculations">
+        <div class="settings-form">
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">W-2 Salary</span>
+              <span class="setting-description">Annual gross salary</span>
+            </div>
+            <div class="input-wrapper">
+              <span class="input-prefix">$</span>
+              <input
+                type="number"
+                class="form-input"
+                :value="budgetStore.salary"
+                @input="budgetStore.salary = Number($event.target.value) || 0"
+              />
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Business / Side Income</span>
+              <span class="setting-description">1099, freelance, etc.</span>
+            </div>
+            <div class="input-wrapper">
+              <span class="input-prefix">$</span>
+              <input
+                type="number"
+                class="form-input"
+                :value="budgetStore.businessIncome"
+                @input="budgetStore.businessIncome = Number($event.target.value) || 0"
+              />
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Short-Term Investment Income</span>
+              <span class="setting-description">Gains held &lt; 1 year, taxed as ordinary</span>
+            </div>
+            <div class="input-wrapper">
+              <span class="input-prefix">$</span>
+              <input
+                type="number"
+                class="form-input"
+                :value="budgetStore.shortTermInvestmentIncome"
+                @input="budgetStore.shortTermInvestmentIncome = Number($event.target.value) || 0"
+              />
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Long-Term Investment Income</span>
+              <span class="setting-description">Gains held &gt; 1 year, preferential rate</span>
+            </div>
+            <div class="input-wrapper">
+              <span class="input-prefix">$</span>
+              <input
+                type="number"
+                class="form-input"
+                :value="budgetStore.longTermInvestmentIncome"
+                @input="budgetStore.longTermInvestmentIncome = Number($event.target.value) || 0"
+              />
+            </div>
+          </div>
+
+          <div class="tax-summary">
+            <div class="setting-row summary-row">
+              <span class="setting-label">Ordinary Income</span>
+              <span class="summary-value">{{ formatCurrency(budgetStore.ordinaryIncome) }}</span>
+            </div>
+            <div class="setting-row summary-row">
+              <span class="setting-label">Gross Income</span>
+              <span class="summary-value">{{ formatCurrency(budgetStore.grossIncome) }}</span>
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -37,6 +118,35 @@
 
           <div class="setting-row">
             <div class="setting-info">
+              <span class="setting-label">State</span>
+              <span class="setting-description">For state income tax</span>
+            </div>
+            <select
+              class="form-select"
+              :value="budgetStore.state"
+              @change="budgetStore.state = $event.target.value"
+            >
+              <option v-for="s in states" :key="s.code" :value="s.code">{{ s.name }}</option>
+            </select>
+          </div>
+
+          <div class="tax-summary">
+            <div class="setting-row summary-row">
+              <span class="setting-label">Federal Tax</span>
+              <span class="summary-value">{{ formatCurrency(budgetStore.federalTax) }} <span class="rate-tag">{{ budgetStore.federalEffectiveRate.toFixed(1) }}%</span></span>
+            </div>
+            <div class="setting-row summary-row">
+              <span class="setting-label">State Tax</span>
+              <span class="summary-value">{{ formatCurrency(budgetStore.stateTax) }} <span class="rate-tag">{{ budgetStore.stateEffectiveRate.toFixed(1) }}%</span></span>
+            </div>
+            <div class="setting-row summary-row total">
+              <span class="setting-label">Effective Rate</span>
+              <span class="summary-value highlight">{{ budgetStore.effectiveRate.toFixed(1) }}%</span>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
               <span class="setting-label">Monthly Budget</span>
             </div>
             <div class="input-wrapper">
@@ -45,12 +155,16 @@
                 type="number"
                 class="form-input"
                 :value="budgetStore.monthlyBudget"
-                @input="budgetStore.monthlyBudget = Number($event.target.value)"
+                @input="budgetStore.monthlyBudget = Number($event.target.value) || 0"
               />
             </div>
           </div>
         </div>
       </Card>
+
+      <div class="disclaimer">
+        All figures shown are estimates for informational purposes only and do not constitute financial, tax, or legal advice. Calculations are simplified and may not reflect your complete tax situation, including deductions, credits, AMT, NIIT, or other provisions of federal, state, or local tax law. Consult a qualified tax professional or financial advisor before making any financial decisions.
+      </div>
     </div>
   </div>
 </template>
@@ -58,12 +172,43 @@
 <script setup>
 import { useThemeStore } from '@/stores/theme'
 import { useBudgetStore } from '@/stores/budget'
+import { formatCurrency } from '@/utils/formatters'
 import { Sun, Moon } from 'lucide-vue-next'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
+import PlaidLink from '@/components/banking/PlaidLink.vue'
 
 const themeStore = useThemeStore()
 const budgetStore = useBudgetStore()
+
+const states = [
+  { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' },
+  { code: 'AZ', name: 'Arizona' }, { code: 'AR', name: 'Arkansas' },
+  { code: 'CA', name: 'California' }, { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' }, { code: 'DE', name: 'Delaware' },
+  { code: 'DC', name: 'Washington D.C.' },
+  { code: 'FL', name: 'Florida' }, { code: 'GA', name: 'Georgia' },
+  { code: 'HI', name: 'Hawaii' }, { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' }, { code: 'IN', name: 'Indiana' },
+  { code: 'IA', name: 'Iowa' }, { code: 'KS', name: 'Kansas' },
+  { code: 'KY', name: 'Kentucky' }, { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' }, { code: 'MD', name: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts' }, { code: 'MI', name: 'Michigan' },
+  { code: 'MN', name: 'Minnesota' }, { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' }, { code: 'MT', name: 'Montana' },
+  { code: 'NE', name: 'Nebraska' }, { code: 'NV', name: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire' }, { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' }, { code: 'NY', name: 'New York' },
+  { code: 'NC', name: 'North Carolina' }, { code: 'ND', name: 'North Dakota' },
+  { code: 'OH', name: 'Ohio' }, { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' }, { code: 'PA', name: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island' }, { code: 'SC', name: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota' }, { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' }, { code: 'UT', name: 'Utah' },
+  { code: 'VT', name: 'Vermont' }, { code: 'VA', name: 'Virginia' },
+  { code: 'WA', name: 'Washington' }, { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' }, { code: 'WY', name: 'Wyoming' },
+]
 </script>
 
 <style scoped>
@@ -201,5 +346,56 @@ const budgetStore = useBudgetStore()
 .form-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.tax-summary {
+  padding: 14px 0;
+  border-top: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-row {
+  padding: 0;
+}
+
+.summary-row.total {
+  padding-top: 10px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.summary-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-value.highlight {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--electric-teal);
+}
+
+.rate-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--bg-subtle);
+  color: var(--text-tertiary);
+}
+
+.disclaimer {
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+  padding: 16px 20px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
 }
 </style>

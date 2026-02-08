@@ -4,7 +4,7 @@
       <div class="brand-mark">
         <Eye :size="22" stroke-width="2.5" />
       </div>
-      <span class="brand-text">Vision<span class="brand-accent">Vue</span></span>
+      <span class="brand-text">Vision</span>
     </div>
 
     <nav class="sidebar-nav">
@@ -134,7 +134,7 @@ function isActive(link) {
 }
 
 .nav-link.active {
-  background: rgba(0, 230, 138, 0.08);
+  background: rgba(100, 149, 237, 0.08);
   color: var(--electric-teal);
 }
 

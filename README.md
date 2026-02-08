@@ -1,4 +1,4 @@
-# Vision Vue - Tax-Smart Portfolio Intelligence
+# Vision - Tax-Smart Portfolio Intelligence
 
 A modern Vue 3 application for tax-smart portfolio management with glassmorphic design.
 

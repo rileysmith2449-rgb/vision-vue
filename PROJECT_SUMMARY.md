@@ -1,4 +1,4 @@
-# Vision Vue Project - Complete Overview
+# Vision Project - Complete Overview
 
 ## 📊 Project Statistics
 

@@ -5,6 +5,7 @@
     <div v-if="portfolioStore.loading" class="loading">Analyzing portfolio...</div>
 
     <template v-else>
+      <CardOptimizer />
       <AIAdvisor />
     </template>
   </div>
@@ -16,6 +17,7 @@ import { usePortfolioStore } from '@/stores/portfolio'
 import { useBudgetStore } from '@/stores/budget'
 import Header from '@/components/layout/Header.vue'
 import AIAdvisor from '@/components/insights/AIAdvisor.vue'
+import CardOptimizer from '@/components/insights/CardOptimizer.vue'
 
 const portfolioStore = usePortfolioStore()
 const budgetStore = useBudgetStore()

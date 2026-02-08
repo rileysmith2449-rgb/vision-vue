@@ -8,6 +8,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   const holdings = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const dataSource = ref('demo') // 'demo' | 'plaid'
 
   // Getters
   const totalValue = computed(() => {
@@ -101,9 +102,25 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     loading.value = true
     error.value = null
     try {
-      // In production, this would be an API call
       await new Promise(resolve => setTimeout(resolve, 300))
       holdings.value = generateDemoHoldings()
+      dataSource.value = 'demo'
+    } catch (err) {
+      error.value = err.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadFromPlaid() {
+    loading.value = true
+    error.value = null
+    try {
+      const res = await fetch('/api/holdings')
+      if (!res.ok) throw new Error('Failed to fetch holdings from Plaid')
+      const data = await res.json()
+      holdings.value = data.holdings
+      dataSource.value = 'plaid'
     } catch (err) {
       error.value = err.message
     } finally {
@@ -138,6 +155,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     holdings,
     loading,
     error,
+    dataSource,
     // Getters
     totalValue,
     totalCostBasis,
@@ -155,6 +173,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     categoryTotals,
     // Actions
     loadHoldings,
+    loadFromPlaid,
     addHolding,
     updateHolding,
     removeHolding,

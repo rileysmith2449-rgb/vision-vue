@@ -7,7 +7,10 @@ export const useBudgetStore = defineStore('budget', () => {
   const monthlyBudget = ref(8500)
   const salary = ref(150000)
   const businessIncome = ref(50000)
+  const shortTermInvestmentIncome = ref(0)
+  const longTermInvestmentIncome = ref(0)
   const filingStatus = ref('married')
+  const state = ref('CA')
   const expenses = ref({})
   const currentCategory = ref(null)
   const currentSubcategory = ref(null)
@@ -35,8 +38,12 @@ export const useBudgetStore = defineStore('budget', () => {
     return budgetRemaining.value < 0
   })
 
+  const ordinaryIncome = computed(() => {
+    return salary.value + businessIncome.value + shortTermInvestmentIncome.value
+  })
+
   const grossIncome = computed(() => {
-    return salary.value + businessIncome.value
+    return ordinaryIncome.value + longTermInvestmentIncome.value
   })
 
   const standardDeduction = computed(() => {
@@ -52,13 +59,37 @@ export const useBudgetStore = defineStore('budget', () => {
     return Math.max(0, grossIncome.value - standardDeduction.value)
   })
 
+  const taxableOrdinaryIncome = computed(() => {
+    return Math.max(0, ordinaryIncome.value - standardDeduction.value)
+  })
+
   const federalTax = computed(() => {
-    return calculateFederalTax(taxableIncome.value, filingStatus.value)
+    const ordinaryTax = calculateFederalTax(taxableOrdinaryIncome.value, filingStatus.value)
+    const ltcgTax = longTermInvestmentIncome.value * getLTCGRate(taxableOrdinaryIncome.value, filingStatus.value)
+    return ordinaryTax + ltcgTax
+  })
+
+  const stateTax = computed(() => {
+    return calculateStateTax(taxableIncome.value, state.value)
+  })
+
+  const totalTax = computed(() => {
+    return federalTax.value + stateTax.value
   })
 
   const effectiveRate = computed(() => {
     if (grossIncome.value === 0) return 0
+    return (totalTax.value / grossIncome.value) * 100
+  })
+
+  const federalEffectiveRate = computed(() => {
+    if (grossIncome.value === 0) return 0
     return (federalTax.value / grossIncome.value) * 100
+  })
+
+  const stateEffectiveRate = computed(() => {
+    if (grossIncome.value === 0) return 0
+    return (stateTax.value / grossIncome.value) * 100
   })
 
   const categoryExpenses = computed(() => {
@@ -171,7 +202,10 @@ export const useBudgetStore = defineStore('budget', () => {
     monthlyBudget,
     salary,
     businessIncome,
+    shortTermInvestmentIncome,
+    longTermInvestmentIncome,
     filingStatus,
+    state,
     expenses,
     currentCategory,
     currentSubcategory,
@@ -180,11 +214,16 @@ export const useBudgetStore = defineStore('budget', () => {
     budgetRemaining,
     budgetPercentage,
     isOverBudget,
+    ordinaryIncome,
     grossIncome,
     standardDeduction,
     taxableIncome,
     federalTax,
+    stateTax,
+    totalTax,
     effectiveRate,
+    federalEffectiveRate,
+    stateEffectiveRate,
     categoryExpenses,
     allTransactions,
     transactionsByCard,
@@ -247,4 +286,36 @@ function calculateFederalTax(taxableIncome, filingStatus) {
   }
 
   return tax
+}
+
+// State income tax rates (simplified — top marginal flat approximation for common states)
+const STATE_TAX_RATES = {
+  AL: 0.050, AK: 0, AZ: 0.025, AR: 0.044, CA: 0.093,
+  CO: 0.044, CT: 0.065, DE: 0.066, FL: 0, GA: 0.055,
+  HI: 0.075, ID: 0.058, IL: 0.0495, IN: 0.0315, IA: 0.057,
+  KS: 0.057, KY: 0.040, LA: 0.0425, ME: 0.0715, MD: 0.0575,
+  MA: 0.050, MI: 0.0425, MN: 0.0785, MS: 0.050, MO: 0.048,
+  MT: 0.059, NE: 0.0584, NV: 0, NH: 0, NJ: 0.0897,
+  NM: 0.059, NY: 0.0685, NC: 0.045, ND: 0.0195, OH: 0.035,
+  OK: 0.0475, OR: 0.0875, PA: 0.0307, RI: 0.0599, SC: 0.064,
+  SD: 0, TN: 0, TX: 0, UT: 0.0465, VT: 0.066,
+  VA: 0.0575, WA: 0, WV: 0.055, WI: 0.0653, WY: 0, DC: 0.085,
+}
+
+function calculateStateTax(taxableIncome, stateCode) {
+  const rate = STATE_TAX_RATES[stateCode] || 0
+  return taxableIncome * rate
+}
+
+// Long-term capital gains rate based on ordinary taxable income
+function getLTCGRate(ordinaryTaxableIncome, filingStatus) {
+  const thresholds = {
+    single:  { zero: 47025, fifteen: 518900 },
+    married: { zero: 94050, fifteen: 583750 },
+    hoh:     { zero: 63000, fifteen: 551350 },
+  }
+  const t = thresholds[filingStatus] || thresholds.married
+  if (ordinaryTaxableIncome <= t.zero) return 0
+  if (ordinaryTaxableIncome <= t.fifteen) return 0.15
+  return 0.20
 }

@@ -70,7 +70,7 @@ const typeIcon = computed(() => {
 }
 
 .insight-icon-wrap.opportunity {
-  background: rgba(0, 230, 138, 0.1);
+  background: rgba(100, 149, 237, 0.1);
   color: var(--electric-teal);
 }
 
@@ -110,7 +110,7 @@ const typeIcon = computed(() => {
   border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 700;
-  background: rgba(0, 230, 138, 0.08);
+  background: rgba(100, 149, 237, 0.08);
   color: var(--electric-teal);
 }
 </style>

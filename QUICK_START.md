@@ -1,4 +1,4 @@
-# Vision Vue - Quick Start Guide
+# Vision - Quick Start Guide
 
 ## 📦 What's Included
 
