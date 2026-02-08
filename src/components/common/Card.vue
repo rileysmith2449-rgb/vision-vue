@@ -21,17 +21,16 @@ defineProps({
 <style scoped>
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-glass);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px 0 rgba(70, 130, 180, 0.2);
+  box-shadow: var(--shadow-hover);
 }
 
 .card-header {
@@ -39,19 +38,20 @@ defineProps({
 }
 
 .card-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .card-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .card-body {
-  padding: 24px;
+  padding: 20px 24px 24px;
 }
 
 .card-body.no-padding {

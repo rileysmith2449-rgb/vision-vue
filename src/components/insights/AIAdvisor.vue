@@ -1,7 +1,9 @@
 <template>
   <div class="ai-advisor">
     <div class="advisor-header">
-      <span class="advisor-icon">🤖</span>
+      <div class="advisor-icon-wrap">
+        <Sparkles :size="22" stroke-width="2" />
+      </div>
       <div>
         <h3 class="advisor-title">AI Tax Advisor</h3>
         <p class="advisor-subtitle">Personalized recommendations based on your portfolio</p>
@@ -27,6 +29,7 @@ import { usePortfolioStore } from '@/stores/portfolio'
 import { useBudgetStore } from '@/stores/budget'
 import { formatCurrency } from '@/utils/formatters'
 import { daysUntilLongTerm } from '@/utils/taxCalculations'
+import { Sparkles } from 'lucide-vue-next'
 import InsightCard from './InsightCard.vue'
 
 const portfolioStore = usePortfolioStore()
@@ -35,7 +38,6 @@ const budgetStore = useBudgetStore()
 const insights = computed(() => {
   const results = []
 
-  // Tax-loss harvesting opportunities
   if (portfolioStore.harvestableAmount > 0) {
     results.push({
       title: 'Tax-Loss Harvesting Opportunity',
@@ -45,7 +47,6 @@ const insights = computed(() => {
     })
   }
 
-  // Holdings approaching long-term status
   const nearLongTerm = portfolioStore.holdings.filter(h => {
     if (h.type === 'cash') return false
     const days = daysUntilLongTerm(h.purchaseDate)
@@ -60,7 +61,6 @@ const insights = computed(() => {
     })
   }
 
-  // Budget warnings
   if (budgetStore.isOverBudget) {
     results.push({
       title: 'Budget Warning',
@@ -70,7 +70,6 @@ const insights = computed(() => {
     })
   }
 
-  // High effective tax rate
   if (budgetStore.effectiveRate > 25) {
     results.push({
       title: 'High Effective Tax Rate',
@@ -80,7 +79,6 @@ const insights = computed(() => {
     })
   }
 
-  // Long-term gains advantage
   if (portfolioStore.longTermGains > 0) {
     results.push({
       title: 'Long-Term Gains Advantage',
@@ -90,7 +88,6 @@ const insights = computed(() => {
     })
   }
 
-  // Diversification insight
   const categories = Object.keys(portfolioStore.holdingsByCategory)
   if (categories.length > 0) {
     results.push({
@@ -117,32 +114,33 @@ const insights = computed(() => {
   margin-bottom: 24px;
 }
 
-.advisor-icon {
-  font-size: 2rem;
-  width: 52px;
-  height: 52px;
+.advisor-icon-wrap {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--gradient-pop);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
+  color: #0f172a;
 }
 
 .advisor-title {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .advisor-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .insights-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 </style>

@@ -1,6 +1,8 @@
 <template>
   <div :class="['insight-card', `insight-${type}`]">
-    <div class="insight-icon">{{ typeIcon }}</div>
+    <div :class="['insight-icon-wrap', type]">
+      <component :is="typeIcon" :size="18" stroke-width="2" />
+    </div>
     <div class="insight-content">
       <h4 class="insight-title">{{ title }}</h4>
       <p class="insight-description">{{ description }}</p>
@@ -11,6 +13,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { DollarSign, AlertTriangle, Info } from 'lucide-vue-next'
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -20,29 +23,28 @@ const props = defineProps({
 })
 
 const typeIcon = computed(() => {
-  const icons = { opportunity: '💰', warning: '⚠️', info: 'ℹ️' }
-  return icons[props.type] || 'ℹ️'
+  const icons = { opportunity: DollarSign, warning: AlertTriangle, info: Info }
+  return icons[props.type] || Info
 })
 </script>
 
 <style scoped>
 .insight-card {
   display: flex;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: 14px;
+  padding: 18px 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-glass);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
-  border-left: 4px solid transparent;
-  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  transition: box-shadow 0.2s ease;
 }
 
 .insight-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 40px 0 rgba(70, 130, 180, 0.2);
+  box-shadow: var(--shadow-hover);
 }
 
 .insight-opportunity {
@@ -57,16 +59,29 @@ const typeIcon = computed(() => {
   border-left-color: var(--violet-pop);
 }
 
-.insight-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+.insight-icon-wrap {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: rgba(135, 206, 235, 0.08);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.insight-icon-wrap.opportunity {
+  background: rgba(0, 230, 138, 0.1);
+  color: var(--electric-teal);
+}
+
+.insight-icon-wrap.warning {
+  background: rgba(244, 91, 105, 0.1);
+  color: var(--persimmon);
+}
+
+.insight-icon-wrap.info {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--violet-pop);
 }
 
 .insight-content {
@@ -75,26 +90,27 @@ const typeIcon = computed(() => {
 }
 
 .insight-title {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
 }
 
 .insight-description {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .insight-value {
   display: inline-block;
-  margin-top: 10px;
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
   font-weight: 700;
-  background: rgba(0, 255, 159, 0.1);
+  background: rgba(0, 230, 138, 0.08);
   color: var(--electric-teal);
 }
 </style>

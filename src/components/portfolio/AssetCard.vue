@@ -1,7 +1,9 @@
 <template>
   <div class="asset-card">
     <div class="asset-left">
-      <span class="asset-icon">{{ holding.icon }}</span>
+      <div class="asset-icon-wrap">
+        <component :is="assetIcon" :size="18" stroke-width="1.8" />
+      </div>
       <div class="asset-info">
         <h4 class="asset-symbol">{{ holding.symbol }}</h4>
         <p class="asset-shares">{{ holding.shares }} {{ holding.type === 'cash' ? '' : 'shares' }}</p>
@@ -35,11 +37,23 @@
 import { computed } from 'vue'
 import { formatCurrency, formatPercent } from '@/utils/formatters'
 import { calculateTaxTreatment, daysUntilLongTerm } from '@/utils/taxCalculations'
+import { Banknote, TrendingUp, Bitcoin, Diamond, Home, Target } from 'lucide-vue-next'
 import Badge from '@/components/common/Badge.vue'
 
 const props = defineProps({
   holding: { type: Object, required: true }
 })
+
+const iconMap = {
+  cash: Banknote,
+  stock: TrendingUp,
+  crypto: Bitcoin,
+  etf: Diamond,
+  realestate: Home,
+  other: Target
+}
+
+const assetIcon = computed(() => iconMap[props.holding.type] || Target)
 
 const gain = computed(() => props.holding.currentValue - props.holding.costBasis)
 const gainPercent = computed(() => {
@@ -60,48 +74,48 @@ const daysLeft = computed(() =>
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 24px;
+  padding: 18px 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-glass);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
-  transition: all 0.3s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .asset-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 40px 0 rgba(70, 130, 180, 0.2);
+  box-shadow: var(--shadow-hover);
 }
 
 .asset-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
-.asset-icon {
-  font-size: 1.6rem;
-  width: 44px;
-  height: 44px;
+.asset-icon-wrap {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(135, 206, 235, 0.1);
-  border-radius: 12px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
 }
 
 .asset-symbol {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .asset-shares {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  margin-top: 1px;
 }
 
 .asset-right {
@@ -113,7 +127,7 @@ const daysLeft = computed(() =>
 }
 
 .asset-value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -125,7 +139,7 @@ const daysLeft = computed(() =>
 }
 
 .asset-gain {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
 }
 
@@ -140,8 +154,8 @@ const daysLeft = computed(() =>
 }
 
 .days-left {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
 }
 
 @media (max-width: 1024px) {

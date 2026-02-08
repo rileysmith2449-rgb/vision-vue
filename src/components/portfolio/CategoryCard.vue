@@ -1,17 +1,31 @@
 <template>
   <router-link :to="`/assets/${category}`" class="category-card">
-    <div class="category-icon">{{ categoryIcon }}</div>
+    <div class="category-icon-wrap">
+      <component :is="categoryIcon" :size="20" stroke-width="1.8" />
+    </div>
     <div class="category-info">
       <h4 class="category-name">{{ category }}</h4>
       <p class="category-count">{{ holdings.length }} holding{{ holdings.length !== 1 ? 's' : '' }}</p>
     </div>
-    <div class="category-value">{{ formatCurrency(total) }}</div>
+    <div class="category-right">
+      <span class="category-value">{{ formatCurrency(total) }}</span>
+      <ChevronRight :size="16" stroke-width="2" class="chevron" />
+    </div>
   </router-link>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { formatCurrency } from '@/utils/formatters'
+import {
+  Banknote,
+  TrendingUp,
+  Bitcoin,
+  Diamond,
+  Home,
+  Target,
+  ChevronRight
+} from 'lucide-vue-next'
 
 const props = defineProps({
   category: { type: String, required: true },
@@ -19,51 +33,54 @@ const props = defineProps({
   total: { type: Number, required: true }
 })
 
-const categoryIcons = {
-  Cash: '💵',
-  Stocks: '📈',
-  Crypto: '₿',
-  ETFs: '💎',
-  'Real Estate': '🏠',
-  Other: '🎯'
+const iconMap = {
+  Cash: Banknote,
+  Stocks: TrendingUp,
+  Crypto: Bitcoin,
+  ETFs: Diamond,
+  'Real Estate': Home,
+  Other: Target
 }
 
-const categoryIcon = computed(() => categoryIcons[props.category] || '📁')
+const categoryIcon = computed(() => iconMap[props.category] || Target)
 </script>
 
 <style scoped>
 .category-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: 14px;
+  padding: 18px 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-glass);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
   text-decoration: none;
   color: inherit;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .category-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px 0 rgba(70, 130, 180, 0.2);
-  border-color: var(--electric-teal);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(0, 230, 138, 0.25);
 }
 
-.category-icon {
-  font-size: 2rem;
-  width: 48px;
-  height: 48px;
+.category-card:hover .chevron {
+  transform: translateX(2px);
+}
+
+.category-icon-wrap {
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(135, 206, 235, 0.1);
-  border-radius: 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
@@ -73,21 +90,33 @@ const categoryIcon = computed(() => categoryIcons[props.category] || '📁')
 }
 
 .category-name {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .category-count {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.category-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .category-value {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
-  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
 }
 </style>

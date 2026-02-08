@@ -7,7 +7,7 @@
       class="mobile-nav-item"
       :class="{ active: isActive(link) }"
     >
-      <span class="mobile-nav-icon">{{ link.icon }}</span>
+      <component :is="link.icon" :size="20" stroke-width="1.8" />
       <span class="mobile-nav-label">{{ link.label }}</span>
     </router-link>
   </nav>
@@ -15,15 +15,16 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
+import { LayoutDashboard, Wallet, PieChart, Lightbulb, Settings } from 'lucide-vue-next'
 
 const route = useRoute()
 
 const navLinks = [
-  { to: '/', icon: '📊', label: 'Home' },
-  { to: '/assets', icon: '💰', label: 'Assets' },
-  { to: '/budget', icon: '📋', label: 'Budget' },
-  { to: '/insights', icon: '💡', label: 'Insights' },
-  { to: '/settings', icon: '⚙️', label: 'Settings' }
+  { to: '/', icon: LayoutDashboard, label: 'Home' },
+  { to: '/assets', icon: Wallet, label: 'Assets' },
+  { to: '/budget', icon: PieChart, label: 'Budget' },
+  { to: '/insights', icon: Lightbulb, label: 'Insights' },
+  { to: '/settings', icon: Settings, label: 'Settings' }
 ]
 
 function isActive(link) {
@@ -38,10 +39,10 @@ function isActive(link) {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 72px;
+  height: 68px;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-top: 1px solid var(--border-glass);
   display: flex;
   align-items: center;
@@ -54,24 +55,21 @@ function isActive(link) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   padding: 8px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
-  color: var(--text-secondary);
-  transition: all 0.3s ease;
+  color: var(--text-tertiary);
+  transition: all 0.2s ease;
 }
 
 .mobile-nav-item.active {
   color: var(--electric-teal);
 }
 
-.mobile-nav-icon {
-  font-size: 1.3rem;
-}
-
 .mobile-nav-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 </style>

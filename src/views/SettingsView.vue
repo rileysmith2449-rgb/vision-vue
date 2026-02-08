@@ -10,7 +10,10 @@
             <span class="setting-description">{{ themeStore.isDark ? 'Dark mode' : 'Light mode' }}</span>
           </div>
           <button class="toggle-btn" :class="{ active: themeStore.isDark }" @click="themeStore.toggleTheme()">
-            <span class="toggle-knob">{{ themeStore.isDark ? '🌙' : '☀️' }}</span>
+            <span class="toggle-knob">
+              <Moon v-if="themeStore.isDark" :size="12" stroke-width="2" />
+              <Sun v-else :size="12" stroke-width="2" />
+            </span>
           </button>
         </div>
       </Card>
@@ -55,6 +58,7 @@
 <script setup>
 import { useThemeStore } from '@/stores/theme'
 import { useBudgetStore } from '@/stores/budget'
+import { Sun, Moon } from 'lucide-vue-next'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 
@@ -64,13 +68,13 @@ const budgetStore = useBudgetStore()
 
 <style scoped>
 .settings {
-  max-width: 800px;
+  max-width: 720px;
 }
 
 .settings-grid {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .settings-form {
@@ -93,63 +97,66 @@ const budgetStore = useBudgetStore()
 }
 
 .setting-label {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .setting-description {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-secondary);
 }
 
 .toggle-btn {
-  width: 56px;
-  height: 30px;
-  border-radius: 15px;
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
   border: none;
-  background: rgba(135, 206, 235, 0.2);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
   cursor: pointer;
   position: relative;
-  transition: background 0.3s ease;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .toggle-btn.active {
   background: var(--electric-teal);
+  border-color: var(--electric-teal);
 }
 
 .toggle-knob {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--bg-card);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
-  transition: transform 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary);
 }
 
 .toggle-btn.active .toggle-knob {
-  transform: translateX(26px);
+  transform: translateX(24px);
+  color: var(--electric-teal);
 }
 
 .form-select {
   padding: 10px 14px;
   border: 1px solid var(--border-glass);
-  border-radius: 10px;
-  background: rgba(135, 206, 235, 0.08);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-family: inherit;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.2s ease;
   min-width: 200px;
 }
 
@@ -160,11 +167,11 @@ const budgetStore = useBudgetStore()
 .input-wrapper {
   display: flex;
   align-items: center;
-  background: rgba(135, 206, 235, 0.08);
+  background: var(--bg-subtle);
   border: 1px solid var(--border-glass);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.2s ease;
   min-width: 200px;
 }
 
@@ -174,7 +181,7 @@ const budgetStore = useBudgetStore()
 
 .input-prefix {
   padding: 0 10px;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   font-weight: 600;
 }
 
@@ -184,7 +191,7 @@ const budgetStore = useBudgetStore()
   border: none;
   background: none;
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-family: inherit;
   outline: none;
   -moz-appearance: textfield;

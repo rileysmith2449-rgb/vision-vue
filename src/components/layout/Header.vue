@@ -27,13 +27,14 @@ defineProps({
 }
 
 .header-title {
-  font-size: 1.8rem;
+  font-size: 1.65rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.03em;
 }
 
 .header-subtitle {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   margin-top: 4px;
 }
@@ -51,7 +52,7 @@ defineProps({
   }
 
   .header-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 }
 </style>
