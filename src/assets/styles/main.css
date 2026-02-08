@@ -1,0 +1,58 @@
+:root {
+  --baby-blue: #ADD8E6;
+  --sky-blue: #87CEEB;
+  --mid-blue: #4682B4;
+  --navy-blue: #001F3F;
+  --electric-teal: #00FF9F;
+  --persimmon: #FF6F61;
+  --violet-pop: #9D4EDD;
+  
+  --bg-primary: #f0f7fb;
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --text-primary: #0a1929;
+  --text-secondary: #456578;
+  --border-glass: rgba(135, 206, 235, 0.3);
+  
+  --gradient-pop: linear-gradient(135deg, #00FF9F 0%, #00D9FF 100%);
+  --shadow-glass: 0 8px 32px 0 rgba(70, 130, 180, 0.15);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0a1929;
+  --bg-card: rgba(15, 36, 55, 0.6);
+  --text-primary: #e3f2fd;
+  --text-secondary: #90caf9;
+  --border-glass: rgba(135, 206, 235, 0.2);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Lexend', 'Inter', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  margin-left: 280px;
+  flex: 1;
+  padding: 32px 40px 100px;
+  max-width: 1400px;
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    padding: 24px 20px 120px;
+  }
+}
