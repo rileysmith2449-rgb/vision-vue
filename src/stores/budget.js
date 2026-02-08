@@ -77,6 +77,37 @@ export const useBudgetStore = defineStore('budget', () => {
     return result
   })
 
+  const allTransactions = computed(() => {
+    const txns = []
+    Object.entries(expenses.value).forEach(([category, data]) => {
+      Object.values(data.subcategories).forEach(transactions => {
+        transactions.forEach(t => {
+          txns.push({ ...t, category })
+        })
+      })
+    })
+    return txns
+  })
+
+  const transactionsByCard = computed(() => {
+    const grouped = {}
+    allTransactions.value.forEach(t => {
+      if (!grouped[t.card]) grouped[t.card] = []
+      grouped[t.card].push(t)
+    })
+    return grouped
+  })
+
+  const spendByCardAndCategory = computed(() => {
+    const result = {}
+    allTransactions.value.forEach(t => {
+      if (!result[t.card]) result[t.card] = {}
+      if (!result[t.card][t.category]) result[t.card][t.category] = 0
+      result[t.card][t.category] += t.amount
+    })
+    return result
+  })
+
   // Actions
   function loadExpenses() {
     expenses.value = generateExpenseData()
@@ -106,6 +137,18 @@ export const useBudgetStore = defineStore('budget', () => {
 
   function updateFilingStatus(status) {
     filingStatus.value = status
+  }
+
+  function updateCategoryBudget(name, amount) {
+    if (expenses.value[name]) {
+      expenses.value[name].budget = amount
+      // Recalculate total monthly budget from all categories
+      let total = 0
+      Object.values(expenses.value).forEach(cat => {
+        total += cat.budget
+      })
+      monthlyBudget.value = total
+    }
   }
 
   function getCategoryTransactions(category, subcategory = null) {
@@ -143,14 +186,16 @@ export const useBudgetStore = defineStore('budget', () => {
     federalTax,
     effectiveRate,
     categoryExpenses,
+    allTransactions,
+    transactionsByCard,
+    spendByCardAndCategory,
     // Actions
     loadExpenses,
     setCurrentCategory,
     setCurrentSubcategory,
     resetView,
-    updateSalary,
-    updateBusinessIncome,
     updateFilingStatus,
+    updateCategoryBudget,
     getCategoryTransactions
   }
 })

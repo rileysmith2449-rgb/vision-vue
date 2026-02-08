@@ -20,6 +20,8 @@
         </div>
       </div>
 
+      <GainsChart class="gains-chart" />
+
       <div class="card-grid">
         <CategoryCard
           v-for="(holdings, category) in portfolioStore.holdingsByCategory"
@@ -39,6 +41,7 @@ import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency } from '@/utils/formatters'
 import Header from '@/components/layout/Header.vue'
 import CategoryCard from '@/components/portfolio/CategoryCard.vue'
+import GainsChart from '@/components/charts/GainsChart.vue'
 
 const portfolioStore = usePortfolioStore()
 
@@ -98,6 +101,10 @@ onMounted(() => {
 
 .stat-value.harvest {
   color: var(--electric-teal);
+}
+
+.gains-chart {
+  margin-bottom: 32px;
 }
 
 .card-grid {

@@ -95,12 +95,12 @@ export function generateExpenseData() {
       budget: 600,
       subcategories: {
         'Clothing': [
-          { merchant: 'Nike', amount: 145.00, date: '2026-02-03', card: 'Citi Double' },
+          { merchant: 'Nike', amount: 145.00, date: '2026-02-03', card: 'Apple Card' },
           { merchant: 'Zara', amount: 89.50, date: '2026-02-01', card: 'Citi Double' }
         ],
         'Amazon': [
-          { merchant: 'Amazon.com', amount: 67.23, date: '2026-02-04', card: 'Chase Sapphire' },
-          { merchant: 'Amazon.com', amount: 134.56, date: '2026-02-01', card: 'Chase Sapphire' }
+          { merchant: 'Amazon.com', amount: 67.23, date: '2026-02-04', card: 'Apple Card' },
+          { merchant: 'Amazon.com', amount: 134.56, date: '2026-02-01', card: 'Apple Card' }
         ]
       }
     },
@@ -109,12 +109,12 @@ export function generateExpenseData() {
       budget: 400,
       subcategories: {
         'Streaming': [
-          { merchant: 'Netflix', amount: 15.99, date: '2026-02-01', card: 'Citi Double' },
-          { merchant: 'Spotify', amount: 10.99, date: '2026-02-01', card: 'Citi Double' },
+          { merchant: 'Netflix', amount: 15.99, date: '2026-02-01', card: 'Capital One Savor' },
+          { merchant: 'Spotify', amount: 10.99, date: '2026-02-01', card: 'Capital One Savor' },
           { merchant: 'Disney+', amount: 7.99, date: '2026-02-01', card: 'Citi Double' }
         ],
         'Movies & Events': [
-          { merchant: 'AMC Theaters', amount: 45.00, date: '2026-02-02', card: 'Chase Sapphire' }
+          { merchant: 'AMC Theaters', amount: 45.00, date: '2026-02-02', card: 'Capital One Savor' }
         ]
       }
     },
