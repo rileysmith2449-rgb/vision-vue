@@ -36,7 +36,7 @@ import { useThemeStore } from '@/stores/theme'
 import {
   Eye,
   LayoutDashboard,
-  Wallet,
+  Scale,
   PieChart,
   Lightbulb,
   Settings,
@@ -49,7 +49,7 @@ const themeStore = useThemeStore()
 
 const navLinks = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/assets', icon: Wallet, label: 'Assets' },
+  { to: '/net-worth', icon: Scale, label: 'Net Worth' },
   { to: '/budget', icon: PieChart, label: 'Budget' },
   { to: '/insights', icon: Lightbulb, label: 'Insights' },
   { to: '/settings', icon: Settings, label: 'Settings' }

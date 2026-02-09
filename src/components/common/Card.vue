@@ -1,8 +1,13 @@
 <template>
   <div class="card">
-    <div v-if="title || subtitle" class="card-header">
-      <h3 v-if="title" class="card-title">{{ title }}</h3>
-      <p v-if="subtitle" class="card-subtitle">{{ subtitle }}</p>
+    <div v-if="title || subtitle || $slots.actions" class="card-header">
+      <div class="card-header-top">
+        <div>
+          <h3 v-if="title" class="card-title">{{ title }}</h3>
+          <p v-if="subtitle" class="card-subtitle">{{ subtitle }}</p>
+        </div>
+        <slot name="actions" />
+      </div>
     </div>
     <div :class="['card-body', { 'no-padding': noPadding }]">
       <slot />
@@ -35,6 +40,13 @@ defineProps({
 
 .card-header {
   padding: 24px 24px 0;
+}
+
+.card-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .card-title {

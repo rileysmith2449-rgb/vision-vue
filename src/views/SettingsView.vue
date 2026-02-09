@@ -29,7 +29,7 @@
         <div class="settings-form">
           <div v-for="(member, id) in budgetStore.familyMembers" :key="id" class="setting-row">
             <div class="setting-info">
-              <span class="setting-label">{{ id === 'member1' ? 'Member 1' : 'Member 2' }}</span>
+              <span class="setting-label">{{ id === 'mine' ? 'Mine' : 'Yours' }}</span>
               <span class="setting-description">Display name</span>
             </div>
             <div class="input-wrapper">

@@ -26,11 +26,11 @@ const config = new Configuration({
 const plaidClient = new PlaidApi(config)
 
 // In-memory storage for access tokens (per session — not production-ready)
-// Keyed by connection id: 'default', 'member1', 'member2'
+// Keyed by connection id: 'default', 'mine', 'yours'
 const connections = {
   default: { accessToken: null, itemId: null },
-  member1: { accessToken: null, itemId: null },
-  member2: { accessToken: null, itemId: null },
+  mine: { accessToken: null, itemId: null },
+  yours: { accessToken: null, itemId: null },
 }
 
 function getConnection(memberId) {

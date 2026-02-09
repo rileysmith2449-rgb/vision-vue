@@ -44,9 +44,10 @@
               <div class="tx-merchant-row">
                 <span class="tx-merchant">{{ tx.merchant }}</span>
                 <span
-                  v-if="budgetStore.budgetMode === 'family' && tx.member"
-                  class="member-tag"
-                >{{ budgetStore.familyMembers[tx.member]?.name }}</span>
+                  v-if="budgetStore.budgetMode === 'family' && tx.owner"
+                  class="owner-tag"
+                  :class="'owner-' + tx.owner"
+                >{{ tx.owner === 'ours' ? 'Ours' : budgetStore.familyMembers[tx.owner]?.name }}</span>
               </div>
               <span class="tx-card">{{ tx.card }}</span>
             </div>
@@ -405,14 +406,27 @@ onUnmounted(() => {
   color: var(--text-primary);
 }
 
-.member-tag {
+.owner-tag {
   font-size: 0.65rem;
   font-weight: 600;
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(139, 92, 246, 0.12);
-  color: var(--violet-pop);
   white-space: nowrap;
+}
+
+.owner-tag.owner-mine {
+  background: rgba(20, 184, 166, 0.12);
+  color: #14b8a6;
+}
+
+.owner-tag.owner-yours {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+}
+
+.owner-tag.owner-ours {
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
 }
 
 .tx-card {

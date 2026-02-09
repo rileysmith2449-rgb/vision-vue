@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { generateDemoHoldings } from '@/utils/demoData'
+import { generateDemoHoldings, generateDemoLiabilities, generateNetWorthHistory, generateBenchmarkData, generatePropertyValues } from '@/utils/demoData'
 import { calculateTaxTreatment, daysUntilLongTerm } from '@/utils/taxCalculations'
 
 export const usePortfolioStore = defineStore('portfolio', () => {
@@ -9,6 +9,12 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   const loading = ref(false)
   const error = ref(null)
   const dataSource = ref('demo') // 'demo' | 'plaid'
+
+  // Net worth state
+  const liabilities = ref([])
+  const netWorthHistory = ref([])
+  const benchmarkHistory = ref([])
+  const propertyValues = ref([])
 
   // Getters
   const totalValue = computed(() => {
@@ -97,6 +103,48 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     return totals
   })
 
+  // Net worth computeds
+  const totalLiabilities = computed(() => {
+    return liabilities.value.reduce((sum, l) => sum + l.balance, 0)
+  })
+
+  const totalPropertyValue = computed(() => {
+    return propertyValues.value.reduce((sum, p) => sum + p.estimatedValue, 0)
+  })
+
+  const netWorth = computed(() => {
+    return totalValue.value + totalPropertyValue.value - totalLiabilities.value
+  })
+
+  const liabilitiesByCategory = computed(() => {
+    const categories = {}
+    liabilities.value.forEach(l => {
+      const cat = l.category || 'Other'
+      if (!categories[cat]) categories[cat] = []
+      categories[cat].push(l)
+    })
+    return categories
+  })
+
+  const liabilityCategoryTotals = computed(() => {
+    const totals = {}
+    Object.keys(liabilitiesByCategory.value).forEach(cat => {
+      totals[cat] = liabilitiesByCategory.value[cat].reduce((sum, l) => sum + l.balance, 0)
+    })
+    return totals
+  })
+
+  function loadNetWorthData() {
+    liabilities.value = generateDemoLiabilities()
+    propertyValues.value = generatePropertyValues()
+    // Pin today's net worth so the chart's last point matches the hero cards
+    const assets = (totalValue.value || 0) + (totalPropertyValue.value || 0)
+    const debts = totalLiabilities.value || 0
+    const currentNW = assets - debts
+    netWorthHistory.value = generateNetWorthHistory(isNaN(currentNW) ? 0 : currentNW)
+    benchmarkHistory.value = generateBenchmarkData()
+  }
+
   // Actions
   async function loadHoldings() {
     loading.value = true
@@ -104,6 +152,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 300))
       holdings.value = generateDemoHoldings()
+      loadNetWorthData()
       dataSource.value = 'demo'
     } catch (err) {
       error.value = err.message
@@ -156,6 +205,10 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     loading,
     error,
     dataSource,
+    liabilities,
+    netWorthHistory,
+    benchmarkHistory,
+    propertyValues,
     // Getters
     totalValue,
     totalCostBasis,
@@ -171,9 +224,15 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     estimatedTaxImpact,
     holdingsByCategory,
     categoryTotals,
+    totalLiabilities,
+    totalPropertyValue,
+    netWorth,
+    liabilitiesByCategory,
+    liabilityCategoryTotals,
     // Actions
     loadHoldings,
     loadFromPlaid,
+    loadNetWorthData,
     addHolding,
     updateHolding,
     removeHolding,

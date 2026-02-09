@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <!-- Family mode: filter by member -->
+    <!-- Family mode: filter by owner -->
     <div v-if="budgetStore.budgetMode === 'family'" class="member-filter">
       <button
         class="member-btn"
@@ -48,18 +48,25 @@
         All
       </button>
       <button
-        class="member-btn"
-        :class="{ active: budgetStore.activeMember === 'member1' }"
-        @click="budgetStore.setActiveMember('member1')"
+        class="member-btn owner-mine"
+        :class="{ active: budgetStore.activeMember === 'mine' }"
+        @click="budgetStore.setActiveMember('mine')"
       >
-        {{ budgetStore.familyMembers.member1.name }}
+        {{ budgetStore.familyMembers.mine.name }}
       </button>
       <button
-        class="member-btn"
-        :class="{ active: budgetStore.activeMember === 'member2' }"
-        @click="budgetStore.setActiveMember('member2')"
+        class="member-btn owner-yours"
+        :class="{ active: budgetStore.activeMember === 'yours' }"
+        @click="budgetStore.setActiveMember('yours')"
       >
-        {{ budgetStore.familyMembers.member2.name }}
+        {{ budgetStore.familyMembers.yours.name }}
+      </button>
+      <button
+        class="member-btn owner-ours"
+        :class="{ active: budgetStore.activeMember === 'ours' }"
+        @click="budgetStore.setActiveMember('ours')"
+      >
+        Ours
       </button>
     </div>
 
@@ -67,18 +74,18 @@
     <div v-if="budgetStore.budgetMode === 'personal' || budgetStore.budgetMode === 'business'" class="member-filter">
       <span class="person-label">Filing as</span>
       <button
-        class="member-btn"
-        :class="{ active: budgetStore.personalMember === 'member1' }"
-        @click="budgetStore.setPersonalMember('member1')"
+        class="member-btn owner-mine"
+        :class="{ active: budgetStore.personalMember === 'mine' }"
+        @click="budgetStore.setPersonalMember('mine')"
       >
-        {{ budgetStore.familyMembers.member1.name }}
+        {{ budgetStore.familyMembers.mine.name }}
       </button>
       <button
-        class="member-btn"
-        :class="{ active: budgetStore.personalMember === 'member2' }"
-        @click="budgetStore.setPersonalMember('member2')"
+        class="member-btn owner-yours"
+        :class="{ active: budgetStore.personalMember === 'yours' }"
+        @click="budgetStore.setPersonalMember('yours')"
       >
-        {{ budgetStore.familyMembers.member2.name }}
+        {{ budgetStore.familyMembers.yours.name }}
       </button>
     </div>
 
@@ -709,6 +716,21 @@ const enrollmentSuggestions = computed(() => {
 
 .member-btn.active {
   background: var(--violet-pop);
+  color: #fff;
+}
+
+.member-btn.owner-mine.active {
+  background: #14b8a6;
+  color: #fff;
+}
+
+.member-btn.owner-yours.active {
+  background: #f97316;
+  color: #fff;
+}
+
+.member-btn.owner-ours.active {
+  background: #a855f7;
   color: #fff;
 }
 

@@ -10,16 +10,24 @@ const router = createRouter({
       meta: { title: 'Dashboard' }
     },
     {
+      path: '/net-worth',
+      name: 'net-worth',
+      component: () => import('@/views/NetWorthView.vue'),
+      meta: { title: 'Net Worth' }
+    },
+    {
+      path: '/net-worth/:category',
+      name: 'net-worth-category',
+      component: () => import('@/views/AssetCategoryView.vue'),
+      meta: { title: 'Net Worth' }
+    },
+    {
       path: '/assets',
-      name: 'assets',
-      component: () => import('@/views/AssetsView.vue'),
-      meta: { title: 'Assets' }
+      redirect: '/net-worth'
     },
     {
       path: '/assets/:category',
-      name: 'asset-category',
-      component: () => import('@/views/AssetCategoryView.vue'),
-      meta: { title: 'Assets' }
+      redirect: to => `/net-worth/${to.params.category}`
     },
     {
       path: '/budget',

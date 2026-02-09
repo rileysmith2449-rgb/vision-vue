@@ -20,8 +20,8 @@ export const useBudgetStore = defineStore('budget', () => {
 
   // Family mode state
   const familyMembers = ref({
-    member1: {
-      id: 'member1',
+    mine: {
+      id: 'mine',
       name: 'Person 1',
       salary: 120000,
       businessIncome: 0,
@@ -30,8 +30,8 @@ export const useBudgetStore = defineStore('budget', () => {
       filingStatus: 'married',
       state: 'CA'
     },
-    member2: {
-      id: 'member2',
+    yours: {
+      id: 'yours',
       name: 'Person 2',
       salary: 95000,
       businessIncome: 10000,
@@ -41,18 +41,18 @@ export const useBudgetStore = defineStore('budget', () => {
       state: 'CA'
     }
   })
-  const activeMember = ref('all') // 'all' | 'member1' | 'member2'
-  const personalMember = ref('member1') // which family member the personal budget maps to
+  const activeMember = ref('all') // 'all' | 'mine' | 'yours' | 'ours'
+  const personalMember = ref('mine') // which family member the personal budget maps to
 
-  // Helper: filter family expenses by member
-  function filterExpensesByMember(allExpenses, memberId) {
+  // Helper: filter family expenses by owner
+  function filterExpensesByMember(allExpenses, ownerId) {
     const filtered = {}
     for (const [catName, catData] of Object.entries(allExpenses)) {
       const filteredSubs = {}
       for (const [subName, transactions] of Object.entries(catData.subcategories)) {
-        const memberTxns = transactions.filter(t => t.member === memberId)
-        if (memberTxns.length > 0) {
-          filteredSubs[subName] = memberTxns
+        const ownerTxns = transactions.filter(t => t.owner === ownerId)
+        if (ownerTxns.length > 0) {
+          filteredSubs[subName] = ownerTxns
         }
       }
       if (Object.keys(filteredSubs).length > 0) {
@@ -143,8 +143,8 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const ordinaryIncome = computed(() => {
     if (budgetMode.value === 'family') {
-      const m1 = familyMembers.value.member1
-      const m2 = familyMembers.value.member2
+      const m1 = familyMembers.value.mine
+      const m2 = familyMembers.value.yours
       return (m1.salary + m1.businessIncome + m1.shortTermInvestmentIncome)
         + (m2.salary + m2.businessIncome + m2.shortTermInvestmentIncome)
     }
@@ -154,8 +154,8 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const grossIncome = computed(() => {
     if (budgetMode.value === 'family') {
-      const m1 = familyMembers.value.member1
-      const m2 = familyMembers.value.member2
+      const m1 = familyMembers.value.mine
+      const m2 = familyMembers.value.yours
       return (m1.salary + m1.businessIncome + m1.shortTermInvestmentIncome + m1.longTermInvestmentIncome)
         + (m2.salary + m2.businessIncome + m2.shortTermInvestmentIncome + m2.longTermInvestmentIncome)
     }
@@ -178,8 +178,8 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const federalTax = computed(() => {
     if (budgetMode.value === 'family') {
-      const t1 = computeMemberTaxes(familyMembers.value.member1)
-      const t2 = computeMemberTaxes(familyMembers.value.member2)
+      const t1 = computeMemberTaxes(familyMembers.value.mine)
+      const t2 = computeMemberTaxes(familyMembers.value.yours)
       return t1.federal + t2.federal
     }
     const m = activePersonalMember.value
@@ -189,8 +189,8 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const stateTax = computed(() => {
     if (budgetMode.value === 'family') {
-      const t1 = computeMemberTaxes(familyMembers.value.member1)
-      const t2 = computeMemberTaxes(familyMembers.value.member2)
+      const t1 = computeMemberTaxes(familyMembers.value.mine)
+      const t2 = computeMemberTaxes(familyMembers.value.yours)
       return t1.state + t2.state
     }
     const m = activePersonalMember.value
@@ -220,8 +220,8 @@ export const useBudgetStore = defineStore('budget', () => {
   // Savings
   const monthlyNetIncome = computed(() => {
     if (budgetMode.value === 'family') {
-      const t1 = computeMemberTaxes(familyMembers.value.member1)
-      const t2 = computeMemberTaxes(familyMembers.value.member2)
+      const t1 = computeMemberTaxes(familyMembers.value.mine)
+      const t2 = computeMemberTaxes(familyMembers.value.yours)
       return (t1.gross - t1.total + t2.gross - t2.total) / 12
     }
     const m = activePersonalMember.value
@@ -364,7 +364,7 @@ export const useBudgetStore = defineStore('budget', () => {
 
     let realIndex = txIndex
     if (budgetMode.value === 'family' && activeMember.value !== 'all') {
-      const filtered = source.filter(t => t.member === activeMember.value)
+      const filtered = source.filter(t => t.owner === activeMember.value)
       const targetTx = filtered[txIndex]
       if (!targetTx) return
       realIndex = source.indexOf(targetTx)

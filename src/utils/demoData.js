@@ -177,10 +177,10 @@ export function generateFamilyExpenseData() {
       budget: 3500,
       subcategories: {
         'Mortgage': [
-          { merchant: 'Chase Mortgage', amount: 2850.00, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+          { merchant: 'Chase Mortgage', amount: 2850.00, date: '2026-02-01', card: 'Citi Double', owner: 'ours' }
         ],
         'Home Insurance': [
-          { merchant: 'State Farm', amount: 125.00, date: '2026-02-01', card: 'Citi Double', member: 'member2' }
+          { merchant: 'State Farm', amount: 125.00, date: '2026-02-01', card: 'Citi Double', owner: 'ours' }
         ]
       }
     },
@@ -189,18 +189,18 @@ export function generateFamilyExpenseData() {
       budget: 1800,
       subcategories: {
         'Restaurants': [
-          { merchant: 'Chipotle', amount: 52.30, date: '2026-02-04', card: 'Amex Gold', member: 'member1' },
-          { merchant: 'The Cheesecake Factory', amount: 145.00, date: '2026-02-03', card: 'Amex Gold', member: 'member2' },
-          { merchant: 'Olive Garden', amount: 98.50, date: '2026-02-01', card: 'Amex Gold', member: 'member1' }
+          { merchant: 'Chipotle', amount: 52.30, date: '2026-02-04', card: 'Amex Gold', owner: 'mine' },
+          { merchant: 'The Cheesecake Factory', amount: 145.00, date: '2026-02-03', card: 'Amex Gold', owner: 'yours' },
+          { merchant: 'Olive Garden', amount: 98.50, date: '2026-02-01', card: 'Amex Gold', owner: 'mine' }
         ],
         'Groceries': [
-          { merchant: 'Whole Foods', amount: 215.40, date: '2026-02-04', card: 'Amex Gold', member: 'member2' },
-          { merchant: 'Trader Joes', amount: 132.80, date: '2026-02-02', card: 'Amex Gold', member: 'member1' },
-          { merchant: 'Costco', amount: 312.45, date: '2026-01-31', card: 'Citi Double', member: 'member2' }
+          { merchant: 'Whole Foods', amount: 215.40, date: '2026-02-04', card: 'Amex Gold', owner: 'ours' },
+          { merchant: 'Trader Joes', amount: 132.80, date: '2026-02-02', card: 'Amex Gold', owner: 'mine' },
+          { merchant: 'Costco', amount: 312.45, date: '2026-01-31', card: 'Citi Double', owner: 'ours' }
         ],
         'Coffee Shops': [
-          { merchant: 'Starbucks', amount: 7.25, date: '2026-02-05', card: 'Chase Sapphire', member: 'member1' },
-          { merchant: 'Blue Bottle', amount: 14.50, date: '2026-02-04', card: 'Chase Sapphire', member: 'member2' }
+          { merchant: 'Starbucks', amount: 7.25, date: '2026-02-05', card: 'Chase Sapphire', owner: 'mine' },
+          { merchant: 'Blue Bottle', amount: 14.50, date: '2026-02-04', card: 'Chase Sapphire', owner: 'yours' }
         ]
       }
     },
@@ -209,15 +209,15 @@ export function generateFamilyExpenseData() {
       budget: 1200,
       subcategories: {
         'Gas & Fuel': [
-          { merchant: 'Shell Gas Station', amount: 72.00, date: '2026-02-04', card: 'Citi Double', member: 'member1' },
-          { merchant: 'Chevron', amount: 65.40, date: '2026-01-31', card: 'Citi Double', member: 'member2' }
+          { merchant: 'Shell Gas Station', amount: 72.00, date: '2026-02-04', card: 'Citi Double', owner: 'mine' },
+          { merchant: 'Chevron', amount: 65.40, date: '2026-01-31', card: 'Citi Double', owner: 'yours' }
         ],
         'Rideshare': [
-          { merchant: 'Uber', amount: 28.90, date: '2026-02-05', card: 'Chase Sapphire', member: 'member2' },
-          { merchant: 'Lyft', amount: 22.10, date: '2026-02-03', card: 'Chase Sapphire', member: 'member1' }
+          { merchant: 'Uber', amount: 28.90, date: '2026-02-05', card: 'Chase Sapphire', owner: 'yours' },
+          { merchant: 'Lyft', amount: 22.10, date: '2026-02-03', card: 'Chase Sapphire', owner: 'mine' }
         ],
         'Car Payment': [
-          { merchant: 'Toyota Financial', amount: 385.00, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+          { merchant: 'Toyota Financial', amount: 385.00, date: '2026-02-01', card: 'Citi Double', owner: 'mine' }
         ]
       }
     },
@@ -226,12 +226,12 @@ export function generateFamilyExpenseData() {
       budget: 900,
       subcategories: {
         'Clothing': [
-          { merchant: 'Nike', amount: 165.00, date: '2026-02-03', card: 'Apple Card', member: 'member1' },
-          { merchant: 'Zara', amount: 112.50, date: '2026-02-01', card: 'Apple Card', member: 'member2' }
+          { merchant: 'Nike', amount: 165.00, date: '2026-02-03', card: 'Apple Card', owner: 'mine' },
+          { merchant: 'Zara', amount: 112.50, date: '2026-02-01', card: 'Apple Card', owner: 'yours' }
         ],
         'Amazon': [
-          { merchant: 'Amazon.com', amount: 89.99, date: '2026-02-04', card: 'Apple Card', member: 'member2' },
-          { merchant: 'Amazon.com', amount: 156.23, date: '2026-02-01', card: 'Apple Card', member: 'member1' }
+          { merchant: 'Amazon.com', amount: 89.99, date: '2026-02-04', card: 'Apple Card', owner: 'yours' },
+          { merchant: 'Amazon.com', amount: 156.23, date: '2026-02-01', card: 'Apple Card', owner: 'mine' }
         ]
       }
     },
@@ -240,12 +240,12 @@ export function generateFamilyExpenseData() {
       budget: 500,
       subcategories: {
         'Streaming': [
-          { merchant: 'Netflix', amount: 22.99, date: '2026-02-01', card: 'Capital One Savor', member: 'member1' },
-          { merchant: 'Spotify Family', amount: 16.99, date: '2026-02-01', card: 'Capital One Savor', member: 'member2' },
-          { merchant: 'Disney+', amount: 13.99, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+          { merchant: 'Netflix', amount: 22.99, date: '2026-02-01', card: 'Capital One Savor', owner: 'ours' },
+          { merchant: 'Spotify Family', amount: 16.99, date: '2026-02-01', card: 'Capital One Savor', owner: 'ours' },
+          { merchant: 'Disney+', amount: 13.99, date: '2026-02-01', card: 'Citi Double', owner: 'ours' }
         ],
         'Movies & Events': [
-          { merchant: 'AMC Theaters', amount: 62.00, date: '2026-02-02', card: 'Capital One Savor', member: 'member2' }
+          { merchant: 'AMC Theaters', amount: 62.00, date: '2026-02-02', card: 'Capital One Savor', owner: 'yours' }
         ]
       }
     },
@@ -254,10 +254,10 @@ export function generateFamilyExpenseData() {
       budget: 800,
       subcategories: {
         'Hotels': [
-          { merchant: 'Marriott', amount: 345.00, date: '2026-02-03', card: 'Chase Sapphire', member: 'member1' }
+          { merchant: 'Marriott', amount: 345.00, date: '2026-02-03', card: 'Chase Sapphire', owner: 'mine' }
         ],
         'Flights': [
-          { merchant: 'United Airlines', amount: 524.00, date: '2026-02-01', card: 'Chase Sapphire', member: 'member2' }
+          { merchant: 'United Airlines', amount: 524.00, date: '2026-02-01', card: 'Chase Sapphire', owner: 'yours' }
         ]
       }
     },
@@ -266,20 +266,100 @@ export function generateFamilyExpenseData() {
       budget: 650,
       subcategories: {
         'Internet': [
-          { merchant: 'Comcast', amount: 109.99, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+          { merchant: 'Comcast', amount: 109.99, date: '2026-02-01', card: 'Citi Double', owner: 'ours' }
         ],
         'Electric': [
-          { merchant: 'PG&E', amount: 178.50, date: '2026-02-01', card: 'Citi Double', member: 'member2' }
+          { merchant: 'PG&E', amount: 178.50, date: '2026-02-01', card: 'Citi Double', owner: 'ours' }
         ],
         'Phone': [
-          { merchant: 'Verizon Family', amount: 140.00, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+          { merchant: 'Verizon Family', amount: 140.00, date: '2026-02-01', card: 'Citi Double', owner: 'ours' }
         ],
         'Water': [
-          { merchant: 'City Water', amount: 65.00, date: '2026-02-01', card: 'Citi Double', member: 'member2' }
+          { merchant: 'City Water', amount: 65.00, date: '2026-02-01', card: 'Citi Double', owner: 'ours' }
         ]
       }
     }
   }
+}
+
+/**
+ * Generate business expense data
+ */
+/**
+ * Generate demo liabilities
+ */
+export function generateDemoLiabilities() {
+  return [
+    { id: 'liab-1', name: 'Primary Mortgage', type: 'mortgage', category: 'Mortgage', icon: '🏠', balance: 385000, interestRate: 6.25, monthlyPayment: 2850 },
+    { id: 'liab-2', name: 'Home Equity Line', type: 'heloc', category: 'Mortgage', icon: '🏠', balance: 42000, interestRate: 8.50, monthlyPayment: 315 },
+    { id: 'liab-3', name: 'Toyota Camry Loan', type: 'auto', category: 'Auto Loans', icon: '🚗', balance: 18500, interestRate: 4.90, monthlyPayment: 385 },
+    { id: 'liab-4', name: 'Honda CR-V Loan', type: 'auto', category: 'Auto Loans', icon: '🚗', balance: 24200, interestRate: 5.25, monthlyPayment: 445 },
+    { id: 'liab-5', name: 'Federal Student Loan', type: 'student', category: 'Student Loans', icon: '🎓', balance: 32000, interestRate: 5.50, monthlyPayment: 340 },
+    { id: 'liab-6', name: 'Private Student Loan', type: 'student', category: 'Student Loans', icon: '🎓', balance: 14500, interestRate: 7.20, monthlyPayment: 185 },
+    { id: 'liab-7', name: 'Chase Sapphire Balance', type: 'credit', category: 'Credit Cards', icon: '💳', balance: 3200, interestRate: 21.99, monthlyPayment: 150 },
+    { id: 'liab-8', name: 'Amex Gold Balance', type: 'credit', category: 'Credit Cards', icon: '💳', balance: 1850, interestRate: 19.99, monthlyPayment: 100 },
+  ]
+}
+
+/**
+ * Generate daily net worth history for ~2 years (730 days).
+ * The last entry is pinned to the real current net-worth value;
+ * earlier days are projected backwards with daily noise.
+ * Each entry: { date: 'YYYY-MM-DD', value: number }
+ */
+export function generateNetWorthHistory(currentNetWorth) {
+  const now = new Date()
+  const days = 730
+  const points = []
+  let v = currentNetWorth
+
+  for (let i = 0; i < days; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().split('T')[0]
+    points.unshift({ date: dateStr, value: Math.round(v) })
+    // Walk backwards: net worth was slightly less (~0.03-0.08% daily drift)
+    v = v / (1 + (Math.random() * 0.0005 + 0.0001) * (Math.random() < 0.35 ? -1 : 1))
+  }
+  return points
+}
+
+/**
+ * Generate daily benchmark data for ~2 years (730 days).
+ * Returns array of { date, sp500, inflation, bitcoin } where each
+ * value is an index starting at 1.0 on the first day (so 1.15 = +15%).
+ */
+export function generateBenchmarkData() {
+  const now = new Date()
+  const days = 730
+  const points = []
+  let sp = 1.0
+  let inf = 1.0
+  let btc = 1.0
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().split('T')[0]
+    points.push({ date: dateStr, sp500: sp, inflation: inf, bitcoin: btc })
+    // S&P 500: ~10% annual = ~0.038% daily mean, moderate vol
+    sp *= 1 + (0.00038 + (Math.random() - 0.48) * 0.012)
+    // Inflation (CPI): ~3.5% annual = ~0.014% daily, very low vol
+    inf *= 1 + (0.000135 + (Math.random() - 0.5) * 0.0003)
+    // Bitcoin: ~40% annual mean, high vol
+    btc *= 1 + (0.0013 + (Math.random() - 0.47) * 0.035)
+  }
+  return points
+}
+
+/**
+ * Generate property values
+ */
+export function generatePropertyValues() {
+  return [
+    { id: 'prop-1', name: 'Primary Residence', address: '742 Evergreen Terrace, Springfield', estimatedValue: 625000, purchasePrice: 480000, purchaseDate: '2020-06-15' },
+    { id: 'prop-2', name: 'Rental Condo', address: '1200 Lake Shore Dr #405, Chicago', estimatedValue: 310000, purchasePrice: 275000, purchaseDate: '2022-03-01' },
+  ]
 }
 
 /**

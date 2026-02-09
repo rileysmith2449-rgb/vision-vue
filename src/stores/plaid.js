@@ -9,8 +9,8 @@ export const usePlaidStore = defineStore('plaid', () => {
 
   // Per-member connections for family mode
   const memberConnections = ref({
-    member1: { isConnected: false, isLinking: false, error: null, itemId: null },
-    member2: { isConnected: false, isLinking: false, error: null, itemId: null }
+    mine: { isConnected: false, isLinking: false, error: null, itemId: null },
+    yours: { isConnected: false, isLinking: false, error: null, itemId: null }
   })
 
   async function createLinkToken(memberId) {

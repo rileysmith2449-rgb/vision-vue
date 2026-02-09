@@ -2,7 +2,7 @@
   <div class="asset-category">
     <Header :title="categoryName" :subtitle="`${holdings.length} holdings`">
       <template #actions>
-        <router-link to="/assets" class="back-link">← Back to Assets</router-link>
+        <router-link to="/net-worth" class="back-link">← Back to Net Worth</router-link>
       </template>
     </Header>
 
@@ -27,7 +27,7 @@
 
     <div v-else class="empty-state">
       <p>No holdings found in this category.</p>
-      <router-link to="/assets" class="back-link">← Back to Assets</router-link>
+      <router-link to="/net-worth" class="back-link">← Back to Net Worth</router-link>
     </div>
   </div>
 </template>
