@@ -1,13 +1,85 @@
 <template>
   <div class="card-optimizer">
     <div class="optimizer-header">
-      <div class="optimizer-icon-wrap">
-        <CreditCard :size="22" stroke-width="2" />
+      <div class="optimizer-header-left">
+        <div class="optimizer-icon-wrap">
+          <CreditCard :size="22" stroke-width="2" />
+        </div>
+        <div>
+          <h3 class="optimizer-title">Card Optimization</h3>
+          <p class="optimizer-subtitle">Use the right card for each category to maximize rewards</p>
+        </div>
       </div>
-      <div>
-        <h3 class="optimizer-title">Card Optimization</h3>
-        <p class="optimizer-subtitle">Use the right card for each category to maximize rewards</p>
+      <div class="mode-toggle">
+        <button
+          class="toggle-btn"
+          :class="{ active: budgetStore.budgetMode === 'personal' }"
+          @click="budgetStore.setBudgetMode('personal')"
+        >
+          <User :size="14" stroke-width="2" />
+          Personal
+        </button>
+        <button
+          class="toggle-btn"
+          :class="{ active: budgetStore.budgetMode === 'family' }"
+          @click="budgetStore.setBudgetMode('family')"
+        >
+          <Users :size="14" stroke-width="2" />
+          Family
+        </button>
+        <button
+          class="toggle-btn"
+          :class="{ active: budgetStore.budgetMode === 'business' }"
+          @click="budgetStore.setBudgetMode('business')"
+        >
+          <Briefcase :size="14" stroke-width="2" />
+          Business
+        </button>
       </div>
+    </div>
+
+    <!-- Family mode: filter by member -->
+    <div v-if="budgetStore.budgetMode === 'family'" class="member-filter">
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.activeMember === 'all' }"
+        @click="budgetStore.setActiveMember('all')"
+      >
+        All
+      </button>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.activeMember === 'member1' }"
+        @click="budgetStore.setActiveMember('member1')"
+      >
+        {{ budgetStore.familyMembers.member1.name }}
+      </button>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.activeMember === 'member2' }"
+        @click="budgetStore.setActiveMember('member2')"
+      >
+        {{ budgetStore.familyMembers.member2.name }}
+      </button>
+    </div>
+
+    <!-- Personal/Business mode: select which person -->
+    <div v-if="budgetStore.budgetMode === 'personal' || budgetStore.budgetMode === 'business'" class="member-filter">
+      <span class="person-label">Filing as</span>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.personalMember === 'member1' }"
+        @click="budgetStore.setPersonalMember('member1')"
+      >
+        {{ budgetStore.familyMembers.member1.name }}
+      </button>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.personalMember === 'member2' }"
+        @click="budgetStore.setPersonalMember('member2')"
+      >
+        {{ budgetStore.familyMembers.member2.name }}
+      </button>
     </div>
 
     <div v-if="optimizations.length === 0" class="empty-state">
@@ -52,12 +124,40 @@
         <span class="total-value">{{ formatCurrency(totalMissedRewards) }}/mo</span>
       </div>
     </div>
+
+    <div v-if="enrollmentSuggestions.length > 0" class="enrollment-section">
+      <div class="enrollment-header">
+        <PlusCircle :size="16" stroke-width="2" />
+        <span>Cards to Consider</span>
+      </div>
+      <div class="enrollment-list">
+        <div
+          v-for="suggestion in enrollmentSuggestions"
+          :key="suggestion.card"
+          class="enrollment-card"
+        >
+          <div class="enrollment-card-top">
+            <span class="enrollment-card-name">{{ suggestion.card }}</span>
+            <span class="enrollment-card-reward">+{{ formatCurrency(suggestion.totalExtraRewards) }}/mo</span>
+          </div>
+          <div class="enrollment-categories">
+            <span
+              v-for="cat in suggestion.categories"
+              :key="cat.name"
+              class="enrollment-category-tag"
+            >
+              {{ cat.name }} {{ cat.rate }}x {{ cat.rewardType }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { CreditCard, ArrowRight } from 'lucide-vue-next'
+import { CreditCard, ArrowRight, User, Users, Briefcase, PlusCircle } from 'lucide-vue-next'
 import { useBudgetStore } from '@/stores/budget'
 import { formatCurrency } from '@/utils/formatters'
 
@@ -75,6 +175,7 @@ const CARD_REWARDS = {
       'Transportation': { rate: 1, type: 'pts' },
       'Entertainment': { rate: 1, type: 'pts' },
       'Bills & Utilities': { rate: 1, type: 'pts' },
+      'Housing & Rent': { rate: 1, type: 'pts' },
     }
   },
   'Chase Sapphire': {
@@ -86,6 +187,7 @@ const CARD_REWARDS = {
       'Shopping': { rate: 1, type: 'pts' },
       'Entertainment': { rate: 1, type: 'pts' },
       'Bills & Utilities': { rate: 1, type: 'pts' },
+      'Housing & Rent': { rate: 1, type: 'pts' },
     }
   },
   'Capital One Savor': {
@@ -97,6 +199,7 @@ const CARD_REWARDS = {
       'Travel': { rate: 1, type: '%' },
       'Transportation': { rate: 1, type: '%' },
       'Bills & Utilities': { rate: 1, type: '%' },
+      'Housing & Rent': { rate: 1, type: '%' },
     }
   },
   'Citi Double': {
@@ -108,6 +211,7 @@ const CARD_REWARDS = {
       'Transportation': { rate: 2, type: '%' },
       'Entertainment': { rate: 2, type: '%' },
       'Bills & Utilities': { rate: 2, type: '%' },
+      'Housing & Rent': { rate: 2, type: '%' },
     }
   },
   'Apple Card': {
@@ -119,6 +223,7 @@ const CARD_REWARDS = {
       'Transportation': { rate: 1, type: '%' },
       'Entertainment': { rate: 1, type: '%' },
       'Bills & Utilities': { rate: 1, type: '%' },
+      'Housing & Rent': { rate: 1, type: '%' },
     }
   },
   // Business cards
@@ -148,15 +253,16 @@ const CATEGORY_ICONS = {
   'Shopping': '🛍️',
   'Entertainment': '🎬',
   'Travel': '✈️',
+  'Housing & Rent': '🏠',
   'Bills & Utilities': '💡',
   'Office & Software': '💻',
   'Meals & Entertainment': '🍽️',
   'Internet & Phone': '📡',
 }
 
-// Only cards matching the active budget mode
+// Only cards matching the active budget mode (family maps to personal)
 const activeCards = computed(() => {
-  const mode = budgetStore.budgetMode
+  const mode = budgetStore.budgetMode === 'family' ? 'personal' : budgetStore.budgetMode
   const filtered = {}
   for (const [card, data] of Object.entries(CARD_REWARDS)) {
     if (data.type === mode) {
@@ -235,6 +341,47 @@ const optimizations = computed(() => {
 const totalMissedRewards = computed(() => {
   return optimizations.value.reduce((sum, opt) => sum + opt.missedRewards, 0)
 })
+
+// Cards the user currently uses (from transaction data)
+const userCards = computed(() => {
+  const cards = new Set()
+  const expenses = budgetStore.expenses
+  if (!expenses) return cards
+  for (const data of Object.values(expenses)) {
+    for (const transactions of Object.values(data.subcategories)) {
+      for (const t of transactions) {
+        if (t.card) cards.add(t.card)
+      }
+    }
+  }
+  return cards
+})
+
+// Cards the user doesn't have but would benefit from
+const enrollmentSuggestions = computed(() => {
+  const suggestions = {}
+
+  for (const opt of optimizations.value) {
+    if (opt.missedRewards > 0 && !userCards.value.has(opt.bestCard)) {
+      if (!suggestions[opt.bestCard]) {
+        suggestions[opt.bestCard] = {
+          card: opt.bestCard,
+          categories: [],
+          totalExtraRewards: 0,
+        }
+      }
+      suggestions[opt.bestCard].categories.push({
+        name: opt.category,
+        rate: opt.bestRate,
+        rewardType: opt.rewardType,
+        extraRewards: opt.missedRewards,
+      })
+      suggestions[opt.bestCard].totalExtraRewards += opt.missedRewards
+    }
+  }
+
+  return Object.values(suggestions).sort((a, b) => b.totalExtraRewards - a.totalExtraRewards)
+})
 </script>
 
 <style scoped>
@@ -245,8 +392,50 @@ const totalMissedRewards = computed(() => {
 .optimizer-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
   margin-bottom: 24px;
+}
+
+.optimizer-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mode-toggle {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.toggle-btn.active {
+  background: var(--electric-teal);
+  color: #000;
 }
 
 .optimizer-icon-wrap {
@@ -414,7 +603,131 @@ const totalMissedRewards = computed(() => {
   font-size: 0.9rem;
 }
 
+.enrollment-section {
+  margin-top: 20px;
+}
+
+.enrollment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.enrollment-header svg {
+  color: var(--violet-pop);
+}
+
+.enrollment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.enrollment-card {
+  padding: 14px 18px;
+  background: var(--bg-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glass);
+  transition: box-shadow 0.2s ease;
+}
+
+.enrollment-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.enrollment-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.enrollment-card-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.enrollment-card-reward {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--violet-pop);
+}
+
+.enrollment-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.enrollment-category-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--text-secondary);
+}
+
+/* Member filter */
+.member-filter {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: 16px;
+  width: fit-content;
+}
+
+.member-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.member-btn:hover {
+  color: var(--text-primary);
+}
+
+.member-btn.active {
+  background: var(--violet-pop);
+  color: #fff;
+}
+
+.person-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+}
+
 @media (max-width: 640px) {
+  .optimizer-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
   .optimization-row {
     flex-wrap: wrap;
     gap: 10px;

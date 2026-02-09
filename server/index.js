@@ -26,16 +26,26 @@ const config = new Configuration({
 const plaidClient = new PlaidApi(config)
 
 // In-memory storage for access tokens (per session — not production-ready)
-let accessToken = null
-let itemId = null
+// Keyed by connection id: 'default', 'member1', 'member2'
+const connections = {
+  default: { accessToken: null, itemId: null },
+  member1: { accessToken: null, itemId: null },
+  member2: { accessToken: null, itemId: null },
+}
+
+function getConnection(memberId) {
+  const key = memberId && connections[memberId] ? memberId : 'default'
+  return connections[key]
+}
 
 // --- Routes ---
 
 // Create a link token for Plaid Link initialization
 app.post('/api/link-token', async (req, res) => {
   try {
+    const memberId = req.query.member || 'default'
     const response = await plaidClient.linkTokenCreate({
-      user: { client_user_id: 'vision-vue-user' },
+      user: { client_user_id: `vision-vue-${memberId}` },
       client_name: 'Vision',
       products: [Products.Investments],
       country_codes: [CountryCode.Us],
@@ -51,11 +61,12 @@ app.post('/api/link-token', async (req, res) => {
 // Exchange a public token for an access token
 app.post('/api/exchange-token', async (req, res) => {
   try {
-    const { public_token } = req.body
+    const { public_token, member } = req.body
+    const conn = getConnection(member)
     const response = await plaidClient.itemPublicTokenExchange({ public_token })
-    accessToken = response.data.access_token
-    itemId = response.data.item_id
-    res.json({ item_id: itemId })
+    conn.accessToken = response.data.access_token
+    conn.itemId = response.data.item_id
+    res.json({ item_id: conn.itemId })
   } catch (err) {
     console.error('Error exchanging token:', err.response?.data || err.message)
     res.status(500).json({ error: 'Failed to exchange token' })
@@ -64,12 +75,14 @@ app.post('/api/exchange-token', async (req, res) => {
 
 // Get investment holdings
 app.get('/api/holdings', async (req, res) => {
-  if (!accessToken) {
+  const memberId = req.query.member
+  const conn = getConnection(memberId)
+  if (!conn.accessToken) {
     return res.status(400).json({ error: 'No account connected. Link an account first.' })
   }
 
   try {
-    const response = await plaidClient.investmentsHoldingsGet({ access_token: accessToken })
+    const response = await plaidClient.investmentsHoldingsGet({ access_token: conn.accessToken })
     const holdings = mapPlaidHoldings(response.data.holdings, response.data.securities)
     res.json({ holdings })
   } catch (err) {
@@ -80,8 +93,10 @@ app.get('/api/holdings', async (req, res) => {
 
 // Disconnect: clear stored tokens
 app.post('/api/disconnect', (req, res) => {
-  accessToken = null
-  itemId = null
+  const { member } = req.body || {}
+  const conn = getConnection(member)
+  conn.accessToken = null
+  conn.itemId = null
   res.json({ success: true })
 })
 

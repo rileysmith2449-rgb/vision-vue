@@ -58,6 +58,18 @@ export function generateExpenseData() {
  */
 function generatePersonalExpenseData() {
   return {
+    'Housing & Rent': {
+      icon: '🏠',
+      budget: 2800,
+      subcategories: {
+        'Rent': [
+          { merchant: 'Avalon Apartments', amount: 2450.00, date: '2026-02-01', card: 'Citi Double' }
+        ],
+        'Renters Insurance': [
+          { merchant: 'Lemonade Insurance', amount: 15.00, date: '2026-02-01', card: 'Citi Double' }
+        ]
+      }
+    },
     'Dining & Food': {
       icon: '🍽️',
       budget: 1200,
@@ -149,6 +161,121 @@ function generatePersonalExpenseData() {
         ],
         'Phone': [
           { merchant: 'Verizon', amount: 75.00, date: '2026-02-01', card: 'Citi Double' }
+        ]
+      }
+    }
+  }
+}
+
+/**
+ * Generate business expense data
+ */
+export function generateFamilyExpenseData() {
+  return {
+    'Housing & Rent': {
+      icon: '🏠',
+      budget: 3500,
+      subcategories: {
+        'Mortgage': [
+          { merchant: 'Chase Mortgage', amount: 2850.00, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+        ],
+        'Home Insurance': [
+          { merchant: 'State Farm', amount: 125.00, date: '2026-02-01', card: 'Citi Double', member: 'member2' }
+        ]
+      }
+    },
+    'Dining & Food': {
+      icon: '🍽️',
+      budget: 1800,
+      subcategories: {
+        'Restaurants': [
+          { merchant: 'Chipotle', amount: 52.30, date: '2026-02-04', card: 'Amex Gold', member: 'member1' },
+          { merchant: 'The Cheesecake Factory', amount: 145.00, date: '2026-02-03', card: 'Amex Gold', member: 'member2' },
+          { merchant: 'Olive Garden', amount: 98.50, date: '2026-02-01', card: 'Amex Gold', member: 'member1' }
+        ],
+        'Groceries': [
+          { merchant: 'Whole Foods', amount: 215.40, date: '2026-02-04', card: 'Amex Gold', member: 'member2' },
+          { merchant: 'Trader Joes', amount: 132.80, date: '2026-02-02', card: 'Amex Gold', member: 'member1' },
+          { merchant: 'Costco', amount: 312.45, date: '2026-01-31', card: 'Citi Double', member: 'member2' }
+        ],
+        'Coffee Shops': [
+          { merchant: 'Starbucks', amount: 7.25, date: '2026-02-05', card: 'Chase Sapphire', member: 'member1' },
+          { merchant: 'Blue Bottle', amount: 14.50, date: '2026-02-04', card: 'Chase Sapphire', member: 'member2' }
+        ]
+      }
+    },
+    'Transportation': {
+      icon: '🚗',
+      budget: 1200,
+      subcategories: {
+        'Gas & Fuel': [
+          { merchant: 'Shell Gas Station', amount: 72.00, date: '2026-02-04', card: 'Citi Double', member: 'member1' },
+          { merchant: 'Chevron', amount: 65.40, date: '2026-01-31', card: 'Citi Double', member: 'member2' }
+        ],
+        'Rideshare': [
+          { merchant: 'Uber', amount: 28.90, date: '2026-02-05', card: 'Chase Sapphire', member: 'member2' },
+          { merchant: 'Lyft', amount: 22.10, date: '2026-02-03', card: 'Chase Sapphire', member: 'member1' }
+        ],
+        'Car Payment': [
+          { merchant: 'Toyota Financial', amount: 385.00, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+        ]
+      }
+    },
+    'Shopping': {
+      icon: '🛍️',
+      budget: 900,
+      subcategories: {
+        'Clothing': [
+          { merchant: 'Nike', amount: 165.00, date: '2026-02-03', card: 'Apple Card', member: 'member1' },
+          { merchant: 'Zara', amount: 112.50, date: '2026-02-01', card: 'Apple Card', member: 'member2' }
+        ],
+        'Amazon': [
+          { merchant: 'Amazon.com', amount: 89.99, date: '2026-02-04', card: 'Apple Card', member: 'member2' },
+          { merchant: 'Amazon.com', amount: 156.23, date: '2026-02-01', card: 'Apple Card', member: 'member1' }
+        ]
+      }
+    },
+    'Entertainment': {
+      icon: '🎬',
+      budget: 500,
+      subcategories: {
+        'Streaming': [
+          { merchant: 'Netflix', amount: 22.99, date: '2026-02-01', card: 'Capital One Savor', member: 'member1' },
+          { merchant: 'Spotify Family', amount: 16.99, date: '2026-02-01', card: 'Capital One Savor', member: 'member2' },
+          { merchant: 'Disney+', amount: 13.99, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+        ],
+        'Movies & Events': [
+          { merchant: 'AMC Theaters', amount: 62.00, date: '2026-02-02', card: 'Capital One Savor', member: 'member2' }
+        ]
+      }
+    },
+    'Travel': {
+      icon: '✈️',
+      budget: 800,
+      subcategories: {
+        'Hotels': [
+          { merchant: 'Marriott', amount: 345.00, date: '2026-02-03', card: 'Chase Sapphire', member: 'member1' }
+        ],
+        'Flights': [
+          { merchant: 'United Airlines', amount: 524.00, date: '2026-02-01', card: 'Chase Sapphire', member: 'member2' }
+        ]
+      }
+    },
+    'Bills & Utilities': {
+      icon: '💡',
+      budget: 650,
+      subcategories: {
+        'Internet': [
+          { merchant: 'Comcast', amount: 109.99, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+        ],
+        'Electric': [
+          { merchant: 'PG&E', amount: 178.50, date: '2026-02-01', card: 'Citi Double', member: 'member2' }
+        ],
+        'Phone': [
+          { merchant: 'Verizon Family', amount: 140.00, date: '2026-02-01', card: 'Citi Double', member: 'member1' }
+        ],
+        'Water': [
+          { merchant: 'City Water', amount: 65.00, date: '2026-02-01', card: 'Citi Double', member: 'member2' }
         ]
       }
     }

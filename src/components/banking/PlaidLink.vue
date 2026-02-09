@@ -1,37 +1,79 @@
 <template>
   <Card title="Connected Accounts" subtitle="Link your brokerage to import real holdings">
     <div class="plaid-link">
-      <!-- Connected state -->
-      <div v-if="plaidStore.isConnected" class="status-row">
-        <div class="status-badge connected">
-          <CheckCircle :size="16" />
-          <span>Account Connected</span>
+      <!-- Family mode: per-member connections -->
+      <template v-if="budgetStore.budgetMode === 'family'">
+        <div v-for="(member, id) in budgetStore.familyMembers" :key="id" class="member-connection">
+          <div class="member-connection-header">{{ member.name }}</div>
+
+          <!-- Connected state -->
+          <div v-if="plaidStore.memberConnections[id].isConnected" class="status-row">
+            <div class="status-badge connected">
+              <CheckCircle :size="16" />
+              <span>Account Connected</span>
+            </div>
+            <button class="disconnect-btn" @click="handleDisconnect(id)">Disconnect</button>
+          </div>
+
+          <!-- Not connected -->
+          <div v-else class="status-row">
+            <div class="status-badge disconnected">
+              <LinkIcon :size="16" />
+              <span>No account linked</span>
+            </div>
+          </div>
+
+          <!-- Error message -->
+          <p v-if="plaidStore.memberConnections[id].error" class="error-text">{{ plaidStore.memberConnections[id].error }}</p>
+
+          <!-- Connect button -->
+          <button
+            v-if="!plaidStore.memberConnections[id].isConnected"
+            class="connect-btn"
+            :disabled="plaidStore.memberConnections[id].isLinking"
+            @click="handleConnect(id)"
+          >
+            <LinkIcon v-if="!plaidStore.memberConnections[id].isLinking" :size="16" />
+            <Loader2 v-else :size="16" class="spin" />
+            {{ plaidStore.memberConnections[id].isLinking ? 'Connecting...' : 'Connect Bank Account' }}
+          </button>
         </div>
-        <button class="disconnect-btn" @click="handleDisconnect">Disconnect</button>
-      </div>
+      </template>
 
-      <!-- Not connected -->
-      <div v-else class="status-row">
-        <div class="status-badge disconnected">
-          <LinkIcon :size="16" />
-          <span>No account linked</span>
+      <!-- Default: single connection -->
+      <template v-else>
+        <!-- Connected state -->
+        <div v-if="plaidStore.isConnected" class="status-row">
+          <div class="status-badge connected">
+            <CheckCircle :size="16" />
+            <span>Account Connected</span>
+          </div>
+          <button class="disconnect-btn" @click="handleDisconnect()">Disconnect</button>
         </div>
-      </div>
 
-      <!-- Error message -->
-      <p v-if="plaidStore.error" class="error-text">{{ plaidStore.error }}</p>
+        <!-- Not connected -->
+        <div v-else class="status-row">
+          <div class="status-badge disconnected">
+            <LinkIcon :size="16" />
+            <span>No account linked</span>
+          </div>
+        </div>
 
-      <!-- Connect button -->
-      <button
-        v-if="!plaidStore.isConnected"
-        class="connect-btn"
-        :disabled="plaidStore.isLinking"
-        @click="handleConnect"
-      >
-        <LinkIcon v-if="!plaidStore.isLinking" :size="16" />
-        <Loader2 v-else :size="16" class="spin" />
-        {{ plaidStore.isLinking ? 'Connecting...' : 'Connect Bank Account' }}
-      </button>
+        <!-- Error message -->
+        <p v-if="plaidStore.error" class="error-text">{{ plaidStore.error }}</p>
+
+        <!-- Connect button -->
+        <button
+          v-if="!plaidStore.isConnected"
+          class="connect-btn"
+          :disabled="plaidStore.isLinking"
+          @click="handleConnect()"
+        >
+          <LinkIcon v-if="!plaidStore.isLinking" :size="16" />
+          <Loader2 v-else :size="16" class="spin" />
+          {{ plaidStore.isLinking ? 'Connecting...' : 'Connect Bank Account' }}
+        </button>
+      </template>
 
       <p class="hint-text">
         Uses Plaid sandbox — test with <strong>user_good</strong> / <strong>pass_good</strong>
@@ -46,9 +88,11 @@ import { CheckCircle, Link as LinkIcon, Loader2 } from 'lucide-vue-next'
 import Card from '@/components/common/Card.vue'
 import { usePlaidStore } from '@/stores/plaid'
 import { usePortfolioStore } from '@/stores/portfolio'
+import { useBudgetStore } from '@/stores/budget'
 
 const plaidStore = usePlaidStore()
 const portfolioStore = usePortfolioStore()
+const budgetStore = useBudgetStore()
 
 const plaidReady = ref(false)
 
@@ -65,12 +109,17 @@ onMounted(() => {
   }
 })
 
-async function handleConnect() {
-  plaidStore.isLinking = true
-  plaidStore.error = null
+async function handleConnect(memberId) {
+  if (memberId) {
+    plaidStore.memberConnections[memberId].isLinking = true
+    plaidStore.memberConnections[memberId].error = null
+  } else {
+    plaidStore.isLinking = true
+    plaidStore.error = null
+  }
 
   try {
-    const linkToken = await plaidStore.createLinkToken()
+    const linkToken = await plaidStore.createLinkToken(memberId)
 
     if (!window.Plaid) {
       throw new Error('Plaid SDK not loaded yet. Please try again.')
@@ -80,29 +129,53 @@ async function handleConnect() {
       token: linkToken,
       onSuccess: async (publicToken) => {
         try {
-          await plaidStore.exchangeToken(publicToken)
+          await plaidStore.exchangeToken(publicToken, memberId)
           await portfolioStore.loadFromPlaid()
         } catch (err) {
-          plaidStore.error = err.message
+          if (memberId) {
+            plaidStore.memberConnections[memberId].error = err.message
+          } else {
+            plaidStore.error = err.message
+          }
         } finally {
-          plaidStore.isLinking = false
+          if (memberId) {
+            plaidStore.memberConnections[memberId].isLinking = false
+          } else {
+            plaidStore.isLinking = false
+          }
         }
       },
       onExit: (err) => {
-        if (err) plaidStore.error = err.display_message || err.error_message
-        plaidStore.isLinking = false
+        if (err) {
+          const msg = err.display_message || err.error_message
+          if (memberId) {
+            plaidStore.memberConnections[memberId].error = msg
+          } else {
+            plaidStore.error = msg
+          }
+        }
+        if (memberId) {
+          plaidStore.memberConnections[memberId].isLinking = false
+        } else {
+          plaidStore.isLinking = false
+        }
       },
     })
 
     handler.open()
   } catch (err) {
-    plaidStore.error = err.message
-    plaidStore.isLinking = false
+    if (memberId) {
+      plaidStore.memberConnections[memberId].error = err.message
+      plaidStore.memberConnections[memberId].isLinking = false
+    } else {
+      plaidStore.error = err.message
+      plaidStore.isLinking = false
+    }
   }
 }
 
-async function handleDisconnect() {
-  await plaidStore.disconnect()
+async function handleDisconnect(memberId) {
+  await plaidStore.disconnect(memberId)
   portfolioStore.loadHoldings() // Revert to demo data
 }
 </script>
@@ -112,6 +185,21 @@ async function handleDisconnect() {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.member-connection {
+  padding: 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-connection-header {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .status-row {

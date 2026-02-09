@@ -41,7 +41,13 @@
         <div class="transaction-list">
           <div v-for="(tx, i) in transactions" :key="i" class="transaction">
             <div class="tx-info">
-              <span class="tx-merchant">{{ tx.merchant }}</span>
+              <div class="tx-merchant-row">
+                <span class="tx-merchant">{{ tx.merchant }}</span>
+                <span
+                  v-if="budgetStore.budgetMode === 'family' && tx.member"
+                  class="member-tag"
+                >{{ budgetStore.familyMembers[tx.member]?.name }}</span>
+              </div>
               <span class="tx-card">{{ tx.card }}</span>
             </div>
             <div class="tx-right">
@@ -387,10 +393,26 @@ onUnmounted(() => {
   flex: 1;
 }
 
+.tx-merchant-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .tx-merchant {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-primary);
+}
+
+.member-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--violet-pop);
+  white-space: nowrap;
 }
 
 .tx-card {

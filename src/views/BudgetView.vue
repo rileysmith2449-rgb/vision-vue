@@ -13,6 +13,14 @@
           </button>
           <button
             class="toggle-btn"
+            :class="{ active: budgetStore.budgetMode === 'family' }"
+            @click="budgetStore.setBudgetMode('family')"
+          >
+            <Users :size="14" stroke-width="2" />
+            Family
+          </button>
+          <button
+            class="toggle-btn"
             :class="{ active: budgetStore.budgetMode === 'business' }"
             @click="budgetStore.setBudgetMode('business')"
           >
@@ -22,6 +30,50 @@
         </div>
       </template>
     </Header>
+
+    <!-- Family mode: filter by member -->
+    <div v-if="budgetStore.budgetMode === 'family'" class="member-filter">
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.activeMember === 'all' }"
+        @click="budgetStore.setActiveMember('all')"
+      >
+        All
+      </button>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.activeMember === 'member1' }"
+        @click="budgetStore.setActiveMember('member1')"
+      >
+        {{ budgetStore.familyMembers.member1.name }}
+      </button>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.activeMember === 'member2' }"
+        @click="budgetStore.setActiveMember('member2')"
+      >
+        {{ budgetStore.familyMembers.member2.name }}
+      </button>
+    </div>
+
+    <!-- Personal/Business mode: select which person this budget files to -->
+    <div v-if="budgetStore.budgetMode === 'personal' || budgetStore.budgetMode === 'business'" class="member-filter">
+      <span class="person-label">Filing as</span>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.personalMember === 'member1' }"
+        @click="budgetStore.setPersonalMember('member1')"
+      >
+        {{ budgetStore.familyMembers.member1.name }}
+      </button>
+      <button
+        class="member-btn"
+        :class="{ active: budgetStore.personalMember === 'member2' }"
+        @click="budgetStore.setPersonalMember('member2')"
+      >
+        {{ budgetStore.familyMembers.member2.name }}
+      </button>
+    </div>
 
     <MonthlyHeader
       :spent="budgetStore.totalExpenses"
@@ -71,7 +123,7 @@ import MonthlyHeader from '@/components/budget/MonthlyHeader.vue'
 import BudgetCategoryRow from '@/components/budget/BudgetCategoryRow.vue'
 import CreditCardSection from '@/components/budget/CreditCardSection.vue'
 import BudgetChart from '@/components/charts/BudgetChart.vue'
-import { User, Briefcase, PiggyBank } from 'lucide-vue-next'
+import { User, Users, Briefcase, PiggyBank } from 'lucide-vue-next'
 
 const budgetStore = useBudgetStore()
 
@@ -131,6 +183,50 @@ onMounted(() => {
 .toggle-btn.active {
   background: var(--electric-teal);
   color: #000;
+}
+
+/* Member filter */
+.member-filter {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: 16px;
+  width: fit-content;
+}
+
+.member-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.member-btn:hover {
+  color: var(--text-primary);
+}
+
+.member-btn.active {
+  background: var(--violet-pop);
+  color: #fff;
+}
+
+.person-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
 }
 
 /* Savings row */

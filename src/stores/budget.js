@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { generateExpenseData, generateBusinessExpenseData } from '@/utils/demoData'
+import { generateExpenseData, generateBusinessExpenseData, generateFamilyExpenseData } from '@/utils/demoData'
 import { creditCards } from '@/utils/creditCardData'
 
 export const useBudgetStore = defineStore('budget', () => {
   // State
-  const budgetMode = ref('personal') // 'personal' | 'business'
+  const budgetMode = ref('personal') // 'personal' | 'business' | 'family'
   const salary = ref(150000)
   const businessIncome = ref(50000)
   const shortTermInvestmentIncome = ref(0)
@@ -14,18 +14,69 @@ export const useBudgetStore = defineStore('budget', () => {
   const state = ref('CA')
   const personalExpenses = ref({})
   const businessExpenses = ref({})
+  const familyExpenses = ref({})
   const currentCategory = ref(null)
   const currentSubcategory = ref(null)
+
+  // Family mode state
+  const familyMembers = ref({
+    member1: {
+      id: 'member1',
+      name: 'Person 1',
+      salary: 120000,
+      businessIncome: 0,
+      shortTermInvestmentIncome: 0,
+      longTermInvestmentIncome: 0,
+      filingStatus: 'married',
+      state: 'CA'
+    },
+    member2: {
+      id: 'member2',
+      name: 'Person 2',
+      salary: 95000,
+      businessIncome: 10000,
+      shortTermInvestmentIncome: 0,
+      longTermInvestmentIncome: 0,
+      filingStatus: 'married',
+      state: 'CA'
+    }
+  })
+  const activeMember = ref('all') // 'all' | 'member1' | 'member2'
+  const personalMember = ref('member1') // which family member the personal budget maps to
+
+  // Helper: filter family expenses by member
+  function filterExpensesByMember(allExpenses, memberId) {
+    const filtered = {}
+    for (const [catName, catData] of Object.entries(allExpenses)) {
+      const filteredSubs = {}
+      for (const [subName, transactions] of Object.entries(catData.subcategories)) {
+        const memberTxns = transactions.filter(t => t.member === memberId)
+        if (memberTxns.length > 0) {
+          filteredSubs[subName] = memberTxns
+        }
+      }
+      if (Object.keys(filteredSubs).length > 0) {
+        filtered[catName] = { ...catData, subcategories: filteredSubs }
+      }
+    }
+    return filtered
+  }
 
   // Writable computed — proxies to active mode's expense data
   const expenses = computed({
     get() {
+      if (budgetMode.value === 'family') {
+        if (activeMember.value === 'all') return familyExpenses.value
+        return filterExpensesByMember(familyExpenses.value, activeMember.value)
+      }
       return budgetMode.value === 'personal'
         ? personalExpenses.value
         : businessExpenses.value
     },
     set(val) {
-      if (budgetMode.value === 'personal') {
+      if (budgetMode.value === 'family') {
+        familyExpenses.value = val
+      } else if (budgetMode.value === 'personal') {
         personalExpenses.value = val
       } else {
         businessExpenses.value = val
@@ -42,9 +93,10 @@ export const useBudgetStore = defineStore('budget', () => {
     return total
   })
 
-  // Filtered cards by active mode
+  // Filtered cards by active mode (family uses personal cards)
   const filteredCards = computed(() => {
-    return creditCards.filter(c => c.type === budgetMode.value)
+    const mode = budgetMode.value === 'family' ? 'personal' : budgetMode.value
+    return creditCards.filter(c => c.type === mode)
   })
 
   // Getters
@@ -71,21 +123,49 @@ export const useBudgetStore = defineStore('budget', () => {
     return budgetRemaining.value < 0
   })
 
+  // Helper: compute taxes for a single person's settings
+  function computeMemberTaxes(m) {
+    const ordinary = m.salary + m.businessIncome + m.shortTermInvestmentIncome
+    const gross = ordinary + m.longTermInvestmentIncome
+    const deduction = getStandardDeduction(m.filingStatus)
+    const taxable = Math.max(0, gross - deduction)
+    const taxableOrdinary = Math.max(0, ordinary - deduction)
+    const federal = calculateFederalTax(taxableOrdinary, m.filingStatus)
+      + m.longTermInvestmentIncome * getLTCGRate(taxableOrdinary, m.filingStatus)
+    const st = calculateStateTax(taxable, m.state)
+    return { ordinary, gross, federal, state: st, total: federal + st }
+  }
+
+  // Resolved member for personal/business modes (reads from familyMembers)
+  const activePersonalMember = computed(() => {
+    return familyMembers.value[personalMember.value]
+  })
+
   const ordinaryIncome = computed(() => {
-    return salary.value + businessIncome.value + shortTermInvestmentIncome.value
+    if (budgetMode.value === 'family') {
+      const m1 = familyMembers.value.member1
+      const m2 = familyMembers.value.member2
+      return (m1.salary + m1.businessIncome + m1.shortTermInvestmentIncome)
+        + (m2.salary + m2.businessIncome + m2.shortTermInvestmentIncome)
+    }
+    const m = activePersonalMember.value
+    return m.salary + m.businessIncome + m.shortTermInvestmentIncome
   })
 
   const grossIncome = computed(() => {
-    return ordinaryIncome.value + longTermInvestmentIncome.value
+    if (budgetMode.value === 'family') {
+      const m1 = familyMembers.value.member1
+      const m2 = familyMembers.value.member2
+      return (m1.salary + m1.businessIncome + m1.shortTermInvestmentIncome + m1.longTermInvestmentIncome)
+        + (m2.salary + m2.businessIncome + m2.shortTermInvestmentIncome + m2.longTermInvestmentIncome)
+    }
+    const m = activePersonalMember.value
+    return (m.salary + m.businessIncome + m.shortTermInvestmentIncome) + m.longTermInvestmentIncome
   })
 
   const standardDeduction = computed(() => {
-    const deductions = {
-      single: 14600,
-      married: 29200,
-      hoh: 21900
-    }
-    return deductions[filingStatus.value] || 0
+    const m = activePersonalMember.value
+    return getStandardDeduction(m.filingStatus)
   })
 
   const taxableIncome = computed(() => {
@@ -97,13 +177,25 @@ export const useBudgetStore = defineStore('budget', () => {
   })
 
   const federalTax = computed(() => {
-    const ordinaryTax = calculateFederalTax(taxableOrdinaryIncome.value, filingStatus.value)
-    const ltcgTax = longTermInvestmentIncome.value * getLTCGRate(taxableOrdinaryIncome.value, filingStatus.value)
-    return ordinaryTax + ltcgTax
+    if (budgetMode.value === 'family') {
+      const t1 = computeMemberTaxes(familyMembers.value.member1)
+      const t2 = computeMemberTaxes(familyMembers.value.member2)
+      return t1.federal + t2.federal
+    }
+    const m = activePersonalMember.value
+    const t = computeMemberTaxes(m)
+    return t.federal
   })
 
   const stateTax = computed(() => {
-    return calculateStateTax(taxableIncome.value, state.value)
+    if (budgetMode.value === 'family') {
+      const t1 = computeMemberTaxes(familyMembers.value.member1)
+      const t2 = computeMemberTaxes(familyMembers.value.member2)
+      return t1.state + t2.state
+    }
+    const m = activePersonalMember.value
+    const t = computeMemberTaxes(m)
+    return t.state
   })
 
   const totalTax = computed(() => {
@@ -127,7 +219,14 @@ export const useBudgetStore = defineStore('budget', () => {
 
   // Savings
   const monthlyNetIncome = computed(() => {
-    return (grossIncome.value - totalTax.value) / 12
+    if (budgetMode.value === 'family') {
+      const t1 = computeMemberTaxes(familyMembers.value.member1)
+      const t2 = computeMemberTaxes(familyMembers.value.member2)
+      return (t1.gross - t1.total + t2.gross - t2.total) / 12
+    }
+    const m = activePersonalMember.value
+    const t = computeMemberTaxes(m)
+    return (t.gross - t.total) / 12
   })
 
   const monthlySavings = computed(() => {
@@ -195,12 +294,16 @@ export const useBudgetStore = defineStore('budget', () => {
   function loadExpenses() {
     personalExpenses.value = generateExpenseData()
     businessExpenses.value = generateBusinessExpenseData()
+    familyExpenses.value = generateFamilyExpenseData()
   }
 
   function setBudgetMode(mode) {
     budgetMode.value = mode
     currentCategory.value = null
     currentSubcategory.value = null
+    if (mode !== 'family') {
+      activeMember.value = 'all'
+    }
   }
 
   function setCurrentCategory(category) {
@@ -250,14 +353,51 @@ export const useBudgetStore = defineStore('budget', () => {
   }
 
   function reclassifyTransaction(fromCategory, fromSub, txIndex, toCategory, toSub) {
-    const source = expenses.value[fromCategory]?.subcategories[fromSub]
-    if (!source || txIndex < 0 || txIndex >= source.length) return
+    // Use raw underlying data to avoid index mismatch when viewing a filtered member
+    const raw = budgetMode.value === 'family' ? familyExpenses.value
+      : budgetMode.value === 'personal' ? personalExpenses.value
+      : businessExpenses.value
 
-    const target = expenses.value[toCategory]?.subcategories[toSub]
+    // When filtering by member, find the real index in the raw data
+    const source = raw[fromCategory]?.subcategories[fromSub]
+    if (!source) return
+
+    let realIndex = txIndex
+    if (budgetMode.value === 'family' && activeMember.value !== 'all') {
+      const filtered = source.filter(t => t.member === activeMember.value)
+      const targetTx = filtered[txIndex]
+      if (!targetTx) return
+      realIndex = source.indexOf(targetTx)
+    }
+
+    if (realIndex < 0 || realIndex >= source.length) return
+
+    const target = raw[toCategory]?.subcategories[toSub]
     if (!target) return
 
-    const [tx] = source.splice(txIndex, 1)
+    const [tx] = source.splice(realIndex, 1)
     target.push(tx)
+  }
+
+  function setPersonalMember(id) {
+    personalMember.value = id
+  }
+
+  // Family mode actions
+  function setActiveMember(id) {
+    activeMember.value = id
+  }
+
+  function updateMemberName(id, name) {
+    if (familyMembers.value[id]) {
+      familyMembers.value[id].name = name
+    }
+  }
+
+  function updateMemberSetting(id, field, value) {
+    if (familyMembers.value[id] && field in familyMembers.value[id]) {
+      familyMembers.value[id][field] = value
+    }
   }
 
   return {
@@ -273,6 +413,11 @@ export const useBudgetStore = defineStore('budget', () => {
     expenses,
     personalExpenses,
     businessExpenses,
+    familyExpenses,
+    familyMembers,
+    activeMember,
+    personalMember,
+    activePersonalMember,
     currentCategory,
     currentSubcategory,
     // Getters
@@ -301,6 +446,10 @@ export const useBudgetStore = defineStore('budget', () => {
     // Actions
     loadExpenses,
     setBudgetMode,
+    setPersonalMember,
+    setActiveMember,
+    updateMemberName,
+    updateMemberSetting,
     setCurrentCategory,
     setCurrentSubcategory,
     resetView,
@@ -310,6 +459,12 @@ export const useBudgetStore = defineStore('budget', () => {
     reclassifyTransaction
   }
 })
+
+// Standard deduction helper (reusable for family per-member calcs)
+function getStandardDeduction(status) {
+  const deductions = { single: 14600, married: 29200, hoh: 21900 }
+  return deductions[status] || 0
+}
 
 // Tax calculation helper
 function calculateFederalTax(taxableIncome, filingStatus) {

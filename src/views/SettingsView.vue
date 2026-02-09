@@ -20,8 +20,127 @@
         </div>
       </Card>
 
-      <Card title="Income" subtitle="Your annual income for tax calculations">
+      <!-- Family Members card (family mode only) -->
+      <Card
+        v-if="budgetStore.budgetMode === 'family'"
+        title="Family Members"
+        subtitle="Edit names for each household member"
+      >
         <div class="settings-form">
+          <div v-for="(member, id) in budgetStore.familyMembers" :key="id" class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">{{ id === 'member1' ? 'Member 1' : 'Member 2' }}</span>
+              <span class="setting-description">Display name</span>
+            </div>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                class="form-input"
+                :value="member.name"
+                @input="budgetStore.updateMemberName(id, $event.target.value)"
+              />
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <!-- Per-member Income cards (family mode) -->
+      <template v-if="budgetStore.budgetMode === 'family'">
+        <Card
+          v-for="(member, id) in budgetStore.familyMembers"
+          :key="'income-' + id"
+          :title="member.name + ' — Income'"
+          subtitle="Annual income for tax calculations"
+        >
+          <div class="settings-form">
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-label">W-2 Salary</span>
+                <span class="setting-description">Annual gross salary</span>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input
+                  type="number"
+                  class="form-input"
+                  :value="member.salary"
+                  @input="budgetStore.updateMemberSetting(id, 'salary', Number($event.target.value) || 0)"
+                />
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-label">Business / Side Income</span>
+                <span class="setting-description">1099, freelance, etc.</span>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input
+                  type="number"
+                  class="form-input"
+                  :value="member.businessIncome"
+                  @input="budgetStore.updateMemberSetting(id, 'businessIncome', Number($event.target.value) || 0)"
+                />
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-label">Short-Term Investment Income</span>
+                <span class="setting-description">Gains held &lt; 1 year, taxed as ordinary</span>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input
+                  type="number"
+                  class="form-input"
+                  :value="member.shortTermInvestmentIncome"
+                  @input="budgetStore.updateMemberSetting(id, 'shortTermInvestmentIncome', Number($event.target.value) || 0)"
+                />
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-label">Long-Term Investment Income</span>
+                <span class="setting-description">Gains held &gt; 1 year, preferential rate</span>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input
+                  type="number"
+                  class="form-input"
+                  :value="member.longTermInvestmentIncome"
+                  @input="budgetStore.updateMemberSetting(id, 'longTermInvestmentIncome', Number($event.target.value) || 0)"
+                />
+              </div>
+            </div>
+          </div>
+        </Card>
+      </template>
+
+      <!-- Single Income card (personal/business mode) — mapped to a family member -->
+      <Card v-else title="Income" subtitle="Your annual income for tax calculations">
+        <div class="settings-form">
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Person</span>
+              <span class="setting-description">Which family member is this budget for?</span>
+            </div>
+            <div class="person-toggle">
+              <button
+                v-for="(member, id) in budgetStore.familyMembers"
+                :key="id"
+                class="person-btn"
+                :class="{ active: budgetStore.personalMember === id }"
+                @click="budgetStore.setPersonalMember(id)"
+              >
+                {{ member.name }}
+              </button>
+            </div>
+          </div>
+
           <div class="setting-row">
             <div class="setting-info">
               <span class="setting-label">W-2 Salary</span>
@@ -32,8 +151,8 @@
               <input
                 type="number"
                 class="form-input"
-                :value="budgetStore.salary"
-                @input="budgetStore.salary = Number($event.target.value) || 0"
+                :value="budgetStore.activePersonalMember.salary"
+                @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'salary', Number($event.target.value) || 0)"
               />
             </div>
           </div>
@@ -48,8 +167,8 @@
               <input
                 type="number"
                 class="form-input"
-                :value="budgetStore.businessIncome"
-                @input="budgetStore.businessIncome = Number($event.target.value) || 0"
+                :value="budgetStore.activePersonalMember.businessIncome"
+                @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'businessIncome', Number($event.target.value) || 0)"
               />
             </div>
           </div>
@@ -64,8 +183,8 @@
               <input
                 type="number"
                 class="form-input"
-                :value="budgetStore.shortTermInvestmentIncome"
-                @input="budgetStore.shortTermInvestmentIncome = Number($event.target.value) || 0"
+                :value="budgetStore.activePersonalMember.shortTermInvestmentIncome"
+                @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'shortTermInvestmentIncome', Number($event.target.value) || 0)"
               />
             </div>
           </div>
@@ -80,8 +199,8 @@
               <input
                 type="number"
                 class="form-input"
-                :value="budgetStore.longTermInvestmentIncome"
-                @input="budgetStore.longTermInvestmentIncome = Number($event.target.value) || 0"
+                :value="budgetStore.activePersonalMember.longTermInvestmentIncome"
+                @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'longTermInvestmentIncome', Number($event.target.value) || 0)"
               />
             </div>
           </div>
@@ -99,7 +218,69 @@
         </div>
       </Card>
 
-      <Card title="Tax Settings" subtitle="Configure your tax parameters">
+      <!-- Per-member Tax Settings cards (family mode) -->
+      <template v-if="budgetStore.budgetMode === 'family'">
+        <Card
+          v-for="(member, id) in budgetStore.familyMembers"
+          :key="'tax-' + id"
+          :title="member.name + ' — Tax Settings'"
+          subtitle="Configure tax parameters"
+        >
+          <div class="settings-form">
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-label">Filing Status</span>
+              </div>
+              <select
+                class="form-select"
+                :value="member.filingStatus"
+                @change="budgetStore.updateMemberSetting(id, 'filingStatus', $event.target.value)"
+              >
+                <option value="single">Single</option>
+                <option value="married">Married Filing Jointly</option>
+                <option value="hoh">Head of Household</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-label">State</span>
+                <span class="setting-description">For state income tax</span>
+              </div>
+              <select
+                class="form-select"
+                :value="member.state"
+                @change="budgetStore.updateMemberSetting(id, 'state', $event.target.value)"
+              >
+                <option v-for="s in states" :key="s.code" :value="s.code">{{ s.name }}</option>
+              </select>
+            </div>
+          </div>
+        </Card>
+
+        <!-- Household tax summary -->
+        <Card title="Household Tax Summary" subtitle="Combined taxes for all members">
+          <div class="settings-form">
+            <div class="tax-summary">
+              <div class="setting-row summary-row">
+                <span class="setting-label">Federal Tax</span>
+                <span class="summary-value">{{ formatCurrency(budgetStore.federalTax) }} <span class="rate-tag">{{ budgetStore.federalEffectiveRate.toFixed(1) }}%</span></span>
+              </div>
+              <div class="setting-row summary-row">
+                <span class="setting-label">State Tax</span>
+                <span class="summary-value">{{ formatCurrency(budgetStore.stateTax) }} <span class="rate-tag">{{ budgetStore.stateEffectiveRate.toFixed(1) }}%</span></span>
+              </div>
+              <div class="setting-row summary-row total">
+                <span class="setting-label">Effective Rate</span>
+                <span class="summary-value highlight">{{ budgetStore.effectiveRate.toFixed(1) }}%</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </template>
+
+      <!-- Single Tax Settings card (personal/business mode) — mapped to family member -->
+      <Card v-else title="Tax Settings" subtitle="Configure your tax parameters">
         <div class="settings-form">
           <div class="setting-row">
             <div class="setting-info">
@@ -107,8 +288,8 @@
             </div>
             <select
               class="form-select"
-              :value="budgetStore.filingStatus"
-              @change="budgetStore.updateFilingStatus($event.target.value)"
+              :value="budgetStore.activePersonalMember.filingStatus"
+              @change="budgetStore.updateMemberSetting(budgetStore.personalMember, 'filingStatus', $event.target.value)"
             >
               <option value="single">Single</option>
               <option value="married">Married Filing Jointly</option>
@@ -123,8 +304,8 @@
             </div>
             <select
               class="form-select"
-              :value="budgetStore.state"
-              @change="budgetStore.state = $event.target.value"
+              :value="budgetStore.activePersonalMember.state"
+              @change="budgetStore.updateMemberSetting(budgetStore.personalMember, 'state', $event.target.value)"
             >
               <option v-for="s in states" :key="s.code" :value="s.code">{{ s.name }}</option>
             </select>
@@ -387,6 +568,38 @@ const states = [
   border-radius: 6px;
   background: var(--bg-subtle);
   color: var(--text-tertiary);
+}
+
+.person-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.person-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.person-btn:hover {
+  color: var(--text-primary);
+}
+
+.person-btn.active {
+  background: var(--violet-pop);
+  color: #fff;
 }
 
 .disclaimer {
