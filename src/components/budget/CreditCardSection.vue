@@ -16,7 +16,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
-import { creditCards } from '@/utils/creditCardData'
 import CreditCardItem from './CreditCardItem.vue'
 
 const budgetStore = useBudgetStore()
@@ -25,7 +24,7 @@ const cardsWithSpend = computed(() => {
   const spendData = budgetStore.spendByCardAndCategory
   const results = []
 
-  for (const card of creditCards) {
+  for (const card of budgetStore.filteredCards) {
     const cardSpend = spendData[card.name]
     if (!cardSpend) continue
 

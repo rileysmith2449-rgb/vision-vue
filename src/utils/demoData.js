@@ -50,6 +50,13 @@ export function generateDemoHoldings() {
  * Generate demo expense data
  */
 export function generateExpenseData() {
+  return generatePersonalExpenseData()
+}
+
+/**
+ * Generate personal expense data
+ */
+function generatePersonalExpenseData() {
   return {
     'Dining & Food': {
       icon: '🍽️',
@@ -142,6 +149,73 @@ export function generateExpenseData() {
         ],
         'Phone': [
           { merchant: 'Verizon', amount: 75.00, date: '2026-02-01', card: 'Citi Double' }
+        ]
+      }
+    }
+  }
+}
+
+/**
+ * Generate business expense data
+ */
+export function generateBusinessExpenseData() {
+  return {
+    'Office & Software': {
+      icon: '💻',
+      budget: 800,
+      subcategories: {
+        'Software Subscriptions': [
+          { merchant: 'Adobe Creative Cloud', amount: 54.99, date: '2026-02-01', card: 'Chase Ink Business' },
+          { merchant: 'Slack', amount: 12.50, date: '2026-02-01', card: 'Chase Ink Business' },
+          { merchant: 'Notion', amount: 10.00, date: '2026-02-01', card: 'Chase Ink Business' },
+          { merchant: 'GitHub', amount: 4.00, date: '2026-02-01', card: 'Chase Ink Business' }
+        ],
+        'Office Supplies': [
+          { merchant: 'Staples', amount: 87.45, date: '2026-02-03', card: 'Amex Business Gold' },
+          { merchant: 'Amazon Business', amount: 134.20, date: '2026-02-02', card: 'Amex Business Gold' }
+        ]
+      }
+    },
+    'Travel': {
+      icon: '✈️',
+      budget: 1500,
+      subcategories: {
+        'Flights': [
+          { merchant: 'Delta Airlines', amount: 389.00, date: '2026-02-04', card: 'Amex Business Gold' },
+          { merchant: 'United Airlines', amount: 275.00, date: '2026-02-01', card: 'Amex Business Gold' }
+        ],
+        'Hotels': [
+          { merchant: 'Hilton', amount: 245.00, date: '2026-02-03', card: 'Amex Business Gold' }
+        ],
+        'Ground Transport': [
+          { merchant: 'Uber Business', amount: 42.50, date: '2026-02-04', card: 'Amex Business Gold' },
+          { merchant: 'Hertz', amount: 156.00, date: '2026-02-02', card: 'Amex Business Gold' }
+        ]
+      }
+    },
+    'Meals & Entertainment': {
+      icon: '🍽️',
+      budget: 600,
+      subcategories: {
+        'Client Meals': [
+          { merchant: 'Ruth\'s Chris', amount: 187.50, date: '2026-02-04', card: 'Amex Business Gold' },
+          { merchant: 'Nobu', amount: 234.00, date: '2026-02-02', card: 'Amex Business Gold' }
+        ],
+        'Team Lunches': [
+          { merchant: 'Panera Bread', amount: 67.80, date: '2026-02-03', card: 'Amex Business Gold' },
+          { merchant: 'Sweetgreen', amount: 45.20, date: '2026-02-01', card: 'Amex Business Gold' }
+        ]
+      }
+    },
+    'Internet & Phone': {
+      icon: '📡',
+      budget: 300,
+      subcategories: {
+        'Internet': [
+          { merchant: 'AT&T Business', amount: 129.99, date: '2026-02-01', card: 'Chase Ink Business' }
+        ],
+        'Phone Lines': [
+          { merchant: 'T-Mobile Business', amount: 85.00, date: '2026-02-01', card: 'Chase Ink Business' }
         ]
       }
     }

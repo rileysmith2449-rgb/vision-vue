@@ -48,6 +48,40 @@
               <span class="tx-amount">{{ formatCurrency(tx.amount) }}</span>
               <span class="tx-date">{{ tx.date }}</span>
             </div>
+            <button
+              class="reclassify-btn"
+              title="Reclassify transaction"
+              @click.stop="openReclassify(subName, i, $event)"
+            >
+              <ArrowRightLeft :size="14" stroke-width="2" />
+            </button>
+
+            <Teleport to="body">
+              <div
+                v-if="reclassifyTarget && reclassifyTarget.subName === subName && reclassifyTarget.index === i"
+                ref="dropdownRef"
+                class="reclassify-dropdown"
+                :style="dropdownStyle"
+                @click.stop
+              >
+                <div class="dropdown-title">Move to...</div>
+                <template v-for="opt in budgetStore.categoryOptions" :key="opt.category">
+                  <template v-if="opt.category !== name || opt.subcategories.length > 1">
+                    <div class="dropdown-category">{{ opt.category }}</div>
+                    <button
+                      v-for="sub in opt.subcategories"
+                      :key="sub"
+                      class="dropdown-item"
+                      :class="{ disabled: opt.category === name && sub === subName }"
+                      :disabled="opt.category === name && sub === subName"
+                      @click="doReclassify(opt.category, sub)"
+                    >
+                      {{ sub }}
+                    </button>
+                  </template>
+                </template>
+              </div>
+            </Teleport>
           </div>
         </div>
       </div>
@@ -56,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { formatCurrency } from '@/utils/formatters'
 import { useBudgetStore } from '@/stores/budget'
 import {
@@ -66,7 +100,11 @@ import {
   Film,
   Plane,
   Zap,
-  ChevronDown
+  ChevronDown,
+  ArrowRightLeft,
+  Monitor,
+  Satellite,
+  Utensils
 } from 'lucide-vue-next'
 import ProgressBar from '@/components/common/ProgressBar.vue'
 
@@ -81,6 +119,11 @@ const budgetStore = useBudgetStore()
 const expanded = ref(false)
 const editing = ref(false)
 const editInput = ref(null)
+const dropdownRef = ref(null)
+
+// Reclassify state
+const reclassifyTarget = ref(null)
+const dropdownStyle = ref({})
 
 const iconMap = {
   'Dining & Food': UtensilsCrossed,
@@ -88,7 +131,10 @@ const iconMap = {
   'Shopping': ShoppingBag,
   'Entertainment': Film,
   'Travel': Plane,
-  'Bills & Utilities': Zap
+  'Bills & Utilities': Zap,
+  'Office & Software': Monitor,
+  'Meals & Entertainment': Utensils,
+  'Internet & Phone': Satellite
 }
 
 const categoryIcon = computed(() => iconMap[props.name] || ShoppingBag)
@@ -129,6 +175,48 @@ function saveEdit(e) {
 function cancelEdit() {
   editing.value = false
 }
+
+function openReclassify(subName, index, event) {
+  if (reclassifyTarget.value?.subName === subName && reclassifyTarget.value?.index === index) {
+    reclassifyTarget.value = null
+    return
+  }
+
+  const rect = event.currentTarget.getBoundingClientRect()
+  dropdownStyle.value = {
+    position: 'fixed',
+    top: `${rect.bottom + 4}px`,
+    right: `${window.innerWidth - rect.right}px`,
+    zIndex: 1000
+  }
+  reclassifyTarget.value = { subName, index }
+}
+
+function doReclassify(toCategory, toSub) {
+  if (!reclassifyTarget.value) return
+  budgetStore.reclassifyTransaction(
+    props.name,
+    reclassifyTarget.value.subName,
+    reclassifyTarget.value.index,
+    toCategory,
+    toSub
+  )
+  reclassifyTarget.value = null
+}
+
+function handleClickOutside(e) {
+  if (reclassifyTarget.value && !e.target.closest('.reclassify-dropdown') && !e.target.closest('.reclassify-btn')) {
+    reclassifyTarget.value = null
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
@@ -285,17 +373,18 @@ function cancelEdit() {
 
 .transaction {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
   background: var(--bg-subtle);
   border-radius: var(--radius-sm);
+  gap: 8px;
 }
 
 .tx-info {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  flex: 1;
 }
 
 .tx-merchant {
@@ -327,6 +416,27 @@ function cancelEdit() {
   color: var(--text-tertiary);
 }
 
+/* Reclassify button */
+.reclassify-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.reclassify-btn:hover {
+  background: rgba(0, 230, 138, 0.1);
+  color: var(--electric-teal);
+}
+
 @media (max-width: 1024px) {
   .row-header {
     flex-wrap: wrap;
@@ -347,5 +457,62 @@ function cancelEdit() {
     min-width: auto;
     margin-left: auto;
   }
+}
+</style>
+
+<style>
+/* Teleported dropdown — must be unscoped */
+.reclassify-dropdown {
+  width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  padding: 8px 0;
+}
+
+.reclassify-dropdown .dropdown-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 14px 8px;
+}
+
+.reclassify-dropdown .dropdown-category {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--electric-teal);
+  padding: 8px 14px 4px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.reclassify-dropdown .dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 14px 6px 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.reclassify-dropdown .dropdown-item:hover:not(.disabled) {
+  background: var(--bg-subtle);
+}
+
+.reclassify-dropdown .dropdown-item.disabled {
+  color: var(--text-tertiary);
+  cursor: default;
+  opacity: 0.5;
 }
 </style>

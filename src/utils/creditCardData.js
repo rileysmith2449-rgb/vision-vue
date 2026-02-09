@@ -1,6 +1,7 @@
 export const creditCards = [
   {
     name: 'Amex Gold',
+    type: 'personal',
     annualFee: 250,
     color: '#C5A047',
     cashbackRates: {
@@ -16,6 +17,7 @@ export const creditCards = [
   },
   {
     name: 'Chase Sapphire',
+    type: 'personal',
     annualFee: 550,
     color: '#1A3C6E',
     cashbackRates: {
@@ -31,6 +33,7 @@ export const creditCards = [
   },
   {
     name: 'Citi Double',
+    type: 'personal',
     annualFee: 0,
     color: '#003DA5',
     cashbackRates: {
@@ -40,6 +43,7 @@ export const creditCards = [
   },
   {
     name: 'Apple Card',
+    type: 'personal',
     annualFee: 0,
     color: '#E0E0E0',
     cashbackRates: {
@@ -49,12 +53,40 @@ export const creditCards = [
   },
   {
     name: 'Capital One Savor',
+    type: 'personal',
     annualFee: 95,
     color: '#D03027',
     cashbackRates: {
       'Dining & Food': 0.04,
       'Entertainment': 0.04,
       'Shopping': 0.03,
+      default: 0.01
+    },
+    statementCredits: []
+  },
+  {
+    name: 'Amex Business Gold',
+    type: 'business',
+    annualFee: 375,
+    color: '#8B6914',
+    cashbackRates: {
+      'Office & Software': 0.04,
+      'Travel': 0.03,
+      'Meals & Entertainment': 0.03,
+      default: 0.01
+    },
+    statementCredits: [
+      { name: 'Dell Credit', amount: 200, used: false }
+    ]
+  },
+  {
+    name: 'Chase Ink Business',
+    type: 'business',
+    annualFee: 95,
+    color: '#0A2540',
+    cashbackRates: {
+      'Office & Software': 0.05,
+      'Internet & Phone': 0.05,
       default: 0.01
     },
     statementCredits: []

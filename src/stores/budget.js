@@ -1,19 +1,51 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { generateExpenseData } from '@/utils/demoData'
+import { generateExpenseData, generateBusinessExpenseData } from '@/utils/demoData'
+import { creditCards } from '@/utils/creditCardData'
 
 export const useBudgetStore = defineStore('budget', () => {
   // State
-  const monthlyBudget = ref(8500)
+  const budgetMode = ref('personal') // 'personal' | 'business'
   const salary = ref(150000)
   const businessIncome = ref(50000)
   const shortTermInvestmentIncome = ref(0)
   const longTermInvestmentIncome = ref(0)
   const filingStatus = ref('married')
   const state = ref('CA')
-  const expenses = ref({})
+  const personalExpenses = ref({})
+  const businessExpenses = ref({})
   const currentCategory = ref(null)
   const currentSubcategory = ref(null)
+
+  // Writable computed — proxies to active mode's expense data
+  const expenses = computed({
+    get() {
+      return budgetMode.value === 'personal'
+        ? personalExpenses.value
+        : businessExpenses.value
+    },
+    set(val) {
+      if (budgetMode.value === 'personal') {
+        personalExpenses.value = val
+      } else {
+        businessExpenses.value = val
+      }
+    }
+  })
+
+  // Monthly budget derived from active category budgets
+  const monthlyBudget = computed(() => {
+    let total = 0
+    Object.values(expenses.value).forEach(cat => {
+      total += cat.budget
+    })
+    return total
+  })
+
+  // Filtered cards by active mode
+  const filteredCards = computed(() => {
+    return creditCards.filter(c => c.type === budgetMode.value)
+  })
 
   // Getters
   const totalExpenses = computed(() => {
@@ -31,6 +63,7 @@ export const useBudgetStore = defineStore('budget', () => {
   })
 
   const budgetPercentage = computed(() => {
+    if (monthlyBudget.value === 0) return 0
     return (totalExpenses.value / monthlyBudget.value) * 100
   })
 
@@ -92,6 +125,15 @@ export const useBudgetStore = defineStore('budget', () => {
     return (stateTax.value / grossIncome.value) * 100
   })
 
+  // Savings
+  const monthlyNetIncome = computed(() => {
+    return (grossIncome.value - totalTax.value) / 12
+  })
+
+  const monthlySavings = computed(() => {
+    return monthlyNetIncome.value - totalExpenses.value
+  })
+
   const categoryExpenses = computed(() => {
     const result = {}
     Object.keys(expenses.value).forEach(category => {
@@ -139,9 +181,26 @@ export const useBudgetStore = defineStore('budget', () => {
     return result
   })
 
+  // Reclassify — category options for dropdown
+  const categoryOptions = computed(() => {
+    const options = []
+    Object.entries(expenses.value).forEach(([catName, catData]) => {
+      const subs = Object.keys(catData.subcategories)
+      options.push({ category: catName, subcategories: subs })
+    })
+    return options
+  })
+
   // Actions
   function loadExpenses() {
-    expenses.value = generateExpenseData()
+    personalExpenses.value = generateExpenseData()
+    businessExpenses.value = generateBusinessExpenseData()
+  }
+
+  function setBudgetMode(mode) {
+    budgetMode.value = mode
+    currentCategory.value = null
+    currentSubcategory.value = null
   }
 
   function setCurrentCategory(category) {
@@ -173,32 +232,37 @@ export const useBudgetStore = defineStore('budget', () => {
   function updateCategoryBudget(name, amount) {
     if (expenses.value[name]) {
       expenses.value[name].budget = amount
-      // Recalculate total monthly budget from all categories
-      let total = 0
-      Object.values(expenses.value).forEach(cat => {
-        total += cat.budget
-      })
-      monthlyBudget.value = total
     }
   }
 
   function getCategoryTransactions(category, subcategory = null) {
     if (!expenses.value[category]) return []
-    
+
     if (subcategory) {
       return expenses.value[category].subcategories[subcategory] || []
     }
-    
-    // Return all transactions for category
-    const allTransactions = []
+
+    const allTxns = []
     Object.values(expenses.value[category].subcategories).forEach(transactions => {
-      allTransactions.push(...transactions)
+      allTxns.push(...transactions)
     })
-    return allTransactions
+    return allTxns
+  }
+
+  function reclassifyTransaction(fromCategory, fromSub, txIndex, toCategory, toSub) {
+    const source = expenses.value[fromCategory]?.subcategories[fromSub]
+    if (!source || txIndex < 0 || txIndex >= source.length) return
+
+    const target = expenses.value[toCategory]?.subcategories[toSub]
+    if (!target) return
+
+    const [tx] = source.splice(txIndex, 1)
+    target.push(tx)
   }
 
   return {
     // State
+    budgetMode,
     monthlyBudget,
     salary,
     businessIncome,
@@ -207,9 +271,12 @@ export const useBudgetStore = defineStore('budget', () => {
     filingStatus,
     state,
     expenses,
+    personalExpenses,
+    businessExpenses,
     currentCategory,
     currentSubcategory,
     // Getters
+    filteredCards,
     totalExpenses,
     budgetRemaining,
     budgetPercentage,
@@ -224,18 +291,23 @@ export const useBudgetStore = defineStore('budget', () => {
     effectiveRate,
     federalEffectiveRate,
     stateEffectiveRate,
+    monthlyNetIncome,
+    monthlySavings,
     categoryExpenses,
     allTransactions,
     transactionsByCard,
     spendByCardAndCategory,
+    categoryOptions,
     // Actions
     loadExpenses,
+    setBudgetMode,
     setCurrentCategory,
     setCurrentSubcategory,
     resetView,
     updateFilingStatus,
     updateCategoryBudget,
-    getCategoryTransactions
+    getCategoryTransactions,
+    reclassifyTransaction
   }
 })
 

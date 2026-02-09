@@ -65,45 +65,80 @@ const budgetStore = useBudgetStore()
 
 // Reward rates per card per category (points per dollar, simplified to cash-back equivalent)
 const CARD_REWARDS = {
+  // Personal cards
   'Amex Gold': {
-    'Dining & Food': { rate: 4, type: 'pts' },
-    'Shopping': { rate: 1, type: 'pts' },
-    'Travel': { rate: 3, type: 'pts' },
-    'Transportation': { rate: 1, type: 'pts' },
-    'Entertainment': { rate: 1, type: 'pts' },
-    'Bills & Utilities': { rate: 1, type: 'pts' },
+    type: 'personal',
+    categories: {
+      'Dining & Food': { rate: 4, type: 'pts' },
+      'Shopping': { rate: 1, type: 'pts' },
+      'Travel': { rate: 3, type: 'pts' },
+      'Transportation': { rate: 1, type: 'pts' },
+      'Entertainment': { rate: 1, type: 'pts' },
+      'Bills & Utilities': { rate: 1, type: 'pts' },
+    }
   },
   'Chase Sapphire': {
-    'Dining & Food': { rate: 3, type: 'pts' },
-    'Travel': { rate: 5, type: 'pts' },
-    'Transportation': { rate: 3, type: 'pts' },
-    'Shopping': { rate: 1, type: 'pts' },
-    'Entertainment': { rate: 1, type: 'pts' },
-    'Bills & Utilities': { rate: 1, type: 'pts' },
+    type: 'personal',
+    categories: {
+      'Dining & Food': { rate: 3, type: 'pts' },
+      'Travel': { rate: 5, type: 'pts' },
+      'Transportation': { rate: 3, type: 'pts' },
+      'Shopping': { rate: 1, type: 'pts' },
+      'Entertainment': { rate: 1, type: 'pts' },
+      'Bills & Utilities': { rate: 1, type: 'pts' },
+    }
   },
   'Capital One Savor': {
-    'Dining & Food': { rate: 4, type: '%' },
-    'Entertainment': { rate: 4, type: '%' },
-    'Shopping': { rate: 1, type: '%' },
-    'Travel': { rate: 1, type: '%' },
-    'Transportation': { rate: 1, type: '%' },
-    'Bills & Utilities': { rate: 1, type: '%' },
+    type: 'personal',
+    categories: {
+      'Dining & Food': { rate: 4, type: '%' },
+      'Entertainment': { rate: 4, type: '%' },
+      'Shopping': { rate: 1, type: '%' },
+      'Travel': { rate: 1, type: '%' },
+      'Transportation': { rate: 1, type: '%' },
+      'Bills & Utilities': { rate: 1, type: '%' },
+    }
   },
   'Citi Double': {
-    'Dining & Food': { rate: 2, type: '%' },
-    'Shopping': { rate: 2, type: '%' },
-    'Travel': { rate: 2, type: '%' },
-    'Transportation': { rate: 2, type: '%' },
-    'Entertainment': { rate: 2, type: '%' },
-    'Bills & Utilities': { rate: 2, type: '%' },
+    type: 'personal',
+    categories: {
+      'Dining & Food': { rate: 2, type: '%' },
+      'Shopping': { rate: 2, type: '%' },
+      'Travel': { rate: 2, type: '%' },
+      'Transportation': { rate: 2, type: '%' },
+      'Entertainment': { rate: 2, type: '%' },
+      'Bills & Utilities': { rate: 2, type: '%' },
+    }
   },
   'Apple Card': {
-    'Shopping': { rate: 3, type: '%' },
-    'Dining & Food': { rate: 2, type: '%' },
-    'Travel': { rate: 1, type: '%' },
-    'Transportation': { rate: 1, type: '%' },
-    'Entertainment': { rate: 1, type: '%' },
-    'Bills & Utilities': { rate: 1, type: '%' },
+    type: 'personal',
+    categories: {
+      'Shopping': { rate: 3, type: '%' },
+      'Dining & Food': { rate: 2, type: '%' },
+      'Travel': { rate: 1, type: '%' },
+      'Transportation': { rate: 1, type: '%' },
+      'Entertainment': { rate: 1, type: '%' },
+      'Bills & Utilities': { rate: 1, type: '%' },
+    }
+  },
+  // Business cards
+  'Amex Business Gold': {
+    type: 'business',
+    categories: {
+      'Office & Software': { rate: 4, type: 'pts' },
+      'Travel': { rate: 3, type: 'pts' },
+      'Meals & Entertainment': { rate: 3, type: 'pts' },
+      'Internet & Phone': { rate: 1, type: 'pts' },
+    }
+  },
+  'Chase Ink Business': {
+    type: 'business',
+    categories: {
+      'Office & Software': { rate: 5, type: 'pts' },
+      'Internet & Phone': { rate: 5, type: 'pts' },
+      'Travel': { rate: 1, type: 'pts' },
+      'Meals & Entertainment': { rate: 1, type: 'pts' },
+    }
   },
 }
 
@@ -114,10 +149,25 @@ const CATEGORY_ICONS = {
   'Entertainment': '🎬',
   'Travel': '✈️',
   'Bills & Utilities': '💡',
+  'Office & Software': '💻',
+  'Meals & Entertainment': '🍽️',
+  'Internet & Phone': '📡',
 }
 
+// Only cards matching the active budget mode
+const activeCards = computed(() => {
+  const mode = budgetStore.budgetMode
+  const filtered = {}
+  for (const [card, data] of Object.entries(CARD_REWARDS)) {
+    if (data.type === mode) {
+      filtered[card] = data.categories
+    }
+  }
+  return filtered
+})
+
 function getRewardValue(card, category, spend) {
-  const reward = CARD_REWARDS[card]?.[category]
+  const reward = activeCards.value[card]?.[category]
   if (!reward) return 0
   // Assume 1 point ≈ $0.01 for simplicity
   return (reward.rate / 100) * spend
@@ -147,12 +197,12 @@ const optimizations = computed(() => {
     const currentCard = Object.entries(cardSpend)
       .sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown'
 
-    // Find the best card for this category
+    // Find the best card for this category (only from active mode's cards)
     let bestCard = currentCard
     let bestRate = 0
     let bestRewardType = '%'
 
-    for (const [card, categories] of Object.entries(CARD_REWARDS)) {
+    for (const [card, categories] of Object.entries(activeCards.value)) {
       const reward = categories[category]
       if (reward && reward.rate > bestRate) {
         bestRate = reward.rate
