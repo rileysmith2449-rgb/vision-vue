@@ -15,7 +15,7 @@
     </div>
 
     <div class="hero-grid">
-      <div class="hero-stat">
+      <router-link to="/tax/long-term" class="hero-stat clickable">
         <div class="stat-icon-wrap green">
           <TrendingUp :size="16" stroke-width="2" />
         </div>
@@ -23,8 +23,8 @@
           <span class="stat-label">Long-term Gains</span>
           <span class="stat-value positive">{{ formatCurrency(portfolioStore.longTermGains) }}</span>
         </div>
-      </div>
-      <div class="hero-stat">
+      </router-link>
+      <router-link to="/tax/short-term" class="hero-stat clickable">
         <div class="stat-icon-wrap blue">
           <Clock :size="16" stroke-width="2" />
         </div>
@@ -32,8 +32,8 @@
           <span class="stat-label">Short-term Gains</span>
           <span class="stat-value">{{ formatCurrency(portfolioStore.shortTermGains) }}</span>
         </div>
-      </div>
-      <div class="hero-stat">
+      </router-link>
+      <router-link to="/tax/tax-impact" class="hero-stat clickable">
         <div class="stat-icon-wrap red">
           <Receipt :size="16" stroke-width="2" />
         </div>
@@ -41,8 +41,8 @@
           <span class="stat-label">Est. Tax Impact</span>
           <span class="stat-value negative">{{ formatCurrency(portfolioStore.estimatedTaxImpact) }}</span>
         </div>
-      </div>
-      <div class="hero-stat">
+      </router-link>
+      <router-link to="/tax/harvestable" class="hero-stat clickable">
         <div class="stat-icon-wrap purple">
           <Scissors :size="16" stroke-width="2" />
         </div>
@@ -50,7 +50,7 @@
           <span class="stat-label">Harvestable</span>
           <span class="stat-value">{{ formatCompactNumber(portfolioStore.harvestableAmount) }}</span>
         </div>
-      </div>
+      </router-link>
     </div>
   </div>
 </template>
@@ -143,6 +143,19 @@ const gainPercent = computed(() => {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  text-decoration: none;
+}
+
+.hero-stat.clickable {
+  padding: 10px;
+  margin: -10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.hero-stat.clickable:hover {
+  background: var(--bg-subtle);
 }
 
 .stat-icon-wrap {

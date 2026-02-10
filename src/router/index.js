@@ -36,6 +36,12 @@ const router = createRouter({
       meta: { title: 'Budget & Cashflow' }
     },
     {
+      path: '/tax/:type',
+      name: 'tax-detail',
+      component: () => import('@/views/TaxDetailView.vue'),
+      meta: { title: 'Tax Detail' }
+    },
+    {
       path: '/insights',
       name: 'insights',
       component: () => import('@/views/InsightsView.vue'),
