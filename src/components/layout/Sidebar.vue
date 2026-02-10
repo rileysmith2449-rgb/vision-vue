@@ -2,9 +2,16 @@
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-mark">
-        <Eye :size="22" stroke-width="2.5" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="28" height="28">
+          <g transform="translate(50,50)">
+            <circle cx="0" cy="0" r="28" fill="none" stroke="currentColor" stroke-width="4"/>
+            <ellipse cx="0" cy="0" rx="42" ry="17" fill="none" stroke="currentColor" stroke-width="2.5" transform="rotate(-20)"/>
+            <circle cx="40" cy="-16" r="5" fill="currentColor"/>
+          </g>
+        </svg>
       </div>
-      <span class="brand-text">Vision</span>
+      <span class="brand-divider"></span>
+      <span class="brand-text">VISION</span>
     </div>
 
     <nav class="sidebar-nav">
@@ -34,7 +41,6 @@
 import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import {
-  Eye,
   LayoutDashboard,
   Scale,
   PieChart,
@@ -91,17 +97,22 @@ function isActive(link) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-pop);
-  border-radius: 10px;
-  color: #0f172a;
+  color: var(--text-primary);
+}
+
+.brand-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--text-primary);
+  opacity: 0.25;
 }
 
 .brand-text {
   font-family: 'Lexend', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 400;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: 0.25em;
 }
 
 .brand-accent {
