@@ -3,7 +3,7 @@
     <Sidebar v-if="!isMobile" />
     <div class="top-bar">
       <div class="top-bar-brand">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="24" height="24">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
           <g transform="translate(50,50)">
             <circle cx="0" cy="0" r="28" fill="none" stroke="currentColor" stroke-width="4"/>
             <ellipse cx="0" cy="0" rx="42" ry="17" fill="none" stroke="currentColor" stroke-width="2.5" transform="rotate(-20)"/>
@@ -73,14 +73,14 @@ onUnmounted(() => {
 
 .top-bar-divider {
   width: 1px;
-  height: 20px;
+  height: 28px;
   background: var(--text-primary);
   opacity: 0.25;
 }
 
 .top-bar-text {
   font-family: 'Lexend', sans-serif;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 400;
   letter-spacing: 0.25em;
   color: var(--text-primary);
