@@ -82,7 +82,7 @@ vision-vue/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vision-vue.git
+git clone https://github.com/rileysmith2449-rgb/vision-vue.git
 cd vision-vue
 
 # Install dependencies
@@ -276,6 +276,9 @@ npm run build
 ```
 
 Output in `dist/` folder.
+
+### Live Demo
+**https://vision-vue-fawn.vercel.app**
 
 ### Deploy to Vercel/Netlify
 ```bash
