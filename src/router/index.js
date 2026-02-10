@@ -42,6 +42,12 @@ const router = createRouter({
       meta: { title: 'Tax Detail' }
     },
     {
+      path: '/holding/:symbol',
+      name: 'holding-detail',
+      component: () => import('@/views/HoldingDetailView.vue'),
+      meta: { title: 'Holding Detail' }
+    },
+    {
       path: '/insights',
       name: 'insights',
       component: () => import('@/views/InsightsView.vue'),

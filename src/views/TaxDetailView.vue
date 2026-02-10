@@ -1,6 +1,10 @@
 <template>
   <div class="tax-detail">
-    <Header :title="pageTitle" :subtitle="pageSubtitle" />
+    <Header :title="pageTitle" :subtitle="pageSubtitle">
+      <template #actions>
+        <button class="back-btn" @click="router.back()">Back</button>
+      </template>
+    </Header>
 
     <div class="summary-card">
       <div class="summary-value" :class="valueClass">{{ formatCurrency(summaryAmount) }}</div>
@@ -25,7 +29,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="holding in filteredHoldings" :key="holding.id">
+            <tr v-for="holding in filteredHoldings" :key="holding.id" class="row-clickable" @click="router.push(`/holding/${encodeURIComponent(holding.symbol)}`)">
               <td class="cell-symbol">{{ holding.symbol }}</td>
               <td class="cell-muted">{{ holding.category }}</td>
               <td class="cell-value">{{ formatCurrency(holding.currentValue) }}</td>
@@ -46,7 +50,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency } from '@/utils/formatters'
 import { calculateTaxTreatment, daysUntilLongTerm } from '@/utils/taxCalculations'
@@ -54,6 +58,7 @@ import Header from '@/components/layout/Header.vue'
 import Badge from '@/components/common/Badge.vue'
 
 const route = useRoute()
+const router = useRouter()
 const portfolioStore = usePortfolioStore()
 
 const detailType = computed(() => route.params.type)
@@ -252,12 +257,29 @@ function taxLabel(holding) {
 
 .detail-table tbody tr:hover { background: var(--bg-subtle); }
 .detail-table tbody tr:last-child td { border-bottom: none; }
+.row-clickable { cursor: pointer; }
 
 .cell-symbol { font-weight: 700; }
 .cell-value { font-weight: 600; }
 .cell-muted { color: var(--text-secondary); }
 .cell-gain { color: var(--electric-teal); font-weight: 600; }
 .cell-loss { color: var(--persimmon); font-weight: 600; }
+
+.back-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.back-btn:hover {
+  background: var(--bg-subtle);
+}
 
 @media (max-width: 1024px) {
   .summary-value { font-size: 1.8rem; }

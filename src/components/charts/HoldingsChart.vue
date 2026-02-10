@@ -8,6 +8,7 @@
 
 <script setup>
 import { computed, ref, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip } from 'chart.js'
 import { usePortfolioStore } from '@/stores/portfolio'
@@ -17,6 +18,7 @@ import Card from '@/components/common/Card.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
 
+const router = useRouter()
 const portfolioStore = usePortfolioStore()
 const themeStore = useThemeStore()
 
@@ -62,6 +64,13 @@ const chartOptions = computed(() => ({
   indexAxis: 'y',
   responsive: true,
   maintainAspectRatio: false,
+  onClick: (event, elements) => {
+    if (elements.length > 0) {
+      const index = elements[0].index
+      const symbol = topHoldings.value[index].symbol
+      router.push(`/holding/${encodeURIComponent(symbol)}`)
+    }
+  },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -103,5 +112,6 @@ const chartOptions = computed(() => ({
 .chart-container {
   position: relative;
   height: 350px;
+  cursor: pointer;
 }
 </style>
