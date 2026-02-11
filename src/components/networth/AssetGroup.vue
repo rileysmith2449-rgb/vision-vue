@@ -15,10 +15,11 @@
     </div>
 
     <div v-if="expanded" class="group-details">
-      <router-link
+      <component
         v-for="h in holdings"
         :key="h.id"
-        :to="'/net-worth/' + encodeURIComponent(category)"
+        :is="holdingLink(h) ? 'router-link' : 'div'"
+        :to="holdingLink(h)"
         class="holding-row"
       >
         <div class="holding-info">
@@ -32,7 +33,7 @@
             :class="{ positive: h.currentValue >= h.costBasis, negative: h.currentValue < h.costBasis }"
           >{{ h.type === 'cash' ? '' : formatGain(h) }}</span>
         </div>
-      </router-link>
+      </component>
     </div>
   </div>
 </template>
@@ -41,6 +42,7 @@
 import { ref } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import { formatCurrency } from '@/utils/formatters'
+import { usePortfolioStore } from '@/stores/portfolio'
 
 defineProps({
   category: { type: String, required: true },
@@ -48,6 +50,17 @@ defineProps({
   total: { type: Number, required: true },
   icon: { type: String, default: '📊' }
 })
+
+const portfolioStore = usePortfolioStore()
+
+function holdingLink(h) {
+  if (h.type === 'cash') return null
+  if (h.type === 'realestate') {
+    const prop = portfolioStore.propertyValues.find(p => p.name === h.symbol)
+    return prop ? `/property/${prop.id}` : `/net-worth/${encodeURIComponent(h.category)}`
+  }
+  return `/holding/${encodeURIComponent(h.symbol)}`
+}
 
 const expanded = ref(false)
 

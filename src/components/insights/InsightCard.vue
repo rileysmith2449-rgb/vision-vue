@@ -17,15 +17,22 @@
       </div>
     </div>
 
-    <div v-if="details && expanded" class="insight-details">
+    <div v-if="details && expanded" class="insight-details" @click.stop>
       <p v-if="details.summary" class="details-summary">{{ details.summary }}</p>
       <div v-if="details.columns && details.rows?.length" class="details-table">
         <div class="details-header">
           <span v-for="col in details.columns" :key="col" class="details-cell">{{ col }}</span>
         </div>
-        <div v-for="(row, i) in details.rows" :key="i" class="details-row">
-          <span v-for="(cell, j) in row" :key="j" class="details-cell">{{ cell }}</span>
-        </div>
+        <component
+          :is="row.link ? 'router-link' : 'div'"
+          v-for="(row, i) in details.rows"
+          :key="i"
+          :to="row.link || undefined"
+          :class="['details-row', { 'details-row-link': row.link }]"
+        >
+          <span v-for="(cell, j) in row.cells" :key="j" class="details-cell">{{ cell }}</span>
+          <ArrowRight v-if="row.link" :size="14" stroke-width="2" class="row-link-icon" />
+        </component>
       </div>
     </div>
   </div>
@@ -33,7 +40,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { DollarSign, AlertTriangle, Info, ChevronDown } from 'lucide-vue-next'
+import { DollarSign, AlertTriangle, Info, ChevronDown, ArrowRight } from 'lucide-vue-next'
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -195,12 +202,35 @@ const typeIcon = computed(() => {
 .details-row {
   display: flex;
   gap: 8px;
-  padding: 8px 0;
+  padding: 8px 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
 }
 
 .details-row:last-child {
   border-bottom: none;
+}
+
+.details-row-link {
+  cursor: pointer;
+}
+
+.details-row-link:hover {
+  background: var(--bg-subtle);
+}
+
+.row-link-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  align-self: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.details-row-link:hover .row-link-icon {
+  opacity: 1;
 }
 
 .details-cell {

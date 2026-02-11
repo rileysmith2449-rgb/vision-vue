@@ -6,7 +6,7 @@
     <div class="movers-grid">
       <div class="movers-column">
         <h4 class="column-title column-title--gain">Top Gainers</h4>
-        <div v-for="holding in topGainers" :key="holding.id" class="mover-row">
+        <div v-for="holding in topGainers" :key="holding.id" class="mover-row mover-row--clickable" @click="router.push(`/holding/${encodeURIComponent(holding.symbol)}`)">
           <span class="dot dot--gain"></span>
           <span class="mover-symbol">{{ holding.symbol }}</span>
           <Badge type="gain" :label="formatPercent(gainPct(holding))" />
@@ -18,7 +18,7 @@
       <div class="movers-column">
         <h4 class="column-title column-title--loss">Top Losers</h4>
         <template v-if="topLosers.length">
-          <div v-for="holding in topLosers" :key="holding.id" class="mover-row">
+          <div v-for="holding in topLosers" :key="holding.id" class="mover-row mover-row--clickable" @click="router.push(`/holding/${encodeURIComponent(holding.symbol)}`)">
             <span class="dot dot--loss"></span>
             <span class="mover-symbol">{{ holding.symbol }}</span>
             <Badge type="loss" :label="formatPercent(gainPct(holding))" />
@@ -35,10 +35,12 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency, formatPercent } from '@/utils/formatters'
 import Badge from '@/components/common/Badge.vue'
 
+const router = useRouter()
 const portfolioStore = usePortfolioStore()
 
 function gainPct(holding) {
@@ -119,6 +121,16 @@ const topLosers = computed(() =>
 
 .mover-row:last-child {
   border-bottom: none;
+}
+
+.mover-row--clickable {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.mover-row--clickable:hover {
+  background: var(--bg-subtle);
 }
 
 .dot {

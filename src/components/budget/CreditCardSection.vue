@@ -1,7 +1,21 @@
 <template>
   <section v-if="cardsWithSpend.length" class="credit-cards-section">
-    <h2 class="section-title">Credit Cards</h2>
-    <p class="section-subtitle">Cashback earned and card value analysis</p>
+    <div class="section-header-row">
+      <div>
+        <h2 class="section-title">Credit Cards</h2>
+        <p class="section-subtitle">Cashback earned and card value analysis</p>
+      </div>
+      <div class="overall-optimal">
+        <span class="overall-optimal-label">Overall Optimal</span>
+        <div class="overall-optimal-bar">
+          <div class="overall-optimal-fill" :style="{ width: totalOptimalPercent + '%' }" />
+        </div>
+        <span
+          class="overall-optimal-value"
+          :class="totalOptimalPercent >= 70 ? 'gain' : totalOptimalPercent >= 40 ? '' : 'loss'"
+        >{{ totalOptimalPercent.toFixed(0) }}%</span>
+      </div>
+    </div>
     <div class="cards-grid">
       <CreditCardItem
         v-for="item in cardsWithSpend"
@@ -16,9 +30,25 @@
 <script setup>
 import { computed } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
+import { getBestCardForCategory } from '@/utils/creditCardData'
 import CreditCardItem from './CreditCardItem.vue'
 
 const budgetStore = useBudgetStore()
+
+const totalOptimalPercent = computed(() => {
+  const txns = budgetStore.allTransactions
+  if (!txns || txns.length === 0) return 100
+  let optimalAmount = 0
+  let totalAmount = 0
+  for (const txn of txns) {
+    totalAmount += txn.amount
+    const best = getBestCardForCategory(txn.category, budgetStore.budgetMode)
+    if (txn.card === best.cardName) {
+      optimalAmount += txn.amount
+    }
+  }
+  return totalAmount > 0 ? (optimalAmount / totalAmount) * 100 : 100
+})
 
 const cardsWithSpend = computed(() => {
   const spendData = budgetStore.spendByCardAndCategory
@@ -77,6 +107,14 @@ const cardsWithSpend = computed(() => {
   margin-top: 40px;
 }
 
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
 .section-title {
   font-size: 1.2rem;
   font-weight: 700;
@@ -88,7 +126,57 @@ const cardsWithSpend = computed(() => {
   font-size: 0.82rem;
   color: var(--text-secondary);
   margin-top: 2px;
-  margin-bottom: 20px;
+}
+
+.overall-optimal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.overall-optimal-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.overall-optimal-bar {
+  width: 80px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.overall-optimal-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--electric-teal);
+  transition: width 0.3s ease;
+}
+
+.overall-optimal-value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 36px;
+  text-align: right;
+}
+
+.overall-optimal-value.gain {
+  color: var(--electric-teal);
+}
+
+.overall-optimal-value.loss {
+  color: var(--persimmon);
 }
 
 .cards-grid {
@@ -100,6 +188,11 @@ const cardsWithSpend = computed(() => {
 @media (max-width: 1024px) {
   .cards-grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-header-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

@@ -21,7 +21,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="holding in sortedHoldings" :key="holding.id">
+          <tr v-for="holding in sortedHoldings" :key="holding.id" class="row-clickable" @click="router.push(`/holding/${encodeURIComponent(holding.symbol)}`)">
             <td class="cell-symbol">{{ holding.symbol }}</td>
             <td class="cell-category">{{ holding.category }}</td>
             <td class="cell-value">{{ formatCurrency(holding.currentValue) }}</td>
@@ -50,11 +50,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency, formatPercent } from '@/utils/formatters'
 import { calculateTaxTreatment, daysUntilLongTerm } from '@/utils/taxCalculations'
 import Badge from '@/components/common/Badge.vue'
 
+const router = useRouter()
 const portfolioStore = usePortfolioStore()
 
 const columns = [
@@ -212,6 +214,10 @@ function taxLabel(holding) {
 
 .holdings-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.row-clickable {
+  cursor: pointer;
 }
 
 .cell-symbol {

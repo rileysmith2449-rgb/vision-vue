@@ -1,3 +1,18 @@
+export function getBestCardForCategory(category, budgetMode = 'personal') {
+  const type = budgetMode === 'family' ? 'personal' : budgetMode
+  const eligible = creditCards.filter(c => c.type === type)
+  let bestCard = null
+  let bestRate = 0
+  for (const card of eligible) {
+    const rate = card.cashbackRates[category] || card.cashbackRates.default || 0
+    if (rate > bestRate) {
+      bestRate = rate
+      bestCard = card.name
+    }
+  }
+  return { cardName: bestCard, rate: bestRate }
+}
+
 export const creditCards = [
   {
     name: 'Amex Gold',

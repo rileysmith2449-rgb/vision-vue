@@ -48,6 +48,18 @@ const router = createRouter({
       meta: { title: 'Holding Detail' }
     },
     {
+      path: '/property/:id',
+      name: 'property-detail',
+      component: () => import('@/views/PropertyDetailView.vue'),
+      meta: { title: 'Property Detail' }
+    },
+    {
+      path: '/liability/:id',
+      name: 'liability-detail',
+      component: () => import('@/views/LiabilityDetailView.vue'),
+      meta: { title: 'Liability Detail' }
+    },
+    {
       path: '/insights',
       name: 'insights',
       component: () => import('@/views/InsightsView.vue'),

@@ -45,7 +45,7 @@
       <div v-if="portfolioStore.propertyValues.length > 0" class="section">
         <h3 class="section-title">Property Values</h3>
         <div class="property-list">
-          <div v-for="prop in portfolioStore.propertyValues" :key="prop.id" class="property-card">
+          <div v-for="prop in portfolioStore.propertyValues" :key="prop.id" class="property-card clickable" @click="router.push(`/property/${prop.id}`)">
             <div class="property-info">
               <span class="property-name">{{ prop.name }}</span>
               <span class="property-address">{{ prop.address }}</span>
@@ -88,6 +88,7 @@
 
 <script setup>
 import { onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency } from '@/utils/formatters'
 import Header from '@/components/layout/Header.vue'
@@ -95,6 +96,7 @@ import NetWorthChart from '@/components/networth/NetWorthChart.vue'
 import AssetGroup from '@/components/networth/AssetGroup.vue'
 import LiabilityGroup from '@/components/networth/LiabilityGroup.vue'
 
+const router = useRouter()
 const portfolioStore = usePortfolioStore()
 
 const categoryIcons = {
@@ -228,6 +230,16 @@ onMounted(() => {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
+}
+
+.property-card.clickable {
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.property-card.clickable:hover {
+  border-color: rgba(100, 149, 237, 0.3);
+  background: var(--bg-subtle);
 }
 
 .property-info {

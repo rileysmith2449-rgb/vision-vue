@@ -15,7 +15,7 @@
     </div>
 
     <div v-if="expanded" class="group-details">
-      <div v-for="item in items" :key="item.id" class="liability-row">
+      <router-link v-for="item in items" :key="item.id" :to="`/liability/${item.id}`" class="liability-row">
         <div class="liability-info">
           <span class="liability-name">{{ item.name }}</span>
           <span class="liability-meta">{{ item.interestRate }}% APR &middot; {{ formatCurrency(item.monthlyPayment) }}/mo</span>
@@ -23,7 +23,7 @@
         <div class="liability-right">
           <span class="liability-balance">{{ formatCurrency(item.balance) }}</span>
         </div>
-      </div>
+      </router-link>
     </div>
   </div>
 </template>
@@ -135,6 +135,8 @@ const expanded = ref(false)
   align-items: center;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
+  text-decoration: none;
+  cursor: pointer;
   transition: background 0.15s ease;
 }
 

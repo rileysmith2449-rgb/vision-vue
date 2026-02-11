@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { generateExpenseData, generateBusinessExpenseData, generateFamilyExpenseData } from '@/utils/demoData'
+import { generateExpenseData, generateBusinessExpenseData, generateFamilyExpenseData, generateHistoricalTransactions } from '@/utils/demoData'
 import { creditCards } from '@/utils/creditCardData'
 
 export const useBudgetStore = defineStore('budget', () => {
@@ -17,6 +17,7 @@ export const useBudgetStore = defineStore('budget', () => {
   const familyExpenses = ref({})
   const currentCategory = ref(null)
   const currentSubcategory = ref(null)
+  const historicalTransactions = ref([])
 
   // Family mode state
   const familyMembers = ref({
@@ -297,6 +298,12 @@ export const useBudgetStore = defineStore('budget', () => {
     familyExpenses.value = generateFamilyExpenseData()
   }
 
+  function loadHistoricalData() {
+    if (historicalTransactions.value.length === 0) {
+      historicalTransactions.value = generateHistoricalTransactions()
+    }
+  }
+
   function setBudgetMode(mode) {
     budgetMode.value = mode
     currentCategory.value = null
@@ -443,8 +450,10 @@ export const useBudgetStore = defineStore('budget', () => {
     transactionsByCard,
     spendByCardAndCategory,
     categoryOptions,
+    historicalTransactions,
     // Actions
     loadExpenses,
+    loadHistoricalData,
     setBudgetMode,
     setPersonalMember,
     setActiveMember,

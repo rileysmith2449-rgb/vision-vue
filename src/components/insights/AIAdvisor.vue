@@ -5,8 +5,8 @@
         <Sparkles :size="22" stroke-width="2" />
       </div>
       <div>
-        <h3 class="advisor-title">AI Tax Advisor</h3>
-        <p class="advisor-subtitle">Personalized recommendations based on your portfolio</p>
+        <h3 class="advisor-title">AI Vision</h3>
+        <p class="advisor-subtitle">Intelligent insights across your portfolio, budget, and taxes</p>
       </div>
     </div>
 
@@ -58,11 +58,10 @@ const insights = computed(() => {
         columns: ['Symbol', 'Unrealized Loss', 'Potential Savings'],
         rows: portfolioStore.harvestableHoldings.map(h => {
           const loss = Math.abs(h.currentValue - h.costBasis)
-          return [
-            h.symbol,
-            formatCurrency(loss),
-            formatCurrency(loss * 0.32)
-          ]
+          return {
+            cells: [h.symbol, formatCurrency(loss), formatCurrency(loss * 0.32)],
+            link: `/holding/${encodeURIComponent(h.symbol)}`
+          }
         })
       }
     })
@@ -82,11 +81,10 @@ const insights = computed(() => {
       details: {
         summary: 'Holdings approaching long-term capital gains eligibility',
         columns: ['Symbol', 'Days Remaining', 'Purchase Date'],
-        rows: nearLongTerm.map(h => [
-          h.symbol,
-          `${daysUntilLongTerm(h.purchaseDate)} days`,
-          formatDate(h.purchaseDate)
-        ])
+        rows: nearLongTerm.map(h => ({
+          cells: [h.symbol, `${daysUntilLongTerm(h.purchaseDate)} days`, formatDate(h.purchaseDate)],
+          link: `/holding/${encodeURIComponent(h.symbol)}`
+        }))
       }
     })
   }
@@ -102,12 +100,9 @@ const insights = computed(() => {
       details: {
         summary: `${overBudgetCategories.length} categor${overBudgetCategories.length === 1 ? 'y' : 'ies'} over budget`,
         columns: ['Category', 'Spent', 'Budget', 'Over By'],
-        rows: overBudgetCategories.map(([name, data]) => [
-          name,
-          formatCurrency(data.total),
-          formatCurrency(data.budget),
-          formatCurrency(data.total - data.budget)
-        ])
+        rows: overBudgetCategories.map(([name, data]) => ({
+          cells: [name, formatCurrency(data.total), formatCurrency(data.budget), formatCurrency(data.total - data.budget)]
+        }))
       }
     })
   }
@@ -122,10 +117,10 @@ const insights = computed(() => {
         summary: 'Breakdown of your tax liability',
         columns: ['Component', 'Amount', 'Effective Rate'],
         rows: [
-          ['Gross Income', formatCurrency(budgetStore.grossIncome), '—'],
-          ['Federal Tax', formatCurrency(budgetStore.federalTax), `${budgetStore.grossIncome > 0 ? ((budgetStore.federalTax / budgetStore.grossIncome) * 100).toFixed(1) : 0}%`],
-          ['State Tax', formatCurrency(budgetStore.stateTax), `${budgetStore.grossIncome > 0 ? ((budgetStore.stateTax / budgetStore.grossIncome) * 100).toFixed(1) : 0}%`],
-          ['Total Tax', formatCurrency(budgetStore.totalTax), `${budgetStore.effectiveRate.toFixed(1)}%`]
+          { cells: ['Gross Income', formatCurrency(budgetStore.grossIncome), '—'] },
+          { cells: ['Federal Tax', formatCurrency(budgetStore.federalTax), `${budgetStore.grossIncome > 0 ? ((budgetStore.federalTax / budgetStore.grossIncome) * 100).toFixed(1) : 0}%`], link: '/tax/federal' },
+          { cells: ['State Tax', formatCurrency(budgetStore.stateTax), `${budgetStore.grossIncome > 0 ? ((budgetStore.stateTax / budgetStore.grossIncome) * 100).toFixed(1) : 0}%`], link: '/tax/state' },
+          { cells: ['Total Tax', formatCurrency(budgetStore.totalTax), `${budgetStore.effectiveRate.toFixed(1)}%`] }
         ]
       }
     })
@@ -148,12 +143,10 @@ const insights = computed(() => {
         columns: ['Symbol', 'Gain', 'Tax at 15%', 'Tax at 37%'],
         rows: longTermHoldings.map(h => {
           const gain = h.currentValue - h.costBasis
-          return [
-            h.symbol,
-            formatCurrency(gain),
-            formatCurrency(gain * 0.15),
-            formatCurrency(gain * 0.37)
-          ]
+          return {
+            cells: [h.symbol, formatCurrency(gain), formatCurrency(gain * 0.15), formatCurrency(gain * 0.37)],
+            link: `/holding/${encodeURIComponent(h.symbol)}`
+          }
         })
       }
     })
@@ -169,11 +162,10 @@ const insights = computed(() => {
       details: {
         summary: 'Asset allocation across categories',
         columns: ['Category', 'Holdings', 'Value'],
-        rows: categories.map(cat => [
-          cat,
-          `${portfolioStore.holdingsByCategory[cat].length}`,
-          formatCurrency(portfolioStore.categoryTotals[cat] || 0)
-        ])
+        rows: categories.map(cat => ({
+          cells: [cat, `${portfolioStore.holdingsByCategory[cat].length}`, formatCurrency(portfolioStore.categoryTotals[cat] || 0)],
+          link: `/net-worth/${encodeURIComponent(cat)}`
+        }))
       }
     })
   }

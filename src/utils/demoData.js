@@ -363,6 +363,88 @@ export function generatePropertyValues() {
 }
 
 /**
+ * Generate 12 months of historical transactions for spending analysis.
+ * Based on personal expense patterns with seasonal variance.
+ */
+export function generateHistoricalTransactions() {
+  const now = new Date(2026, 1, 10) // Feb 10, 2026
+  const txns = []
+
+  const templates = [
+    { category: 'Housing & Rent', merchant: 'Avalon Apartments', base: 2450, card: 'Citi Double', recurring: true },
+    { category: 'Housing & Rent', merchant: 'Lemonade Insurance', base: 15, card: 'Citi Double', recurring: true },
+    { category: 'Dining & Food', merchant: 'Chipotle', base: 44, card: 'Amex Gold' },
+    { category: 'Dining & Food', merchant: 'The Cheesecake Factory', base: 125, card: 'Amex Gold' },
+    { category: 'Dining & Food', merchant: 'Starbucks', base: 8.5, card: 'Amex Gold' },
+    { category: 'Dining & Food', merchant: 'Olive Garden', base: 88, card: 'Amex Gold' },
+    { category: 'Dining & Food', merchant: 'Whole Foods', base: 155, card: 'Amex Gold' },
+    { category: 'Dining & Food', merchant: 'Trader Joes', base: 86, card: 'Amex Gold' },
+    { category: 'Dining & Food', merchant: 'Costco', base: 228, card: 'Citi Double' },
+    { category: 'Dining & Food', merchant: 'Blue Bottle', base: 12, card: 'Chase Sapphire' },
+    { category: 'Dining & Food', merchant: 'Philz Coffee', base: 8.5, card: 'Chase Sapphire' },
+    { category: 'Transportation', merchant: 'Shell Gas Station', base: 64, card: 'Citi Double' },
+    { category: 'Transportation', merchant: 'Chevron', base: 57, card: 'Citi Double' },
+    { category: 'Transportation', merchant: 'Uber', base: 23, card: 'Chase Sapphire' },
+    { category: 'Transportation', merchant: 'Lyft', base: 18, card: 'Chase Sapphire' },
+    { category: 'Transportation', merchant: 'SpotHero', base: 15, card: 'Chase Sapphire' },
+    { category: 'Shopping', merchant: 'Nike', base: 142, card: 'Apple Card', skip: 0.4 },
+    { category: 'Shopping', merchant: 'Zara', base: 88, card: 'Citi Double', skip: 0.5 },
+    { category: 'Shopping', merchant: 'Amazon.com', base: 65, card: 'Apple Card' },
+    { category: 'Shopping', merchant: 'Amazon.com', base: 130, card: 'Apple Card' },
+    { category: 'Entertainment', merchant: 'Netflix', base: 15.99, card: 'Capital One Savor', recurring: true },
+    { category: 'Entertainment', merchant: 'Spotify', base: 10.99, card: 'Capital One Savor', recurring: true },
+    { category: 'Entertainment', merchant: 'Disney+', base: 7.99, card: 'Citi Double', recurring: true },
+    { category: 'Entertainment', merchant: 'AMC Theaters', base: 44, card: 'Capital One Savor', skip: 0.3 },
+    { category: 'Travel', merchant: 'Marriott', base: 285, card: 'Chase Sapphire', skip: 0.4 },
+    { category: 'Travel', merchant: 'United Airlines', base: 450, card: 'Chase Sapphire', skip: 0.5 },
+    { category: 'Bills & Utilities', merchant: 'Comcast', base: 89.99, card: 'Citi Double', recurring: true },
+    { category: 'Bills & Utilities', merchant: 'PG&E', base: 144, card: 'Citi Double', recurring: true },
+    { category: 'Bills & Utilities', merchant: 'Verizon', base: 75, card: 'Citi Double', recurring: true },
+  ]
+
+  // Seasonal multipliers by month index (0=Jan ... 11=Dec)
+  const seasonal = {
+    'Dining & Food':  [0.90, 0.88, 0.95, 1.00, 1.05, 1.10, 1.12, 1.08, 1.00, 0.95, 1.10, 1.25],
+    'Shopping':       [0.70, 0.65, 0.80, 0.85, 0.90, 0.95, 0.85, 0.90, 1.00, 1.05, 1.50, 1.80],
+    'Travel':         [0.50, 0.45, 0.70, 0.80, 1.00, 1.40, 1.70, 1.50, 1.00, 0.70, 0.50, 0.80],
+    'Entertainment':  [1.00, 1.00, 1.00, 1.05, 1.05, 1.15, 1.20, 1.15, 1.00, 1.00, 1.05, 1.10],
+    'Transportation': [1.00, 1.00, 1.00, 1.05, 1.10, 1.15, 1.20, 1.15, 1.05, 1.00, 1.00, 1.00],
+  }
+
+  // Use a seeded-like approach with deterministic pseudo-random for consistency
+  let seed = 42
+  function rand() {
+    seed = (seed * 16807 + 0) % 2147483647
+    return seed / 2147483647
+  }
+
+  for (let m = 0; m < 12; m++) {
+    const target = new Date(now.getFullYear(), now.getMonth() - m, 1)
+    const year = target.getFullYear()
+    const month = target.getMonth()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+    for (const t of templates) {
+      if (m > 0 && t.skip && rand() < t.skip) continue
+      const sFactor = seasonal[t.category]?.[month] ?? 1.0
+      const variance = t.recurring ? 1.0 : (0.82 + rand() * 0.36)
+      const amount = +(t.base * variance * sFactor).toFixed(2)
+      const day = t.recurring ? 1 : Math.min(Math.floor(rand() * 27) + 1, daysInMonth)
+
+      txns.push({
+        merchant: t.merchant,
+        amount,
+        date: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        card: t.card,
+        category: t.category,
+      })
+    }
+  }
+
+  return txns.sort((a, b) => new Date(b.date) - new Date(a.date))
+}
+
+/**
  * Generate business expense data
  */
 export function generateBusinessExpenseData() {

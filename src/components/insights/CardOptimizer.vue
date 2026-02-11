@@ -10,83 +10,6 @@
           <p class="optimizer-subtitle">Use the right card for each category to maximize rewards</p>
         </div>
       </div>
-      <div class="mode-toggle">
-        <button
-          class="toggle-btn"
-          :class="{ active: budgetStore.budgetMode === 'personal' }"
-          @click="budgetStore.setBudgetMode('personal')"
-        >
-          <User :size="14" stroke-width="2" />
-          Personal
-        </button>
-        <button
-          class="toggle-btn"
-          :class="{ active: budgetStore.budgetMode === 'family' }"
-          @click="budgetStore.setBudgetMode('family')"
-        >
-          <Users :size="14" stroke-width="2" />
-          Family
-        </button>
-        <button
-          class="toggle-btn"
-          :class="{ active: budgetStore.budgetMode === 'business' }"
-          @click="budgetStore.setBudgetMode('business')"
-        >
-          <Briefcase :size="14" stroke-width="2" />
-          Business
-        </button>
-      </div>
-    </div>
-
-    <!-- Family mode: filter by owner -->
-    <div v-if="budgetStore.budgetMode === 'family'" class="member-filter">
-      <button
-        class="member-btn"
-        :class="{ active: budgetStore.activeMember === 'all' }"
-        @click="budgetStore.setActiveMember('all')"
-      >
-        All
-      </button>
-      <button
-        class="member-btn owner-mine"
-        :class="{ active: budgetStore.activeMember === 'mine' }"
-        @click="budgetStore.setActiveMember('mine')"
-      >
-        {{ budgetStore.familyMembers.mine.name }}
-      </button>
-      <button
-        class="member-btn owner-yours"
-        :class="{ active: budgetStore.activeMember === 'yours' }"
-        @click="budgetStore.setActiveMember('yours')"
-      >
-        {{ budgetStore.familyMembers.yours.name }}
-      </button>
-      <button
-        class="member-btn owner-ours"
-        :class="{ active: budgetStore.activeMember === 'ours' }"
-        @click="budgetStore.setActiveMember('ours')"
-      >
-        Ours
-      </button>
-    </div>
-
-    <!-- Personal/Business mode: select which person -->
-    <div v-if="budgetStore.budgetMode === 'personal' || budgetStore.budgetMode === 'business'" class="member-filter">
-      <span class="person-label">Filing as</span>
-      <button
-        class="member-btn owner-mine"
-        :class="{ active: budgetStore.personalMember === 'mine' }"
-        @click="budgetStore.setPersonalMember('mine')"
-      >
-        {{ budgetStore.familyMembers.mine.name }}
-      </button>
-      <button
-        class="member-btn owner-yours"
-        :class="{ active: budgetStore.personalMember === 'yours' }"
-        @click="budgetStore.setPersonalMember('yours')"
-      >
-        {{ budgetStore.familyMembers.yours.name }}
-      </button>
     </div>
 
     <div v-if="optimizations.length === 0" class="empty-state">
@@ -97,32 +20,63 @@
       <div
         v-for="opt in optimizations"
         :key="opt.category"
-        class="optimization-row"
+        :class="['optimization-item', { expanded: expandedCategory === opt.category }]"
       >
-        <div class="category-info">
-          <span class="category-icon">{{ opt.icon }}</span>
-          <div class="category-details">
-            <span class="category-name">{{ opt.category }}</span>
-            <span class="category-spend">{{ formatCurrency(opt.totalSpend) }} spent</span>
+        <div class="optimization-row" @click="toggleCategory(opt.category)">
+          <div class="category-info">
+            <span class="category-icon">{{ opt.icon }}</span>
+            <div class="category-details">
+              <span class="category-name">{{ opt.category }}</span>
+              <span class="category-spend">{{ formatCurrency(opt.totalSpend) }} spent</span>
+            </div>
+          </div>
+
+          <div class="card-recommendation">
+            <div v-if="opt.currentCard !== opt.bestCard" class="switch-badge">
+              <ArrowRight :size="12" />
+              Switch
+            </div>
+            <div class="card-info">
+              <span class="best-card">{{ opt.bestCard }}</span>
+              <span class="reward-rate">{{ opt.bestRate }}x {{ opt.rewardType }}</span>
+            </div>
+          </div>
+
+          <div class="savings-info">
+            <span v-if="opt.missedRewards > 0" class="missed-rewards">
+              +{{ formatCurrency(opt.missedRewards) }}/mo
+            </span>
+            <span v-else class="already-optimal">Optimal</span>
+          </div>
+
+          <div class="opt-chevron" :class="{ rotated: expandedCategory === opt.category }">
+            <ChevronDown :size="16" stroke-width="2" />
           </div>
         </div>
 
-        <div class="card-recommendation">
-          <div v-if="opt.currentCard !== opt.bestCard" class="switch-badge">
-            <ArrowRight :size="12" />
-            Switch
+        <div v-if="expandedCategory === opt.category" class="category-drilldown">
+          <div class="drilldown-header">
+            <span class="drilldown-cell drilldown-hd">Merchant</span>
+            <span class="drilldown-cell drilldown-hd">Card Used</span>
+            <span class="drilldown-cell drilldown-hd">Best Card</span>
+            <span class="drilldown-cell drilldown-hd drilldown-right">Amount</span>
           </div>
-          <div class="card-info">
-            <span class="best-card">{{ opt.bestCard }}</span>
-            <span class="reward-rate">{{ opt.bestRate }}x {{ opt.rewardType }}</span>
+          <div
+            v-for="(txn, i) in getCategoryTransactions(opt.category)"
+            :key="i"
+            :class="['drilldown-row', { 'is-optimal': txn.card === opt.bestCard }]"
+          >
+            <span class="drilldown-cell txn-merchant-cell">{{ txn.merchant }}</span>
+            <span class="drilldown-cell" :class="{ 'wrong-card': txn.card !== opt.bestCard }">{{ txn.card }}</span>
+            <span class="drilldown-cell best-card-cell">{{ opt.bestCard }}</span>
+            <span class="drilldown-cell drilldown-right">{{ formatCurrency(txn.amount) }}</span>
           </div>
-        </div>
-
-        <div class="savings-info">
-          <span v-if="opt.missedRewards > 0" class="missed-rewards">
-            +{{ formatCurrency(opt.missedRewards) }}/mo
-          </span>
-          <span v-else class="already-optimal">Optimal</span>
+          <div class="drilldown-summary">
+            <span>{{ getCategoryTransactions(opt.category).length }} transactions</span>
+            <span v-if="opt.currentCard !== opt.bestCard" class="drilldown-tip">
+              Use <strong>{{ opt.bestCard }}</strong> for {{ opt.bestRate }}x {{ opt.rewardType }} on {{ opt.category }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -163,12 +117,30 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { CreditCard, ArrowRight, User, Users, Briefcase, PlusCircle } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { CreditCard, ArrowRight, PlusCircle, ChevronDown } from 'lucide-vue-next'
 import { useBudgetStore } from '@/stores/budget'
-import { formatCurrency } from '@/utils/formatters'
+import { formatCurrency, formatDate } from '@/utils/formatters'
 
 const budgetStore = useBudgetStore()
+
+const expandedCategory = ref(null)
+
+function toggleCategory(category) {
+  expandedCategory.value = expandedCategory.value === category ? null : category
+}
+
+function getCategoryTransactions(category) {
+  const catData = budgetStore.expenses[category]
+  if (!catData) return []
+  const txns = []
+  for (const transactions of Object.values(catData.subcategories)) {
+    for (const t of transactions) {
+      txns.push(t)
+    }
+  }
+  return txns.sort((a, b) => b.amount - a.amount)
+}
 
 // Reward rates per card per category (points per dollar, simplified to cash-back equivalent)
 const CARD_REWARDS = {
@@ -410,41 +382,6 @@ const enrollmentSuggestions = computed(() => {
   gap: 14px;
 }
 
-.mode-toggle {
-  display: flex;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  padding: 3px;
-  gap: 2px;
-}
-
-.toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: none;
-  border-radius: calc(var(--radius-md) - 2px);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.toggle-btn:hover {
-  color: var(--text-primary);
-}
-
-.toggle-btn.active {
-  background: var(--electric-teal);
-  color: #000;
-}
-
 .optimizer-icon-wrap {
   width: 48px;
   height: 48px;
@@ -475,22 +412,46 @@ const enrollmentSuggestions = computed(() => {
   gap: 8px;
 }
 
-.optimization-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 18px;
+.optimization-item {
   background: var(--bg-card);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
+}
+
+.optimization-item:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.optimization-item.expanded {
+  border-color: rgba(100, 149, 237, 0.25);
+}
+
+.optimization-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .optimization-row:hover {
-  box-shadow: var(--shadow-hover);
+  background: var(--bg-subtle);
+}
+
+.opt-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.opt-chevron.rotated {
+  transform: rotate(180deg);
 }
 
 .category-info {
@@ -684,63 +645,87 @@ const enrollmentSuggestions = computed(() => {
   color: var(--text-secondary);
 }
 
-/* Member filter */
-.member-filter {
-  display: flex;
-  gap: 2px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  padding: 3px;
-  margin-bottom: 16px;
-  width: fit-content;
+/* Drilldown */
+.category-drilldown {
+  border-top: 1px solid var(--border-glass);
+  padding: 12px 18px 16px;
 }
 
-.member-btn {
-  padding: 5px 14px;
-  border: none;
-  border-radius: calc(var(--radius-md) - 2px);
-  background: transparent;
-  color: var(--text-secondary);
+.drilldown-header {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.drilldown-hd {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.drilldown-row {
+  display: flex;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.drilldown-row:last-of-type {
+  border-bottom: none;
+}
+
+.drilldown-row.is-optimal {
+  opacity: 0.65;
+}
+
+.drilldown-cell {
+  flex: 1;
   font-size: 0.78rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.member-btn:hover {
-  color: var(--text-primary);
+.drilldown-right {
+  text-align: right;
+  flex: 0.6;
 }
 
-.member-btn.active {
-  background: var(--violet-pop);
-  color: #fff;
-}
-
-.member-btn.owner-mine.active {
-  background: #14b8a6;
-  color: #fff;
-}
-
-.member-btn.owner-yours.active {
-  background: #f97316;
-  color: #fff;
-}
-
-.member-btn.owner-ours.active {
-  background: #a855f7;
-  color: #fff;
-}
-
-.person-label {
-  font-size: 0.78rem;
+.txn-merchant-cell {
   font-weight: 600;
-  color: var(--text-tertiary);
-  padding: 0 8px;
+}
+
+.wrong-card {
+  color: var(--persimmon);
+}
+
+.best-card-cell {
+  color: var(--electric-teal);
+  font-weight: 600;
+}
+
+.drilldown-summary {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-glass);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.drilldown-tip {
+  color: var(--electric-teal);
+}
+
+.drilldown-tip strong {
+  font-weight: 700;
 }
 
 @media (max-width: 640px) {
