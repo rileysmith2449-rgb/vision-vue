@@ -10,6 +10,18 @@ const router = createRouter({
       meta: { title: 'Sign In', public: true }
     },
     {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('@/views/PrivacyPolicyView.vue'),
+      meta: { title: 'Privacy Policy', public: true }
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('@/views/TermsOfServiceView.vue'),
+      meta: { title: 'Terms of Service', public: true }
+    },
+    {
       path: '/',
       name: 'dashboard',
       component: () => import('@/views/DashboardView.vue'),

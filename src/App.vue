@@ -1,7 +1,7 @@
 <template>
   <div class="app-container" :data-theme="currentTheme">
-    <Sidebar v-if="!isMobile && !isLoginPage" />
-    <div class="top-bar" v-if="!isLoginPage">
+    <Sidebar v-if="!isMobile && !isFullScreenPage" />
+    <div class="top-bar" v-if="!isFullScreenPage">
       <div class="top-bar-brand">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
           <g transform="translate(50,50)">
@@ -14,14 +14,14 @@
         <span class="top-bar-text">VISION</span>
       </div>
     </div>
-    <main class="main-content" :class="{ 'main-content--full': isLoginPage }">
+    <main class="main-content" :class="{ 'main-content--full': isFullScreenPage }">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
     </main>
-    <MobileNav v-if="isMobile && !isLoginPage" />
+    <MobileNav v-if="isMobile && !isFullScreenPage" />
   </div>
 </template>
 
@@ -39,7 +39,7 @@ const viewportStore = useViewportStore()
 
 const currentTheme = computed(() => themeStore.currentTheme)
 const isMobile = computed(() => viewportStore.isMobile)
-const isLoginPage = computed(() => route.name === 'login')
+const isFullScreenPage = computed(() => ['login', 'privacy', 'terms'].includes(route.name))
 
 onMounted(() => {
   viewportStore.updateViewport()
