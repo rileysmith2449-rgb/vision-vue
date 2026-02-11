@@ -141,7 +141,6 @@
           <p>For questions or concerns about this Privacy Policy, contact us at:</p>
           <p>
             Vision Finance<br/>
-            Riley Smith, Founder & Lead Developer<br/>
             <a href="mailto:support@visionfinance.app">support@visionfinance.app</a>
           </p>
         </section>
