@@ -40,49 +40,6 @@
       </div>
     </div>
 
-    <!-- Best Card Combination -->
-    <div class="section-block">
-      <h4 class="block-title">
-        <Wallet :size="16" stroke-width="2" />
-        Best Card Combination
-      </h4>
-      <p class="block-subtitle">The optimal wallet for your {{ periodLabel }} spending pattern</p>
-
-      <div class="combo-grid">
-        <div
-          v-for="card in analysis.recommendedCards"
-          :key="card.name"
-          :class="['combo-card', card.action]"
-        >
-          <div class="combo-card-header">
-            <span class="combo-card-name">{{ card.name }}</span>
-            <span :class="['combo-badge', card.action]">
-              {{ card.action === 'keep' ? 'Keep' : card.action === 'add' ? 'Add' : 'Drop' }}
-            </span>
-          </div>
-          <div class="combo-stats">
-            <div class="combo-stat">
-              <span class="combo-stat-label">Rewards</span>
-              <span class="combo-stat-value gain">{{ formatCurrency(card.rewards) }}</span>
-            </div>
-            <div class="combo-stat">
-              <span class="combo-stat-label">Fee (prorated)</span>
-              <span class="combo-stat-value">{{ card.proratedFee > 0 ? formatCurrency(card.proratedFee) : 'Free' }}</span>
-            </div>
-            <div class="combo-stat">
-              <span class="combo-stat-label">Net Value</span>
-              <span class="combo-stat-value" :class="card.netValue >= 0 ? 'gain' : 'loss'">
-                {{ card.netValue >= 0 ? '+' : '' }}{{ formatCurrency(card.netValue) }}
-              </span>
-            </div>
-          </div>
-          <div v-if="card.bestCategories.length" class="combo-categories">
-            <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Category Breakdown -->
     <div class="section-block">
       <h4 class="block-title">
@@ -161,6 +118,92 @@
       </div>
     </div>
 
+    <!-- Best Card Combination -->
+    <div class="section-block">
+      <h4 class="block-title">
+        <Wallet :size="16" stroke-width="2" />
+        Best Card Combination
+      </h4>
+      <p class="block-subtitle">The optimal wallet for your {{ periodLabel }} spending pattern</p>
+
+      <div class="combo-grid">
+        <div
+          v-for="card in analysis.recommendedCards"
+          :key="card.name"
+          :class="['combo-card', card.action]"
+        >
+          <div class="combo-card-header">
+            <span class="combo-card-name">{{ card.name }}</span>
+            <span :class="['combo-badge', card.action]">
+              {{ card.action === 'keep' ? 'Keep' : card.action === 'add' ? 'Add' : card.action === 'evaluate' ? 'Evaluate' : 'Drop' }}
+            </span>
+          </div>
+          <div v-if="card.action === 'evaluate'" class="combo-warning">
+            Fee exceeds rewards — consider if perks justify the cost
+          </div>
+          <div class="combo-stats">
+            <div class="combo-stat">
+              <span class="combo-stat-label">Rewards</span>
+              <span class="combo-stat-value gain">{{ formatCurrency(card.rewards) }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Fee (prorated)</span>
+              <span class="combo-stat-value">{{ card.proratedFee > 0 ? formatCurrency(card.proratedFee) : 'Free' }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Net Value</span>
+              <span class="combo-stat-value" :class="card.netValue >= 0 ? 'gain' : 'loss'">
+                {{ card.netValue >= 0 ? '+' : '' }}{{ formatCurrency(card.netValue) }}
+              </span>
+            </div>
+          </div>
+          <div v-if="card.bestCategories.length" class="combo-categories">
+            <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards to Consider -->
+    <div v-if="analysis.suggestedCards.length" class="section-block">
+      <h4 class="block-title">
+        <PlusCircle :size="16" stroke-width="2" />
+        Cards to Consider
+      </h4>
+      <p class="block-subtitle">Popular cards that could boost your rewards based on your spending</p>
+
+      <div class="combo-grid">
+        <div
+          v-for="card in analysis.suggestedCards"
+          :key="card.name"
+          class="combo-card suggest"
+        >
+          <div class="combo-card-header">
+            <span class="combo-card-name">{{ card.name }}</span>
+            <span class="combo-badge suggest">Consider</span>
+          </div>
+          <p class="suggest-highlight">{{ card.highlight }}</p>
+          <div class="combo-stats">
+            <div class="combo-stat">
+              <span class="combo-stat-label">Projected Rewards</span>
+              <span class="combo-stat-value gain">{{ formatCurrency(card.projectedRewards) }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Annual Fee</span>
+              <span class="combo-stat-value">{{ card.annualFee > 0 ? formatCurrency(card.annualFee) : 'Free' }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Net Value</span>
+              <span class="combo-stat-value gain">+{{ formatCurrency(card.netValue) }}</span>
+            </div>
+          </div>
+          <div v-if="card.bestCategories.length" class="combo-categories">
+            <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Points & Redemption Strategy -->
     <div class="section-block">
       <h4 class="block-title">
@@ -217,9 +260,9 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { TrendingUp, Wallet, BarChart3, Gift, CheckCircle, Circle, ChevronDown } from 'lucide-vue-next'
+import { TrendingUp, Wallet, BarChart3, Gift, CheckCircle, Circle, ChevronDown, PlusCircle } from 'lucide-vue-next'
 import { useBudgetStore } from '@/stores/budget'
-import { creditCards, getBestCardForCategory } from '@/utils/creditCardData'
+import { creditCards, getBestCardForCategory, marketCards } from '@/utils/creditCardData'
 import { formatCurrency } from '@/utils/formatters'
 
 const budgetStore = useBudgetStore()
@@ -402,13 +445,19 @@ const analysis = computed(() => {
 
     const hasSpend = userCardNames.has(card.name)
     let action = 'keep'
-    if (!hasSpend && bestCategories.length > 0) action = 'add'
-    else if (hasSpend && netValue < 0 && bestCategories.length === 0) action = 'drop'
-    else if (!hasSpend && bestCategories.length === 0) action = 'drop'
+    if (netValue < 0 && bestCategories.length > 0) {
+      action = 'evaluate'
+    } else if (netValue < 0) {
+      action = 'drop'
+    } else if (!hasSpend && bestCategories.length > 0) {
+      action = 'add'
+    } else if (!hasSpend && bestCategories.length === 0) {
+      action = 'drop'
+    }
 
     return { name: card.name, rewards, proratedFee, netValue, bestCategories, action, creditsValue }
   }).sort((a, b) => {
-    const order = { keep: 0, add: 1, drop: 2 }
+    const order = { keep: 0, add: 1, evaluate: 2, drop: 3 }
     return (order[a.action] ?? 9) - (order[b.action] ?? 9) || b.netValue - a.netValue
   })
 
@@ -449,7 +498,34 @@ const analysis = computed(() => {
   }
   pointsPrograms.sort((a, b) => b.bestValue - a.bestValue)
 
-  // Statement credits summary
+  // Cards to consider (market cards the user doesn't own)
+    const suggestedCards = marketCards.map(card => {
+      let projectedRewards = 0
+      const bestCategories = []
+      for (const cat of categories) {
+        const rate = card.cashbackRates[cat.name] || card.cashbackRates.default || 0
+        const currentBest = getBestCardForCategory(cat.name, mode)
+        if (rate > currentBest.rate) {
+          projectedRewards += cat.spend * rate
+          bestCategories.push(cat.name)
+        } else {
+          projectedRewards += cat.spend * Math.min(rate, currentBest.rate)
+        }
+      }
+      const proratedFee = card.annualFee * proratedFactor
+      const netValue = projectedRewards - proratedFee
+      return {
+        name: card.name,
+        annualFee: card.annualFee,
+        projectedRewards,
+        netValue,
+        bestCategories,
+        highlight: card.highlight,
+      }
+    }).filter(c => c.bestCategories.length > 0 && c.netValue > 0)
+      .sort((a, b) => b.netValue - a.netValue)
+
+    // Statement credits summary
   const creditsSummary = []
   let totalCreditsValue = 0
   for (const card of allCards) {
@@ -466,6 +542,7 @@ const analysis = computed(() => {
     missedRewards,
     categories,
     recommendedCards,
+    suggestedCards,
     pointsPrograms,
     creditsSummary,
     totalCreditsValue,
@@ -638,7 +715,9 @@ const analysis = computed(() => {
 
 .combo-card.keep { border-color: rgba(0, 230, 138, 0.2); }
 .combo-card.add { border-color: rgba(139, 92, 246, 0.25); }
+.combo-card.evaluate { border-color: rgba(255, 193, 7, 0.25); }
 .combo-card.drop { border-color: rgba(255, 99, 71, 0.2); opacity: 0.6; }
+.combo-card.suggest { border-color: rgba(59, 130, 246, 0.25); }
 
 .combo-card-header {
   display: flex;
@@ -664,7 +743,25 @@ const analysis = computed(() => {
 
 .combo-badge.keep { background: rgba(0, 230, 138, 0.12); color: var(--electric-teal); }
 .combo-badge.add { background: rgba(139, 92, 246, 0.12); color: var(--violet-pop); }
+.combo-badge.evaluate { background: rgba(255, 193, 7, 0.12); color: #ffc107; }
 .combo-badge.drop { background: rgba(255, 99, 71, 0.1); color: var(--persimmon); }
+.combo-badge.suggest { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+
+.combo-warning {
+  font-size: 0.72rem;
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.06);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+
+.suggest-highlight {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
 
 .combo-stats {
   display: flex;

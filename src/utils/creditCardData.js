@@ -107,3 +107,60 @@ export const creditCards = [
     statementCredits: []
   }
 ]
+
+export const marketCards = [
+  {
+    name: 'Wells Fargo Active Cash',
+    annualFee: 0,
+    cashbackRates: {
+      default: 0.02
+    },
+    highlight: 'Flat 2% cash back on everything with no annual fee'
+  },
+  {
+    name: 'Amex Blue Cash Preferred',
+    annualFee: 95,
+    cashbackRates: {
+      'Dining & Food': 0.06,
+      'Entertainment': 0.06,
+      'Transportation': 0.03,
+      default: 0.01
+    },
+    highlight: '6% at U.S. supermarkets & streaming, 3% transit'
+  },
+  {
+    name: 'Citi Custom Cash',
+    annualFee: 0,
+    cashbackRates: {
+      'Dining & Food': 0.05,
+      'Shopping': 0.05,
+      'Transportation': 0.05,
+      'Entertainment': 0.05,
+      'Travel': 0.05,
+      'Bills & Utilities': 0.05,
+      default: 0.01
+    },
+    highlight: '5% on your top eligible spend category each cycle, no fee'
+  },
+  {
+    name: 'Chase Freedom Unlimited',
+    annualFee: 0,
+    cashbackRates: {
+      'Dining & Food': 0.03,
+      'Shopping': 0.03,
+      default: 0.015
+    },
+    highlight: '1.5% on everything plus 3% on dining & drugstores'
+  },
+  {
+    name: 'US Bank Altitude Go',
+    annualFee: 0,
+    cashbackRates: {
+      'Dining & Food': 0.04,
+      'Entertainment': 0.02,
+      'Transportation': 0.02,
+      default: 0.01
+    },
+    highlight: '4% dining, 2% groceries/gas/streaming, no fee'
+  }
+]
