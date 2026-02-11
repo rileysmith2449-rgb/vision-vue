@@ -39,7 +39,7 @@ const viewportStore = useViewportStore()
 
 const currentTheme = computed(() => themeStore.currentTheme)
 const isMobile = computed(() => viewportStore.isMobile)
-const isFullScreenPage = computed(() => ['login', 'privacy', 'terms'].includes(route.name))
+const isFullScreenPage = computed(() => ['login', 'sign-up', 'privacy', 'terms'].includes(route.name))
 
 onMounted(() => {
   viewportStore.updateViewport()

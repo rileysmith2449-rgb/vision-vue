@@ -14,7 +14,7 @@
       </div>
 
       <Descope
-        flowId="sign-up-or-in"
+        flowId="sign-up"
         :theme="themeStore.isDark ? 'dark' : 'light'"
         @success="handleSuccess"
         @error="handleError"

@@ -10,6 +10,12 @@ const router = createRouter({
       meta: { title: 'Sign In', public: true }
     },
     {
+      path: '/sign-up',
+      name: 'sign-up',
+      component: () => import('@/views/SignUpView.vue'),
+      meta: { title: 'Sign Up', public: true }
+    },
+    {
       path: '/privacy',
       name: 'privacy',
       component: () => import('@/views/PrivacyPolicyView.vue'),
@@ -98,9 +104,21 @@ router.beforeEach(async (to, from, next) => {
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
 
+  // Wait for Descope to finish loading before checking auth
+  if (!authStore.isLoaded) {
+    await new Promise((resolve) => {
+      const check = setInterval(() => {
+        if (authStore.isLoaded) {
+          clearInterval(check)
+          resolve()
+        }
+      }, 50)
+    })
+  }
+
   if (!to.meta.public && !authStore.isAuthenticated) {
     next('/login')
-  } else if (to.name === 'login' && authStore.isAuthenticated) {
+  } else if ((to.name === 'login' || to.name === 'sign-up') && authStore.isAuthenticated) {
     next('/')
   } else {
     next()

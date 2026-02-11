@@ -33,6 +33,10 @@
         <Moon v-else :size="20" stroke-width="1.8" />
         <span class="nav-label">{{ themeStore.isDark ? 'Light Mode' : 'Dark Mode' }}</span>
       </button>
+      <button class="theme-toggle logout-btn" @click="authStore.logout()">
+        <LogOut :size="20" stroke-width="1.8" />
+        <span class="nav-label">Sign Out</span>
+      </button>
     </div>
   </aside>
 </template>
@@ -40,6 +44,7 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
+import { useAuthStore } from '@/stores/auth'
 import {
   LayoutDashboard,
   Scale,
@@ -47,11 +52,13 @@ import {
   Lightbulb,
   Settings,
   Sun,
-  Moon
+  Moon,
+  LogOut
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 
 const navLinks = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -178,5 +185,9 @@ function isActive(link) {
 .theme-toggle:hover {
   background: var(--bg-subtle);
   color: var(--text-primary);
+}
+
+.logout-btn:hover {
+  color: var(--persimmon);
 }
 </style>

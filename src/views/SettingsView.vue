@@ -3,6 +3,20 @@
     <Header title="Settings" subtitle="Customize your experience" />
 
     <div class="settings-grid">
+      <!-- Account -->
+      <Card title="Account" subtitle="Manage your sign-in and security">
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">{{ authStore.currentUser?.email || authStore.currentUser?.name || 'Signed in' }}</span>
+            <span class="setting-description">Signed in with Descope</span>
+          </div>
+          <button class="sign-out-btn" @click="authStore.logout()">
+            <LogOut :size="16" stroke-width="2" />
+            Sign Out
+          </button>
+        </div>
+      </Card>
+
       <!-- Appearance -->
       <Card title="Appearance" subtitle="Toggle between light and dark mode">
         <div class="setting-row">
@@ -295,12 +309,14 @@
 import { computed } from 'vue'
 import { useThemeStore } from '@/stores/theme'
 import { useBudgetStore } from '@/stores/budget'
-import { Sun, Moon, User, Users, Briefcase } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { Sun, Moon, User, Users, Briefcase, LogOut } from 'lucide-vue-next'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 
 const themeStore = useThemeStore()
 const budgetStore = useBudgetStore()
+const authStore = useAuthStore()
 
 const activeMember = computed(() => budgetStore.familyMembers[budgetStore.personalMember])
 
@@ -630,6 +646,28 @@ const stateOptions = [
 
 .select-input:focus {
   border-color: var(--electric-teal);
+}
+
+.sign-out-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(244, 91, 105, 0.3);
+  background: rgba(244, 91, 105, 0.08);
+  color: var(--persimmon);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sign-out-btn:hover {
+  background: rgba(244, 91, 105, 0.15);
+  border-color: rgba(244, 91, 105, 0.5);
 }
 
 @media (max-width: 640px) {
