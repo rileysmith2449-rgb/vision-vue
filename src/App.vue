@@ -1,7 +1,7 @@
 <template>
   <div class="app-container" :data-theme="currentTheme">
-    <Sidebar v-if="!isMobile" />
-    <div class="top-bar">
+    <Sidebar v-if="!isMobile && !isLoginPage" />
+    <div class="top-bar" v-if="!isLoginPage">
       <div class="top-bar-brand">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
           <g transform="translate(50,50)">
@@ -14,29 +14,32 @@
         <span class="top-bar-text">VISION</span>
       </div>
     </div>
-    <main class="main-content">
+    <main class="main-content" :class="{ 'main-content--full': isLoginPage }">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
     </main>
-    <MobileNav v-if="isMobile" />
+    <MobileNav v-if="isMobile && !isLoginPage" />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useViewportStore } from '@/stores/viewport'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import MobileNav from '@/components/layout/MobileNav.vue'
 
+const route = useRoute()
 const themeStore = useThemeStore()
 const viewportStore = useViewportStore()
 
 const currentTheme = computed(() => themeStore.currentTheme)
 const isMobile = computed(() => viewportStore.isMobile)
+const isLoginPage = computed(() => route.name === 'login')
 
 onMounted(() => {
   viewportStore.updateViewport()
@@ -84,6 +87,12 @@ onUnmounted(() => {
   font-weight: 400;
   letter-spacing: 0.25em;
   color: var(--text-primary);
+}
+
+.main-content--full {
+  margin-left: 0 !important;
+  max-width: 100vw !important;
+  padding: 0 !important;
 }
 
 .fade-enter-active,
