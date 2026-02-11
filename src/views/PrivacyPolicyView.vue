@@ -4,7 +4,7 @@
       <div class="legal-header">
         <router-link to="/" class="legal-back">&larr; Back</router-link>
         <h1>Privacy Policy</h1>
-        <p class="legal-meta">Vision Finance &bull; Effective: February 10, 2026</p>
+        <p class="legal-meta">Vision Finance &bull; Effective: February 11, 2026</p>
       </div>
 
       <div class="legal-content">
@@ -26,7 +26,7 @@
           <p>We do <strong>not</strong> collect or store your bank login credentials. All credential exchange is handled securely by Plaid.</p>
 
           <h3>2.2 Authentication Data</h3>
-          <p>We collect minimal authentication data required to secure your account, such as session identifiers.</p>
+          <p>We use Descope as our authentication provider. When you create an account, Descope collects your email address, password hash, and multi-factor authentication credentials (such as TOTP secrets). We do not store passwords or MFA secrets directly — all authentication data is managed by Descope's infrastructure.</p>
 
           <h3>2.3 Usage Data</h3>
           <p>We may collect anonymous usage analytics to improve the platform, including pages visited and feature usage patterns.</p>
@@ -49,7 +49,10 @@
           <h3>4.1 Plaid</h3>
           <p>We use Plaid to connect to your financial institutions. Plaid's use of your data is governed by their <a href="https://plaid.com/legal/#end-user-privacy-policy" target="_blank" rel="noopener">End User Privacy Policy</a>. Plaid is SOC 2 Type II certified and PCI DSS compliant.</p>
 
-          <h3>4.2 Hosting & Infrastructure</h3>
+          <h3>4.2 Descope</h3>
+          <p>We use Descope for user authentication, including email/password sign-in and multi-factor authentication (TOTP). Descope processes your email address, password hash, and MFA credentials. Descope's use of your data is governed by their <a href="https://www.descope.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>. Descope is SOC 2 Type II certified.</p>
+
+          <h3>4.3 Hosting & Infrastructure</h3>
           <p>Our application is hosted on Vercel (SOC 2 Type II certified) with DNS and security managed by Cloudflare (SOC 2 Type II, ISO 27001 certified).</p>
         </section>
 
@@ -66,12 +69,37 @@
         </section>
 
         <section>
-          <h2>6. Data Retention</h2>
-          <p>We retain your financial data only as long as your account is active and necessary to provide our services. When you delete your account or disconnect a financial institution:</p>
+          <h2>6. Data Retention & Disposal Policy</h2>
+          <p>We retain your data only as long as necessary to provide our services. The following retention schedule applies:</p>
+
+          <h3>6.1 Financial Account Data</h3>
           <ul>
-            <li>Associated Plaid access tokens are immediately revoked and deleted</li>
-            <li>Cached financial data is purged within 30 days</li>
-            <li>Anonymized analytics data may be retained for service improvement</li>
+            <li><strong>Plaid access tokens:</strong> Retained while the account connection is active. Immediately revoked and permanently deleted when you disconnect an institution or delete your account.</li>
+            <li><strong>Transaction and balance data:</strong> Cached only for the duration of your active session. No transaction data is persisted to long-term storage.</li>
+            <li><strong>Investment holdings and liability data:</strong> Same as transaction data — session-only, not stored at rest.</li>
+          </ul>
+
+          <h3>6.2 Authentication Data</h3>
+          <ul>
+            <li><strong>Account credentials:</strong> Managed by Descope. Deleted when you delete your account. Descope retains authentication logs for up to 30 days for security purposes.</li>
+            <li><strong>Session tokens:</strong> Automatically expire and are cleared on logout or browser close.</li>
+          </ul>
+
+          <h3>6.3 Disposal Procedures</h3>
+          <p>When data reaches the end of its retention period or you request deletion:</p>
+          <ul>
+            <li>Plaid access tokens are revoked via Plaid's API and deleted from our systems</li>
+            <li>Authentication records are deleted from Descope's infrastructure</li>
+            <li>Any cached data in browser storage is cleared</li>
+            <li>Anonymized, aggregated analytics data may be retained indefinitely as it cannot be linked back to individual users</li>
+          </ul>
+
+          <h3>6.4 Account Deletion</h3>
+          <p>You may request full account deletion at any time by contacting <a href="mailto:support@visionfinance.app">support@visionfinance.app</a>. Upon receiving your request, we will:</p>
+          <ul>
+            <li>Revoke all Plaid access tokens within 24 hours</li>
+            <li>Delete your Descope authentication account within 24 hours</li>
+            <li>Confirm deletion via email within 5 business days</li>
           </ul>
         </section>
 
@@ -89,7 +117,13 @@
 
         <section>
           <h2>8. Cookies & Local Storage</h2>
-          <p>We use session storage to maintain your authenticated session. We do not use third-party tracking cookies. Session data is cleared when you close your browser.</p>
+          <p>We use cookies and local storage for the following purposes:</p>
+          <ul>
+            <li><strong>Authentication cookies:</strong> Set by Descope to maintain your signed-in session. These are essential for the service to function.</li>
+            <li><strong>Theme preference:</strong> Stored in local storage to remember your light/dark mode selection.</li>
+            <li><strong>Budget settings:</strong> Stored in local storage to persist your budget mode and tax configuration.</li>
+          </ul>
+          <p>We do not use third-party tracking cookies or advertising cookies.</p>
         </section>
 
         <section>
