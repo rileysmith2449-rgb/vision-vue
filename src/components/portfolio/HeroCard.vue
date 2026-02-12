@@ -1,20 +1,20 @@
 <template>
   <div class="hero-card">
-    <div class="hero-header">
-      <div class="hero-label">Total Portfolio Value</div>
-      <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
-      <div class="hero-gains">
-        <Badge
-          :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
-          :label="formatPercent(gainPercent)"
-        />
-        <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
-          {{ formatCurrency(portfolioStore.totalGains) }}
-        </span>
+    <div class="hero-top-row">
+      <div class="hero-info">
+        <div class="hero-label">Total Portfolio Value</div>
+        <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
+        <div class="hero-gains">
+          <Badge
+            :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
+            :label="formatPercent(gainPercent)"
+          />
+          <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
+            {{ formatCurrency(portfolioStore.totalGains) }}
+          </span>
+        </div>
       </div>
-    </div>
 
-    <div class="alloc-row">
       <div class="chart-container">
         <Doughnut :data="chartData" :options="chartOptions" />
       </div>
@@ -267,15 +267,15 @@ const chartOptions = computed(() => ({
   pointer-events: none;
 }
 
-.hero-header {
-  margin-bottom: 20px;
-}
-
-.alloc-row {
+.hero-top-row {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   margin-bottom: 24px;
+}
+
+.hero-info {
+  flex-shrink: 0;
 }
 
 .hero-label {
@@ -466,6 +466,15 @@ const chartOptions = computed(() => ({
 
 /* --- Responsive --- */
 @media (max-width: 1024px) {
+  .hero-top-row {
+    flex-wrap: wrap;
+  }
+
+  .hero-info {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
   .hero-value {
     font-size: 2rem;
   }
