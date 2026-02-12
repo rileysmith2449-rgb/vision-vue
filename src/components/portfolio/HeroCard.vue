@@ -1,58 +1,58 @@
 <template>
   <div class="hero-card">
-    <div class="hero-top-row">
-      <div class="hero-left">
-        <div class="hero-label">Total Portfolio Value</div>
-        <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
-        <div class="hero-gains">
-          <Badge
-            :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
-            :label="formatPercent(gainPercent)"
-          />
-          <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
-            {{ formatCurrency(portfolioStore.totalGains) }}
-          </span>
-        </div>
-
-        <div class="alloc-legend">
-          <button
-            v-if="drillCategory"
-            class="back-btn"
-            @click="goBack"
-          >
-            <ArrowLeft :size="14" /> All Categories
-          </button>
-
-          <template v-if="!drillCategory">
-            <button
-              v-for="(value, category) in portfolioStore.categoryTotals"
-              :key="category"
-              class="legend-row"
-              @click="drillInto(category)"
-            >
-              <span class="legend-dot" :style="{ background: categoryColorMap[category] || '#8B5CF6' }"></span>
-              <span class="legend-name">{{ category }}</span>
-              <span class="legend-pct">{{ getCategoryPct(value) }}%</span>
-            </button>
-          </template>
-
-          <template v-else>
-            <button
-              v-for="(holding, i) in drilledHoldings"
-              :key="holding.id"
-              class="legend-row"
-              @click="onHoldingClick(holding)"
-            >
-              <span class="legend-dot" :style="{ background: holdingColors[i] }"></span>
-              <span class="legend-name">{{ holding.symbol }}</span>
-              <span class="legend-val">{{ formatCurrency(holding.currentValue) }}</span>
-            </button>
-          </template>
-        </div>
+    <div class="hero-header">
+      <div class="hero-label">Total Portfolio Value</div>
+      <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
+      <div class="hero-gains">
+        <Badge
+          :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
+          :label="formatPercent(gainPercent)"
+        />
+        <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
+          {{ formatCurrency(portfolioStore.totalGains) }}
+        </span>
       </div>
+    </div>
 
+    <div class="alloc-row">
       <div class="chart-container">
         <Doughnut :data="chartData" :options="chartOptions" />
+      </div>
+
+      <div class="alloc-legend">
+        <button
+          v-if="drillCategory"
+          class="back-btn"
+          @click="goBack"
+        >
+          <ArrowLeft :size="14" /> All Categories
+        </button>
+
+        <template v-if="!drillCategory">
+          <button
+            v-for="(value, category) in portfolioStore.categoryTotals"
+            :key="category"
+            class="legend-row"
+            @click="drillInto(category)"
+          >
+            <span class="legend-dot" :style="{ background: categoryColorMap[category] || '#8B5CF6' }"></span>
+            <span class="legend-name">{{ category }}</span>
+            <span class="legend-pct">{{ getCategoryPct(value) }}%</span>
+          </button>
+        </template>
+
+        <template v-else>
+          <button
+            v-for="(holding, i) in drilledHoldings"
+            :key="holding.id"
+            class="legend-row"
+            @click="onHoldingClick(holding)"
+          >
+            <span class="legend-dot" :style="{ background: holdingColors[i] }"></span>
+            <span class="legend-name">{{ holding.symbol }}</span>
+            <span class="legend-val">{{ formatCurrency(holding.currentValue) }}</span>
+          </button>
+        </template>
       </div>
     </div>
 
@@ -267,16 +267,15 @@ const chartOptions = computed(() => ({
   pointer-events: none;
 }
 
-.hero-top-row {
-  display: flex;
-  gap: 32px;
-  align-items: center;
-  margin-bottom: 24px;
+.hero-header {
+  margin-bottom: 20px;
 }
 
-.hero-left {
-  flex: 1;
-  min-width: 0;
+.alloc-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
 .hero-label {
@@ -391,8 +390,8 @@ const chartOptions = computed(() => ({
 /* --- Chart + legend --- */
 .chart-container {
   position: relative;
-  width: 150px;
-  height: 150px;
+  width: 130px;
+  height: 130px;
   flex-shrink: 0;
 }
 
@@ -400,8 +399,6 @@ const chartOptions = computed(() => ({
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-top: 16px;
-  max-width: 200px;
 }
 
 .legend-row {
@@ -469,19 +466,6 @@ const chartOptions = computed(() => ({
 
 /* --- Responsive --- */
 @media (max-width: 1024px) {
-  .hero-top-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .chart-container {
-    align-self: center;
-  }
-
-  .alloc-legend {
-    max-width: 100%;
-  }
-
   .hero-value {
     font-size: 2rem;
   }
