@@ -1,11 +1,21 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { generateExpenseData, generateBusinessExpenseData, generateFamilyExpenseData, generateHistoricalTransactions } from '@/utils/demoData'
 import { creditCards } from '@/utils/creditCardData'
 
+function loadFromStorage(key, fallback) {
+  try {
+    const v = localStorage.getItem(key)
+    return v !== null ? JSON.parse(v) : fallback
+  } catch { return fallback }
+}
+
 export const useBudgetStore = defineStore('budget', () => {
-  // State
-  const budgetMode = ref('personal') // 'personal' | 'business' | 'family'
+  // Onboarding flag
+  const settingsConfigured = ref(localStorage.getItem('vision-settings-configured') === 'true')
+
+  // State — hydrate from localStorage if previously saved
+  const budgetMode = ref(loadFromStorage('vision-budgetMode', 'personal'))
   const salary = ref(150000)
   const businessIncome = ref(50000)
   const shortTermInvestmentIncome = ref(0)
@@ -19,8 +29,8 @@ export const useBudgetStore = defineStore('budget', () => {
   const currentSubcategory = ref(null)
   const historicalTransactions = ref([])
 
-  // Family mode state
-  const familyMembers = ref({
+  // Family mode state — hydrate from localStorage
+  const familyMembers = ref(loadFromStorage('vision-familyMembers', {
     mine: {
       id: 'mine',
       name: 'Person 1',
@@ -41,9 +51,14 @@ export const useBudgetStore = defineStore('budget', () => {
       filingStatus: 'married',
       state: 'CA'
     }
-  })
+  }))
   const activeMember = ref('all') // 'all' | 'mine' | 'yours' | 'ours'
-  const personalMember = ref('mine') // which family member the personal budget maps to
+  const personalMember = ref(loadFromStorage('vision-personalMember', 'mine'))
+
+  // Persist key settings to localStorage on change
+  watch(budgetMode, v => localStorage.setItem('vision-budgetMode', JSON.stringify(v)))
+  watch(familyMembers, v => localStorage.setItem('vision-familyMembers', JSON.stringify(v)), { deep: true })
+  watch(personalMember, v => localStorage.setItem('vision-personalMember', JSON.stringify(v)))
 
   // Helper: filter family expenses by owner
   function filterExpensesByMember(allExpenses, ownerId) {
@@ -390,6 +405,16 @@ export const useBudgetStore = defineStore('budget', () => {
     personalMember.value = id
   }
 
+  function completeOnboarding() {
+    // Persist current settings to localStorage
+    localStorage.setItem('vision-budgetMode', JSON.stringify(budgetMode.value))
+    localStorage.setItem('vision-familyMembers', JSON.stringify(familyMembers.value))
+    localStorage.setItem('vision-personalMember', JSON.stringify(personalMember.value))
+    // Mark setup complete
+    localStorage.setItem('vision-settings-configured', 'true')
+    settingsConfigured.value = true
+  }
+
   // Family mode actions
   function setActiveMember(id) {
     activeMember.value = id
@@ -409,6 +434,7 @@ export const useBudgetStore = defineStore('budget', () => {
 
   return {
     // State
+    settingsConfigured,
     budgetMode,
     monthlyBudget,
     salary,
@@ -465,7 +491,8 @@ export const useBudgetStore = defineStore('budget', () => {
     updateFilingStatus,
     updateCategoryBudget,
     getCategoryTransactions,
-    reclassifyTransaction
+    reclassifyTransaction,
+    completeOnboarding
   }
 })
 

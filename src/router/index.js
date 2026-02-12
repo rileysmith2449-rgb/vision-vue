@@ -28,6 +28,12 @@ const router = createRouter({
       meta: { title: 'Terms of Service', public: true }
     },
     {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: () => import('@/views/OnboardingView.vue'),
+      meta: { title: 'Get Started' }
+    },
+    {
       path: '/',
       name: 'dashboard',
       component: () => import('@/views/DashboardView.vue'),
@@ -119,6 +125,10 @@ router.beforeEach(async (to, from, next) => {
   if (!to.meta.public && !authStore.isAuthenticated) {
     next('/login')
   } else if ((to.name === 'login' || to.name === 'sign-up') && authStore.isAuthenticated) {
+    next('/')
+  } else if (authStore.isAuthenticated && localStorage.getItem('vision-settings-configured') !== 'true' && to.name !== 'onboarding') {
+    next('/onboarding')
+  } else if (authStore.isAuthenticated && localStorage.getItem('vision-settings-configured') === 'true' && to.name === 'onboarding') {
     next('/')
   } else {
     next()
