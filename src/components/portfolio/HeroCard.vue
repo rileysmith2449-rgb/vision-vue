@@ -273,8 +273,8 @@ const chartOptions = computed(() => ({
 .hero-top-row {
   display: flex;
   gap: 32px;
-  align-items: flex-start;
-  margin-bottom: 28px;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
 .hero-info {
@@ -283,11 +283,10 @@ const chartOptions = computed(() => ({
 }
 
 .hero-chart-area {
-  width: 240px;
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 16px;
 }
 
 .hero-label {
@@ -402,23 +401,23 @@ const chartOptions = computed(() => ({
 /* --- Chart + legend --- */
 .chart-container {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
 }
 
 .alloc-legend {
-  width: 100%;
-  margin-top: 16px;
+  min-width: 140px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .legend-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 8px;
+  padding: 4px 8px;
   border: none;
   background: none;
   border-radius: 6px;
@@ -426,7 +425,7 @@ const chartOptions = computed(() => ({
   transition: background 0.15s;
   font-family: inherit;
   text-align: left;
-  width: 100%;
+  white-space: nowrap;
 }
 
 .legend-row:hover {
@@ -481,20 +480,11 @@ const chartOptions = computed(() => ({
 @media (max-width: 1024px) {
   .hero-top-row {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .hero-chart-area {
-    width: 100%;
-    align-items: center;
-  }
-
-  .chart-container {
-    width: 200px;
-    height: 200px;
-  }
-
-  .alloc-legend {
-    max-width: 280px;
+    align-self: center;
   }
 
   .hero-value {
