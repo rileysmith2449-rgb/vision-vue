@@ -23,9 +23,9 @@
         ></div>
       </div>
 
-      <!-- Step 1: Budget Mode -->
+      <!-- Step 1: Mode -->
       <div v-if="step === 1" class="step-content">
-        <h2 class="step-heading">Budget Mode</h2>
+        <h2 class="step-heading">Mode</h2>
         <p class="step-description">How will you use Vision?</p>
 
         <div class="mode-toggle">
@@ -224,7 +224,10 @@
             <ChevronLeft :size="16" stroke-width="2" />
             Back
           </button>
-          <button class="btn-primary" @click="step = 3">
+          <button class="btn-skip" @click="skippedTax = true; step = 3">
+            Skip
+          </button>
+          <button class="btn-primary" @click="skippedTax = false; step = 3">
             Continue
             <ChevronRight :size="16" stroke-width="2" />
           </button>
@@ -238,73 +241,80 @@
 
         <div class="review-section">
           <div class="review-row">
-            <span class="review-label">Budget Mode</span>
+            <span class="review-label">Mode</span>
             <span class="review-value">{{ localMode.charAt(0).toUpperCase() + localMode.slice(1) }}</span>
           </div>
 
-          <template v-if="localMode === 'family'">
-            <div v-for="id in ['mine', 'yours']" :key="id" class="review-member">
-              <div class="review-member-header">
-                <div class="member-color" :class="id"></div>
-                <span class="review-member-name">{{ localMembers[id].name }}</span>
-                <span v-if="id === localPersonalMember" class="review-badge">Default</span>
+          <div v-if="skippedTax" class="review-row">
+            <span class="review-label">Tax Information</span>
+            <span class="review-value review-skipped">Skipped</span>
+          </div>
+
+          <template v-if="!skippedTax">
+            <template v-if="localMode === 'family'">
+              <div v-for="id in ['mine', 'yours']" :key="id" class="review-member">
+                <div class="review-member-header">
+                  <div class="member-color" :class="id"></div>
+                  <span class="review-member-name">{{ localMembers[id].name }}</span>
+                  <span v-if="id === localPersonalMember" class="review-badge">Default</span>
+                </div>
+                <div class="review-details">
+                  <div class="review-row">
+                    <span class="review-label">Salary</span>
+                    <span class="review-value">${{ localMembers[id].salary.toLocaleString() }}</span>
+                  </div>
+                  <div class="review-row" v-if="localMembers[id].businessIncome">
+                    <span class="review-label">Business Income</span>
+                    <span class="review-value">${{ localMembers[id].businessIncome.toLocaleString() }}</span>
+                  </div>
+                  <div class="review-row" v-if="localMembers[id].shortTermInvestmentIncome">
+                    <span class="review-label">Short-term Investments</span>
+                    <span class="review-value">${{ localMembers[id].shortTermInvestmentIncome.toLocaleString() }}</span>
+                  </div>
+                  <div class="review-row" v-if="localMembers[id].longTermInvestmentIncome">
+                    <span class="review-label">Long-term Investments</span>
+                    <span class="review-value">${{ localMembers[id].longTermInvestmentIncome.toLocaleString() }}</span>
+                  </div>
+                  <div class="review-row">
+                    <span class="review-label">Filing Status</span>
+                    <span class="review-value">{{ filingLabel(localMembers[id].filingStatus) }}</span>
+                  </div>
+                  <div class="review-row">
+                    <span class="review-label">State</span>
+                    <span class="review-value">{{ localMembers[id].state }}</span>
+                  </div>
+                </div>
               </div>
+            </template>
+
+            <template v-else>
               <div class="review-details">
                 <div class="review-row">
                   <span class="review-label">Salary</span>
-                  <span class="review-value">${{ localMembers[id].salary.toLocaleString() }}</span>
+                  <span class="review-value">${{ localMembers[localPersonalMember].salary.toLocaleString() }}</span>
                 </div>
-                <div class="review-row" v-if="localMembers[id].businessIncome">
+                <div class="review-row" v-if="localMembers[localPersonalMember].businessIncome">
                   <span class="review-label">Business Income</span>
-                  <span class="review-value">${{ localMembers[id].businessIncome.toLocaleString() }}</span>
+                  <span class="review-value">${{ localMembers[localPersonalMember].businessIncome.toLocaleString() }}</span>
                 </div>
-                <div class="review-row" v-if="localMembers[id].shortTermInvestmentIncome">
+                <div class="review-row" v-if="localMembers[localPersonalMember].shortTermInvestmentIncome">
                   <span class="review-label">Short-term Investments</span>
-                  <span class="review-value">${{ localMembers[id].shortTermInvestmentIncome.toLocaleString() }}</span>
+                  <span class="review-value">${{ localMembers[localPersonalMember].shortTermInvestmentIncome.toLocaleString() }}</span>
                 </div>
-                <div class="review-row" v-if="localMembers[id].longTermInvestmentIncome">
+                <div class="review-row" v-if="localMembers[localPersonalMember].longTermInvestmentIncome">
                   <span class="review-label">Long-term Investments</span>
-                  <span class="review-value">${{ localMembers[id].longTermInvestmentIncome.toLocaleString() }}</span>
+                  <span class="review-value">${{ localMembers[localPersonalMember].longTermInvestmentIncome.toLocaleString() }}</span>
                 </div>
                 <div class="review-row">
                   <span class="review-label">Filing Status</span>
-                  <span class="review-value">{{ filingLabel(localMembers[id].filingStatus) }}</span>
+                  <span class="review-value">{{ filingLabel(localMembers[localPersonalMember].filingStatus) }}</span>
                 </div>
                 <div class="review-row">
                   <span class="review-label">State</span>
-                  <span class="review-value">{{ localMembers[id].state }}</span>
+                  <span class="review-value">{{ localMembers[localPersonalMember].state }}</span>
                 </div>
               </div>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="review-details">
-              <div class="review-row">
-                <span class="review-label">Salary</span>
-                <span class="review-value">${{ localMembers[localPersonalMember].salary.toLocaleString() }}</span>
-              </div>
-              <div class="review-row" v-if="localMembers[localPersonalMember].businessIncome">
-                <span class="review-label">Business Income</span>
-                <span class="review-value">${{ localMembers[localPersonalMember].businessIncome.toLocaleString() }}</span>
-              </div>
-              <div class="review-row" v-if="localMembers[localPersonalMember].shortTermInvestmentIncome">
-                <span class="review-label">Short-term Investments</span>
-                <span class="review-value">${{ localMembers[localPersonalMember].shortTermInvestmentIncome.toLocaleString() }}</span>
-              </div>
-              <div class="review-row" v-if="localMembers[localPersonalMember].longTermInvestmentIncome">
-                <span class="review-label">Long-term Investments</span>
-                <span class="review-value">${{ localMembers[localPersonalMember].longTermInvestmentIncome.toLocaleString() }}</span>
-              </div>
-              <div class="review-row">
-                <span class="review-label">Filing Status</span>
-                <span class="review-value">{{ filingLabel(localMembers[localPersonalMember].filingStatus) }}</span>
-              </div>
-              <div class="review-row">
-                <span class="review-label">State</span>
-                <span class="review-value">{{ localMembers[localPersonalMember].state }}</span>
-              </div>
-            </div>
+            </template>
           </template>
         </div>
 
@@ -333,6 +343,7 @@ const router = useRouter()
 const budgetStore = useBudgetStore()
 
 const step = ref(1)
+const skippedTax = ref(false)
 const localMode = ref('personal')
 const localPersonalMember = ref('mine')
 const localMembers = reactive({
@@ -413,7 +424,7 @@ function finish() {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   padding: 40px 32px;
-  backdrop-filter: blur(20px);
+  background-image: var(--gradient-card);
   box-shadow: var(--shadow-glass);
   margin: auto;
 }
@@ -562,7 +573,7 @@ function finish() {
 }
 
 .member-color.yours {
-  background: #f97316;
+  background: #06B6D4;
 }
 
 .mapping-toggle {
@@ -839,6 +850,29 @@ function finish() {
 .btn-secondary:hover {
   color: var(--text-primary);
   border-color: var(--text-tertiary);
+}
+
+.btn-skip {
+  padding: 11px 22px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-skip:hover {
+  color: var(--text-primary);
+}
+
+.review-skipped {
+  color: var(--text-tertiary);
+  font-style: italic;
+  font-weight: 500;
 }
 
 .btn-get-started {

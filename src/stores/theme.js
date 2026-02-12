@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
-  const theme = ref(localStorage.getItem('vision-theme') || 'light')
+  const theme = ref(localStorage.getItem('vision-theme') || 'dark')
 
   const currentTheme = computed(() => theme.value)
   const isDark = computed(() => theme.value === 'dark')

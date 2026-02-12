@@ -52,8 +52,7 @@ const categoryIcon = computed(() => iconMap[props.category] || Target)
   gap: 14px;
   padding: 18px 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
@@ -64,8 +63,8 @@ const categoryIcon = computed(() => iconMap[props.category] || Target)
 }
 
 .category-card:hover {
-  box-shadow: var(--shadow-hover);
-  border-color: rgba(0, 230, 138, 0.25);
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
 }
 
 .category-card:hover .chevron {

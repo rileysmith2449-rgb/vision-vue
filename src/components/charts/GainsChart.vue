@@ -46,9 +46,9 @@ const chartData = computed(() => ({
       portfolioStore.shortTermGains,
       portfolioStore.unrealizedLosses,
     ],
-    backgroundColor: ['#00e68a', '#3b82f6', '#f97316'],
+    backgroundColor: ['#14B8A6', '#3B82F6', '#06B6D4'],
     borderColor: 'transparent',
-    borderRadius: 6,
+    borderRadius: 4,
     barThickness: 28,
   }]
 }))
@@ -60,23 +60,32 @@ const chartOptions = computed(() => ({
   plugins: {
     legend: { display: false },
     tooltip: {
+      backgroundColor: '#1E293B',
+      borderColor: 'rgba(56, 189, 248, 0.08)',
+      borderWidth: 1,
+      cornerRadius: 8,
+      titleColor: '#F1F5F9',
+      bodyColor: '#F1F5F9',
+      padding: 12,
       callbacks: {
         label: (context) => ` ${formatCurrency(context.parsed.x)}`
       }
     }
   },
+  animation: { duration: 800 },
   scales: {
     x: {
-      grid: { display: false },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
       ticks: {
         color: textColor.value,
+        font: { size: 11 },
         callback: (value) => formatCurrency(value),
       },
       border: { display: false },
     },
     y: {
-      grid: { display: false },
-      ticks: { color: textColor.value },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
+      ticks: { color: textColor.value, font: { size: 11 } },
       border: { display: false },
     }
   }

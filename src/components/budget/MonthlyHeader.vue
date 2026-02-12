@@ -77,13 +77,18 @@ function nextMonth() {
 <style scoped>
 .monthly-header {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
   padding: 24px;
   margin-bottom: 24px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.monthly-header:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
 }
 
 .month-nav {
@@ -109,8 +114,8 @@ function nextMonth() {
 }
 
 .nav-btn:hover {
-  border-color: var(--electric-teal);
-  color: var(--electric-teal);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
 }
 
 .month-name {
@@ -162,13 +167,13 @@ function nextMonth() {
   border-radius: 8px;
   font-size: 0.82rem;
   font-weight: 600;
-  background: rgba(0, 230, 138, 0.12);
+  background: rgba(20, 184, 166, 0.12);
   color: var(--electric-teal);
   margin-top: 12px;
 }
 
 .total-remaining.over {
-  background: rgba(244, 91, 105, 0.12);
+  background: rgba(239, 68, 68, 0.12);
   color: var(--persimmon);
 }
 

@@ -27,9 +27,9 @@ const props = defineProps({
 
 const fillColor = computed(() => {
   if (props.color) return props.color
-  if (props.value > 100) return 'var(--persimmon)'
-  if (props.value > 80) return '#f0a500'
-  return 'var(--electric-teal)'
+  if (props.value > 100) return 'var(--negative)'
+  if (props.value > 80) return 'var(--accent-sky)'
+  return 'var(--accent-teal)'
 })
 </script>
 
@@ -57,13 +57,13 @@ const fillColor = computed(() => {
 }
 
 .progress-percent.over {
-  color: var(--persimmon);
+  color: var(--negative);
 }
 
 .progress-track {
   width: 100%;
   height: 8px;
-  background: rgba(135, 206, 235, 0.15);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 4px;
   overflow: hidden;
 }

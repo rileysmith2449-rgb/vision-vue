@@ -151,7 +151,7 @@ const cardsWithSpend = computed(() => {
 .overall-optimal-bar {
   width: 80px;
   height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }

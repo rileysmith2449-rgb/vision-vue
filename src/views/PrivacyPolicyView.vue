@@ -166,7 +166,7 @@
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   padding: 48px 40px;
-  backdrop-filter: blur(20px);
+  background-image: var(--gradient-card);
   box-shadow: var(--shadow-glass);
 }
 

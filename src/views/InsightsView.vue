@@ -37,6 +37,12 @@ onMounted(() => {
 <style scoped>
 .insights {
   max-width: 1200px;
+  animation: viewFadeIn 0.3s ease-out;
+}
+
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .loading {

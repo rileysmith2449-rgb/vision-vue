@@ -254,10 +254,10 @@ const compareData = computed(() => {
 })
 
 function getWaterfallColor(type, alpha = 1) {
-  if (type === 'income') return alpha < 1 ? `rgba(0, 230, 138, ${alpha})` : '#00e68a'
-  if (type === 'savings') return alpha < 1 ? `rgba(100, 149, 237, ${alpha})` : '#6495ed'
-  if (type === 'deficit') return alpha < 1 ? `rgba(255, 99, 71, ${alpha})` : '#ff6347'
-  return alpha < 1 ? `rgba(255, 99, 71, ${alpha})` : 'rgba(255, 99, 71, 0.7)'
+  if (type === 'income') return alpha < 1 ? `rgba(20, 184, 166, ${alpha})` : '#14B8A6'
+  if (type === 'savings') return alpha < 1 ? `rgba(59, 130, 246, ${alpha})` : '#3B82F6'
+  if (type === 'deficit') return alpha < 1 ? `rgba(239, 68, 68, ${alpha})` : '#EF4444'
+  return alpha < 1 ? `rgba(239, 68, 68, ${alpha})` : 'rgba(239, 68, 68, 0.7)'
 }
 
 const chartData = computed(() => {
@@ -269,8 +269,8 @@ const chartData = computed(() => {
         {
           label: 'Budget',
           data: budgetValues,
-          backgroundColor: 'rgba(100, 149, 237, 0.6)',
-          borderColor: '#6495ed',
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+          borderColor: '#3B82F6',
           borderWidth: 1,
           borderRadius: 4,
         },
@@ -278,14 +278,14 @@ const chartData = computed(() => {
           label: 'Actual',
           data: actualValues,
           backgroundColor: actualValues.map((v, i) => {
-            if (i === 0) return 'rgba(0, 230, 138, 0.7)'
-            if (i === labels.length - 1) return 'rgba(139, 92, 246, 0.7)'
-            return v > budgetValues[i] ? 'rgba(255, 99, 71, 0.7)' : 'rgba(0, 230, 138, 0.7)'
+            if (i === 0) return 'rgba(20, 184, 166, 0.7)'
+            if (i === labels.length - 1) return 'rgba(20, 184, 166, 0.7)'
+            return v > budgetValues[i] ? 'rgba(239, 68, 68, 0.7)' : 'rgba(20, 184, 166, 0.7)'
           }),
           borderColor: actualValues.map((v, i) => {
-            if (i === 0) return '#00e68a'
-            if (i === labels.length - 1) return '#8b5cf6'
-            return v > budgetValues[i] ? '#ff6347' : '#00e68a'
+            if (i === 0) return '#14B8A6'
+            if (i === labels.length - 1) return '#14B8A6'
+            return v > budgetValues[i] ? '#EF4444' : '#14B8A6'
           }),
           borderWidth: 1,
           borderRadius: 4,
@@ -321,6 +321,13 @@ const chartOptions = computed(() => ({
   plugins: {
     legend: { display: false },
     tooltip: {
+      backgroundColor: '#1E293B',
+      borderColor: 'rgba(56, 189, 248, 0.08)',
+      borderWidth: 1,
+      cornerRadius: 8,
+      titleColor: '#F1F5F9',
+      bodyColor: '#F1F5F9',
+      padding: 12,
       callbacks: {
         title: (items) => items[0]?.label || '',
         label: (context) => {
@@ -341,7 +348,7 @@ const chartOptions = computed(() => ({
   },
   scales: {
     x: {
-      grid: { display: false },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
       ticks: {
         color: textColor.value,
         font: { size: 11, weight: '600' },
@@ -351,15 +358,17 @@ const chartOptions = computed(() => ({
       border: { display: false },
     },
     y: {
-      grid: { color: borderColor.value },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
       ticks: {
         color: textColor.value,
+        font: { size: 11 },
         callback: (value) => formatCurrency(value),
       },
       border: { display: false },
       beginAtZero: true,
     }
-  }
+  },
+  animation: { duration: 800 },
 }))
 </script>
 
@@ -398,7 +407,7 @@ const chartOptions = computed(() => ({
 }
 
 .toggle-btn.active {
-  background: var(--violet-pop);
+  background: var(--accent-blue);
   color: #fff;
 }
 
@@ -430,12 +439,12 @@ const chartOptions = computed(() => ({
 }
 
 .budget-dot {
-  background: rgba(100, 149, 237, 0.6);
-  border: 1px solid #6495ed;
+  background: rgba(59, 130, 246, 0.6);
+  border: 1px solid #3B82F6;
 }
 
 .actual-dot {
-  background: rgba(0, 230, 138, 0.7);
-  border: 1px solid #00e68a;
+  background: rgba(20, 184, 166, 0.7);
+  border: 1px solid #14B8A6;
 }
 </style>

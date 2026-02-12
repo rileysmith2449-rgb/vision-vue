@@ -46,8 +46,7 @@ const expanded = ref(false)
 <style scoped>
 .liability-group {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
@@ -55,8 +54,13 @@ const expanded = ref(false)
   transition: all 0.2s ease;
 }
 
+.liability-group:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
 .liability-group.expanded {
-  border-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.15);
 }
 
 .group-header {

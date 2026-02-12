@@ -183,8 +183,7 @@ const interestSaved = computed(() => currentTotalInterest.value - newTotalIntere
 /* Summary Card */
 .summary-card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
@@ -231,8 +230,7 @@ const interestSaved = computed(() => currentTotalInterest.value - newTotalIntere
 /* Simulator Card */
 .simulator-card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
@@ -281,7 +279,7 @@ const interestSaved = computed(() => currentTotalInterest.value - newTotalIntere
 }
 
 .payment-input:focus {
-  border-color: var(--electric-teal);
+  border-color: var(--border-focus);
 }
 
 .payment-slider {
@@ -289,7 +287,7 @@ const interestSaved = computed(() => currentTotalInterest.value - newTotalIntere
   width: 100%;
   max-width: 400px;
   margin-top: 12px;
-  accent-color: var(--electric-teal);
+  accent-color: var(--accent-blue);
 }
 
 .input-hint {
@@ -312,8 +310,8 @@ const interestSaved = computed(() => currentTotalInterest.value - newTotalIntere
 }
 
 .result-item.highlight {
-  border-color: var(--electric-teal);
-  background: rgba(0, 255, 159, 0.05);
+  border-color: var(--accent-teal);
+  background: rgba(20, 184, 166, 0.05);
 }
 
 .result-label {

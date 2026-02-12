@@ -220,8 +220,8 @@ async function handleDisconnect(memberId) {
 }
 
 .status-badge.connected {
-  background: rgba(100, 149, 237, 0.12);
-  color: var(--electric-teal);
+  background: rgba(20, 184, 166, 0.12);
+  color: var(--accent-teal);
 }
 
 .status-badge.disconnected {
@@ -268,13 +268,13 @@ async function handleDisconnect(memberId) {
 }
 
 .disconnect-btn:hover {
-  border-color: #e74c3c;
-  color: #e74c3c;
+  border-color: var(--negative);
+  color: var(--negative);
 }
 
 .error-text {
   font-size: 0.8rem;
-  color: #e74c3c;
+  color: var(--negative);
 }
 
 .hint-text {

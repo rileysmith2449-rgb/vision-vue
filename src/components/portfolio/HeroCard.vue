@@ -73,8 +73,7 @@ const gainPercent = computed(() => {
 <style scoped>
 .hero-card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
@@ -90,7 +89,7 @@ const gainPercent = computed(() => {
   right: 0;
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(0, 230, 138, 0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -109,11 +108,11 @@ const gainPercent = computed(() => {
 
 .hero-value {
   font-family: 'Lexend', sans-serif;
-  font-size: 2.6rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 .hero-gains {
@@ -128,15 +127,15 @@ const gainPercent = computed(() => {
   font-weight: 600;
 }
 
-.gain-amount.positive { color: var(--electric-teal); }
-.gain-amount.negative { color: var(--persimmon); }
+.gain-amount.positive { color: var(--accent-teal); }
+.gain-amount.negative { color: var(--negative); }
 
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
   padding-top: 24px;
-  border-top: 1px solid var(--border-glass);
+  border-top: 1px solid rgba(59, 130, 246, 0.15);
 }
 
 .hero-stat {
@@ -169,23 +168,23 @@ const gainPercent = computed(() => {
 }
 
 .stat-icon-wrap.green {
-  background: rgba(0, 230, 138, 0.1);
-  color: var(--electric-teal);
+  background: rgba(20, 184, 166, 0.1);
+  color: var(--accent-teal);
 }
 
 .stat-icon-wrap.blue {
-  background: rgba(0, 196, 255, 0.1);
-  color: #00c4ff;
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--accent-sky);
 }
 
 .stat-icon-wrap.red {
-  background: rgba(244, 91, 105, 0.1);
-  color: var(--persimmon);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--negative);
 }
 
 .stat-icon-wrap.purple {
-  background: rgba(139, 92, 246, 0.1);
-  color: var(--violet-pop);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
 }
 
 .stat-label {
@@ -204,8 +203,8 @@ const gainPercent = computed(() => {
   margin-top: 2px;
 }
 
-.stat-value.positive { color: var(--electric-teal); }
-.stat-value.negative { color: var(--persimmon); }
+.stat-value.positive { color: var(--accent-teal); }
+.stat-value.negative { color: var(--negative); }
 
 @media (max-width: 1024px) {
   .hero-value {

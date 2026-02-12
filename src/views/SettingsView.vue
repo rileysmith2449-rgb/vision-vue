@@ -332,6 +332,12 @@ const stateOptions = [
 <style scoped>
 .settings {
   max-width: 720px;
+  animation: viewFadeIn 0.3s ease-out;
+}
+
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .settings-grid {
@@ -378,8 +384,8 @@ const stateOptions = [
 }
 
 .theme-toggle.active {
-  background: var(--electric-teal);
-  border-color: var(--electric-teal);
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
 
 .toggle-knob {
@@ -400,7 +406,7 @@ const stateOptions = [
 
 .theme-toggle.active .toggle-knob {
   transform: translateX(24px);
-  color: var(--electric-teal);
+  color: var(--accent-blue);
 }
 
 /* Mode toggle */
@@ -437,8 +443,8 @@ const stateOptions = [
 }
 
 .mode-btn.active {
-  background: var(--electric-teal);
-  color: #000;
+  background: var(--accent-blue);
+  color: #F1F5F9;
 }
 
 /* Family Members */
@@ -467,7 +473,7 @@ const stateOptions = [
 }
 
 .member-color.yours {
-  background: #f97316;
+  background: #06B6D4;
 }
 
 .member-fields {
@@ -520,8 +526,8 @@ const stateOptions = [
 }
 
 .map-btn.active {
-  background: var(--electric-teal);
-  color: #000;
+  background: var(--accent-blue);
+  color: #F1F5F9;
 }
 
 /* Tax Information */
@@ -586,7 +592,7 @@ const stateOptions = [
 }
 
 .text-input:focus {
-  border-color: var(--electric-teal);
+  border-color: var(--accent-blue);
 }
 
 .currency-input-wrap {
@@ -600,7 +606,7 @@ const stateOptions = [
 }
 
 .currency-input-wrap:focus-within {
-  border-color: var(--electric-teal);
+  border-color: var(--accent-blue);
 }
 
 .currency-prefix {
@@ -645,7 +651,7 @@ const stateOptions = [
 }
 
 .select-input:focus {
-  border-color: var(--electric-teal);
+  border-color: var(--accent-blue);
 }
 
 .sign-out-btn {
@@ -654,9 +660,9 @@ const stateOptions = [
   gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(244, 91, 105, 0.3);
-  background: rgba(244, 91, 105, 0.08);
-  color: var(--persimmon);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--negative);
   font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
@@ -666,8 +672,8 @@ const stateOptions = [
 }
 
 .sign-out-btn:hover {
-  background: rgba(244, 91, 105, 0.15);
-  border-color: rgba(244, 91, 105, 0.5);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 @media (max-width: 640px) {

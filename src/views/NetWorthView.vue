@@ -136,6 +136,12 @@ onMounted(() => {
 <style scoped>
 .net-worth {
   max-width: 1200px;
+  animation: viewFadeIn 0.3s ease-out;
+}
+
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .loading {
@@ -158,15 +164,20 @@ onMounted(() => {
   gap: 6px;
   padding: 20px 24px;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: 16px;
   box-shadow: var(--shadow-glass);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
 }
 
 .stat-card.hero {
-  border-color: rgba(20, 184, 166, 0.25);
+  border-color: rgba(59, 130, 246, 0.25);
 }
 
 .stat-label {
@@ -187,7 +198,7 @@ onMounted(() => {
 }
 
 .stat-value.assets {
-  color: #6495ed;
+  color: var(--accent-blue);
 }
 
 .stat-value.liabilities {
@@ -225,8 +236,7 @@ onMounted(() => {
 .property-card {
   padding: 18px 22px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
@@ -234,12 +244,13 @@ onMounted(() => {
 
 .property-card.clickable {
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
 }
 
 .property-card.clickable:hover {
-  border-color: rgba(100, 149, 237, 0.3);
+  border-color: var(--border-focus);
   background: var(--bg-subtle);
+  transform: translateY(-1px);
 }
 
 .property-info {

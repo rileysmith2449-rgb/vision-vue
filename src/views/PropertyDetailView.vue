@@ -244,8 +244,7 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
 /* Summary Card */
 .summary-card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
@@ -292,8 +291,7 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
 /* Simulator Card */
 .simulator-card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
@@ -342,7 +340,7 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
 }
 
 .price-input:focus {
-  border-color: var(--electric-teal);
+  border-color: var(--border-focus);
 }
 
 .price-slider {
@@ -350,7 +348,7 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
   width: 100%;
   max-width: 400px;
   margin-top: 12px;
-  accent-color: var(--electric-teal);
+  accent-color: var(--accent-blue);
 }
 
 .input-hint {
@@ -373,8 +371,8 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
 }
 
 .result-item.highlight {
-  border-color: var(--electric-teal);
-  background: rgba(0, 255, 159, 0.05);
+  border-color: var(--accent-teal);
+  background: rgba(20, 184, 166, 0.05);
 }
 
 .result-label {
@@ -404,8 +402,7 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
 /* Comparison Card */
 .comparison-card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
@@ -456,7 +453,7 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
 .comparison-cell.negative { color: var(--persimmon); }
 
 .comparison-cell.active-col {
-  background: rgba(157, 78, 221, 0.06);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .rate-tag {
@@ -488,13 +485,13 @@ const daysRemaining = computed(() => property.value ? daysUntilLongTerm(property
 }
 
 .savings-banner.savings-active {
-  background: rgba(0, 255, 159, 0.08);
-  border: 1px solid rgba(0, 255, 159, 0.25);
+  background: rgba(20, 184, 166, 0.08);
+  border: 1px solid rgba(20, 184, 166, 0.25);
 }
 
 .savings-banner.savings-potential {
-  background: rgba(157, 78, 221, 0.08);
-  border: 1px solid rgba(157, 78, 221, 0.25);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 .savings-icon {

@@ -75,8 +75,7 @@ function formatGain(h) {
 <style scoped>
 .asset-group {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
@@ -84,8 +83,13 @@ function formatGain(h) {
   transition: all 0.2s ease;
 }
 
+.asset-group:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
 .asset-group.expanded {
-  border-color: rgba(100, 149, 237, 0.2);
+  border-color: var(--border-focus);
 }
 
 .group-header {

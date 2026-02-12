@@ -81,10 +81,8 @@ function isActive(link) {
   left: 0;
   width: 260px;
   height: 100vh;
-  background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-right: 1px solid var(--border-glass);
+  background: var(--bg-base);
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   padding: 28px 16px 20px;
@@ -123,7 +121,7 @@ function isActive(link) {
 }
 
 .brand-accent {
-  color: var(--electric-teal);
+  color: var(--accent-blue);
 }
 
 .sidebar-nav {
@@ -152,8 +150,9 @@ function isActive(link) {
 }
 
 .nav-link.active {
-  background: rgba(100, 149, 237, 0.08);
-  color: var(--electric-teal);
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--accent-blue);
+  border-left: 3px solid var(--accent-blue);
 }
 
 .nav-label {
@@ -188,6 +187,6 @@ function isActive(link) {
 }
 
 .logout-btn:hover {
-  color: var(--persimmon);
+  color: var(--negative);
 }
 </style>

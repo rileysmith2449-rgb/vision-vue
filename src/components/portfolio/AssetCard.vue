@@ -76,16 +76,16 @@ const daysLeft = computed(() =>
   gap: 16px;
   padding: 18px 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
-  transition: box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .asset-card:hover {
-  box-shadow: var(--shadow-hover);
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
 }
 
 .asset-left {
@@ -143,8 +143,8 @@ const daysLeft = computed(() =>
   font-weight: 600;
 }
 
-.asset-gain.positive { color: var(--electric-teal); }
-.asset-gain.negative { color: var(--persimmon); }
+.asset-gain.positive { color: var(--accent-teal); }
+.asset-gain.negative { color: var(--negative); }
 
 .asset-tax {
   display: flex;

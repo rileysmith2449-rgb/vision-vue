@@ -40,9 +40,7 @@ function isActive(link) {
   left: 0;
   right: 0;
   height: 68px;
-  background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: var(--bg-base);
   border-top: 1px solid var(--border-glass);
   display: flex;
   align-items: center;
@@ -64,7 +62,7 @@ function isActive(link) {
 }
 
 .mobile-nav-item.active {
-  color: var(--electric-teal);
+  color: var(--accent-blue);
 }
 
 .mobile-nav-label {

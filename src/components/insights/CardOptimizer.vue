@@ -414,8 +414,7 @@ const enrollmentSuggestions = computed(() => {
 
 .optimization-item {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
@@ -428,7 +427,7 @@ const enrollmentSuggestions = computed(() => {
 }
 
 .optimization-item.expanded {
-  border-color: rgba(100, 149, 237, 0.25);
+  border-color: var(--border-focus);
 }
 
 .optimization-row {
@@ -498,7 +497,7 @@ const enrollmentSuggestions = computed(() => {
   gap: 3px;
   padding: 2px 8px;
   border-radius: 6px;
-  background: rgba(100, 149, 237, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   color: var(--electric-teal);
   font-size: 0.68rem;
   font-weight: 700;
@@ -547,8 +546,8 @@ const enrollmentSuggestions = computed(() => {
   align-items: center;
   padding: 14px 18px;
   margin-top: 4px;
-  background: rgba(100, 149, 237, 0.06);
-  border: 1px solid rgba(100, 149, 237, 0.15);
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: var(--radius-md);
 }
 
@@ -587,7 +586,7 @@ const enrollmentSuggestions = computed(() => {
 }
 
 .enrollment-header svg {
-  color: var(--violet-pop);
+  color: var(--accent-blue);
 }
 
 .enrollment-list {
@@ -599,9 +598,8 @@ const enrollmentSuggestions = computed(() => {
 .enrollment-card {
   padding: 14px 18px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background-image: var(--gradient-card);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
   transition: box-shadow 0.2s ease;
@@ -627,7 +625,7 @@ const enrollmentSuggestions = computed(() => {
 .enrollment-card-reward {
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--violet-pop);
+  color: var(--accent-blue);
 }
 
 .enrollment-categories {
@@ -641,7 +639,7 @@ const enrollmentSuggestions = computed(() => {
   border-radius: 6px;
   font-size: 0.7rem;
   font-weight: 600;
-  background: rgba(139, 92, 246, 0.08);
+  background: rgba(59, 130, 246, 0.08);
   color: var(--text-secondary);
 }
 

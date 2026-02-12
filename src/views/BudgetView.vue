@@ -230,6 +230,12 @@ onMounted(() => {
 <style scoped>
 .budget {
   max-width: 1200px;
+  animation: viewFadeIn 0.3s ease-out;
+}
+
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Summary Cards */
@@ -246,15 +252,20 @@ onMounted(() => {
   gap: 12px;
   padding: 16px 18px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.summary-card:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
 }
 
 .summary-card.summary-negative {
-  border-color: rgba(255, 99, 71, 0.2);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .summary-card-icon {
@@ -268,27 +279,27 @@ onMounted(() => {
 }
 
 .income-icon {
-  background: rgba(0, 230, 138, 0.1);
+  background: rgba(20, 184, 166, 0.1);
   color: var(--electric-teal);
 }
 
 .fixed-icon {
-  background: rgba(100, 149, 237, 0.1);
-  color: #6495ed;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
 }
 
 .variable-icon {
-  background: rgba(249, 115, 22, 0.1);
-  color: #f97316;
+  background: rgba(6, 182, 212, 0.1);
+  color: #06B6D4;
 }
 
 .savings-card-icon {
-  background: rgba(139, 92, 246, 0.1);
-  color: var(--violet-pop);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
 }
 
 .savings-card-icon.negative {
-  background: rgba(255, 99, 71, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--persimmon);
 }
 
@@ -322,7 +333,7 @@ onMounted(() => {
 }
 
 .summary-card.summary-warn {
-  border-color: rgba(249, 115, 22, 0.25);
+  border-color: rgba(6, 182, 212, 0.25);
 }
 
 .summary-card-hint {
@@ -357,14 +368,14 @@ onMounted(() => {
 }
 
 .savings-pct-input-wrap:focus-within {
-  border-color: var(--violet-pop);
+  border-color: var(--accent-blue);
 }
 
 .savings-pct-input {
   width: 36px;
   border: none;
   background: transparent;
-  color: var(--violet-pop);
+  color: var(--accent-blue);
   font-size: 0.85rem;
   font-weight: 800;
   font-family: 'Lexend', sans-serif;
@@ -382,7 +393,7 @@ onMounted(() => {
 .savings-pct-symbol {
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--violet-pop);
+  color: var(--accent-blue);
 }
 
 /* Expense Groups */
@@ -396,18 +407,17 @@ onMounted(() => {
   justify-content: space-between;
   padding: 12px 16px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
   cursor: pointer;
   margin-bottom: 10px;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .expense-group-header:hover {
-  background: var(--bg-subtle);
+  background: rgba(30, 41, 59, 0.5);
 }
 
 .expense-group-left {
@@ -421,11 +431,11 @@ onMounted(() => {
 }
 
 .fixed-color {
-  color: #6495ed;
+  color: var(--accent-blue);
 }
 
 .variable-color {
-  color: #f97316;
+  color: var(--accent-cyan);
 }
 
 .expense-group-title {
@@ -507,7 +517,7 @@ onMounted(() => {
 }
 
 .member-btn.active {
-  background: var(--violet-pop);
+  background: var(--accent-blue);
   color: #fff;
 }
 
@@ -517,12 +527,12 @@ onMounted(() => {
 }
 
 .member-btn.owner-yours.active {
-  background: #f97316;
+  background: #06B6D4;
   color: #fff;
 }
 
 .member-btn.owner-ours.active {
-  background: #a855f7;
+  background: #38BDF8;
   color: #fff;
 }
 
@@ -534,15 +544,20 @@ onMounted(() => {
   margin-top: 24px;
   padding: 18px 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(0, 230, 138, 0.15);
+  background-image: var(--gradient-card);
+  border: 1px solid rgba(20, 184, 166, 0.15);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.savings-row:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
 }
 
 .savings-row.negative {
-  border-color: rgba(255, 99, 71, 0.2);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .savings-left {
@@ -557,13 +572,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 230, 138, 0.1);
+  background: rgba(20, 184, 166, 0.1);
   border-radius: var(--radius-sm);
   color: var(--electric-teal);
 }
 
 .savings-row.negative .savings-icon {
-  background: rgba(255, 99, 71, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--persimmon);
 }
 

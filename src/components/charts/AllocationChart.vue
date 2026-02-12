@@ -21,12 +21,12 @@ const portfolioStore = usePortfolioStore()
 const themeStore = useThemeStore()
 
 const colors = [
-  '#00e68a', // teal
-  '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#f97316', // persimmon
-  '#0ea5e9', // sky
-  '#6366f1', // mid-blue
+  '#3B82F6', // accent-blue
+  '#14B8A6', // accent-teal
+  '#38BDF8', // accent-sky
+  '#06B6D4', // accent-cyan
+  '#1E40AF', // deep-blue
+  '#0891B2', // dark-cyan
 ]
 
 function getCSSVar(name) {
@@ -57,7 +57,8 @@ const chartData = computed(() => {
     datasets: [{
       data,
       backgroundColor: colors.slice(0, labels.length),
-      borderColor: 'transparent',
+      borderColor: '#0B1120',
+      borderWidth: 2,
       hoverOffset: 6,
     }]
   }
@@ -79,6 +80,13 @@ const chartOptions = computed(() => ({
       }
     },
     tooltip: {
+      backgroundColor: '#1E293B',
+      borderColor: 'rgba(56, 189, 248, 0.08)',
+      borderWidth: 1,
+      cornerRadius: 8,
+      titleColor: '#F1F5F9',
+      bodyColor: '#F1F5F9',
+      padding: 12,
       callbacks: {
         label: (context) => {
           const value = context.parsed
@@ -88,7 +96,8 @@ const chartOptions = computed(() => ({
         }
       }
     }
-  }
+  },
+  animation: { duration: 800 },
 }))
 </script>
 

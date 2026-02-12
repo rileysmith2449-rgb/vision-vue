@@ -54,12 +54,16 @@ defineEmits(['click'])
 
 .btn-primary {
   background: var(--gradient-pop);
-  color: #0a1929;
+  color: #F1F5F9;
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 4px 20px rgba(0, 255, 159, 0.3);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn-secondary {
@@ -70,16 +74,16 @@ defineEmits(['click'])
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-card);
-  border-color: var(--electric-teal);
+  border-color: var(--accent-blue);
 }
 
 .btn-danger {
-  background: var(--persimmon);
+  background: var(--negative);
   color: #fff;
 }
 
 .btn-danger:hover:not(:disabled) {
-  box-shadow: 0 4px 20px rgba(255, 111, 97, 0.3);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
   transform: translateY(-1px);
 }
 </style>

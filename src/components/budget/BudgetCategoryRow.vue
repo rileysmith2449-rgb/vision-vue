@@ -229,8 +229,7 @@ onUnmounted(() => {
 <style scoped>
 .category-row {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
@@ -238,8 +237,13 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 
+.category-row:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
 .category-row.expanded {
-  border-color: rgba(0, 230, 138, 0.2);
+  border-color: var(--border-focus);
 }
 
 .row-header {
@@ -319,14 +323,14 @@ onUnmounted(() => {
 }
 
 .row-budget:hover {
-  background: rgba(0, 230, 138, 0.1);
-  color: var(--electric-teal);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
 }
 
 .budget-input {
   width: 80px;
   padding: 4px 8px;
-  border: 1px solid var(--electric-teal);
+  border: 1px solid var(--accent-blue);
   border-radius: 6px;
   background: var(--bg-subtle);
   color: var(--text-primary);
@@ -420,13 +424,13 @@ onUnmounted(() => {
 }
 
 .owner-tag.owner-yours {
-  background: rgba(249, 115, 22, 0.12);
-  color: #f97316;
+  background: rgba(6, 182, 212, 0.12);
+  color: #06B6D4;
 }
 
 .owner-tag.owner-ours {
-  background: rgba(168, 85, 247, 0.12);
-  color: #a855f7;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38BDF8;
 }
 
 .tx-card {
@@ -469,8 +473,8 @@ onUnmounted(() => {
 }
 
 .reclassify-btn:hover {
-  background: rgba(0, 230, 138, 0.1);
-  color: var(--electric-teal);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
 }
 
 @media (max-width: 1024px) {
@@ -503,8 +507,7 @@ onUnmounted(() => {
   max-height: 320px;
   overflow-y: auto;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -523,7 +526,7 @@ onUnmounted(() => {
 .reclassify-dropdown .dropdown-category {
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--electric-teal);
+  color: var(--accent-blue);
   padding: 8px 14px 4px;
   border-top: 1px solid var(--border-glass);
 }

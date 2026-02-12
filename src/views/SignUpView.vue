@@ -59,7 +59,7 @@ function handleError(e) {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
   padding: 40px 32px;
-  backdrop-filter: blur(20px);
+  background-image: var(--gradient-card);
   box-shadow: var(--shadow-glass);
 }
 

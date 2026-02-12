@@ -129,8 +129,7 @@ function taxLabel(holding) {
 <style scoped>
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
@@ -185,7 +184,7 @@ function taxLabel(holding) {
 }
 
 .holdings-table th.active {
-  color: var(--electric-teal);
+  color: var(--accent-blue);
 }
 
 .sort-icon {
@@ -208,8 +207,12 @@ function taxLabel(holding) {
   padding-right: 24px;
 }
 
+.holdings-table tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.5);
+}
+
 .holdings-table tbody tr:hover {
-  background: var(--bg-subtle);
+  background: var(--bg-surface-hover);
 }
 
 .holdings-table tbody tr:last-child td {
@@ -234,12 +237,12 @@ function taxLabel(holding) {
 }
 
 .cell-gain {
-  color: var(--electric-teal);
+  color: var(--accent-teal);
   font-weight: 600;
 }
 
 .cell-loss {
-  color: var(--persimmon);
+  color: var(--negative);
   font-weight: 600;
 }
 </style>

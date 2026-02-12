@@ -5,13 +5,15 @@
     <div v-if="portfolioStore.loading" class="loading">Loading portfolio...</div>
 
     <template v-else>
-      <HeroCard />
+      <div class="bento-grid">
+        <HeroCard class="span-3" />
 
-      <HoldingsChart class="section" />
+        <HoldingsChart class="span-2" />
 
-      <HoldingsTable class="section" />
+        <TopMovers class="span-1" />
 
-      <TopMovers class="section" />
+        <HoldingsTable class="span-3" />
+      </div>
     </template>
   </div>
 </template>
@@ -37,6 +39,12 @@ onMounted(() => {
 <style scoped>
 .dashboard {
   max-width: 1200px;
+  animation: viewFadeIn 0.3s ease-out;
+}
+
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .loading {
@@ -46,7 +54,18 @@ onMounted(() => {
   font-size: 1.1rem;
 }
 
-.section {
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
   margin-top: 24px;
+}
+
+.bento-grid .span-2 { grid-column: span 2; }
+.bento-grid .span-3 { grid-column: span 3; }
+
+@media (max-width: 1024px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .bento-grid .span-2, .bento-grid .span-3 { grid-column: span 1; }
 }
 </style>

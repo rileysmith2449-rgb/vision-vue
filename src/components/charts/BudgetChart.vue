@@ -44,7 +44,7 @@ const chartData = computed(() => {
   const spent = labels.map(cat => categories[cat].total)
   const budgets = labels.map(cat => categories[cat].budget)
   const spentColors = labels.map(cat =>
-    categories[cat].percentage > 100 ? '#f97316' : '#00e68a'
+    categories[cat].percentage > 100 ? '#06B6D4' : '#14B8A6'
   )
 
   return {
@@ -60,7 +60,7 @@ const chartData = computed(() => {
       {
         label: 'Budget',
         data: budgets,
-        backgroundColor: themeStore.isDark ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.35)',
+        backgroundColor: 'rgba(148, 163, 184, 0.15)',
         borderColor: 'transparent',
         borderRadius: 4,
       }
@@ -82,13 +82,20 @@ const chartOptions = computed(() => ({
         font: { size: 12 },
         generateLabels: (chart) => {
           return [
-            { text: 'Spent', fillStyle: '#00e68a', strokeStyle: 'transparent', pointStyle: 'rectRounded' },
-            { text: 'Budget', fillStyle: themeStore.isDark ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.35)', strokeStyle: 'transparent', pointStyle: 'rectRounded' },
+            { text: 'Spent', fillStyle: '#14B8A6', strokeStyle: 'transparent', pointStyle: 'rectRounded' },
+            { text: 'Budget', fillStyle: 'rgba(148, 163, 184, 0.15)', strokeStyle: 'transparent', pointStyle: 'rectRounded' },
           ]
         }
       }
     },
     tooltip: {
+      backgroundColor: '#1E293B',
+      borderColor: 'rgba(56, 189, 248, 0.08)',
+      borderWidth: 1,
+      cornerRadius: 8,
+      titleColor: '#F1F5F9',
+      bodyColor: '#F1F5F9',
+      padding: 12,
       callbacks: {
         label: (context) => ` ${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
       }
@@ -96,7 +103,7 @@ const chartOptions = computed(() => ({
   },
   scales: {
     x: {
-      grid: { display: false },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
       ticks: {
         color: textColor.value,
         font: { size: 11 },
@@ -107,15 +114,17 @@ const chartOptions = computed(() => ({
     },
     y: {
       grid: {
-        color: borderColor.value,
+        color: 'rgba(148, 163, 184, 0.08)',
       },
       ticks: {
         color: textColor.value,
+        font: { size: 11 },
         callback: (value) => formatCurrency(value),
       },
       border: { display: false },
     }
-  }
+  },
+  animation: { duration: 800 },
 }))
 </script>
 

@@ -132,8 +132,7 @@ const optimalPercent = computed(() => {
 <style scoped>
 .credit-card-item {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
@@ -146,7 +145,7 @@ const optimalPercent = computed(() => {
 }
 
 .credit-card-item.expanded {
-  border-color: rgba(100, 149, 237, 0.25);
+  border-color: var(--border-focus);
 }
 
 .card-visual {
@@ -295,7 +294,7 @@ const optimalPercent = computed(() => {
 }
 
 .txn-suboptimal {
-  background: rgba(255, 99, 71, 0.04);
+  background: rgba(239, 68, 68, 0.04);
 }
 
 .txn-optimal-icon {

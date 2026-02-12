@@ -70,8 +70,7 @@ const topLosers = computed(() =>
 <style scoped>
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
@@ -104,11 +103,11 @@ const topLosers = computed(() =>
 }
 
 .column-title--gain {
-  color: var(--electric-teal);
+  color: var(--accent-teal);
 }
 
 .column-title--loss {
-  color: var(--persimmon);
+  color: var(--negative);
 }
 
 .mover-row {
@@ -141,11 +140,11 @@ const topLosers = computed(() =>
 }
 
 .dot--gain {
-  background: var(--electric-teal);
+  background: var(--accent-teal);
 }
 
 .dot--loss {
-  background: var(--persimmon);
+  background: var(--negative);
 }
 
 .mover-symbol {
@@ -162,11 +161,11 @@ const topLosers = computed(() =>
 }
 
 .mover-amount--gain {
-  color: var(--electric-teal);
+  color: var(--accent-teal);
 }
 
 .mover-amount--loss {
-  color: var(--persimmon);
+  color: var(--negative);
 }
 
 .no-data {

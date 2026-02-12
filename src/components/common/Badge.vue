@@ -21,22 +21,22 @@ defineProps({
 }
 
 .badge-gain {
-  background: rgba(0, 255, 159, 0.15);
-  color: var(--electric-teal);
+  background: rgba(20, 184, 166, 0.15);
+  color: var(--accent-teal);
 }
 
 .badge-loss {
-  background: rgba(255, 111, 97, 0.15);
-  color: var(--persimmon);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--negative);
 }
 
 .badge-neutral {
-  background: rgba(135, 206, 235, 0.15);
+  background: rgba(56, 189, 248, 0.15);
   color: var(--text-secondary);
 }
 
 .badge-info {
-  background: rgba(157, 78, 221, 0.15);
-  color: var(--violet-pop);
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue);
 }
 </style>

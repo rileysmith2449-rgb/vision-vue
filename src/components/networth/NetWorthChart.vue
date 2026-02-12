@@ -56,9 +56,9 @@ const periods = [
   { key: 'ALL', label: 'All', days: Infinity },
 ]
 const benchmarks = [
-  { key: 'sp500', label: 'S&P 500', color: '#6495ed' },
-  { key: 'inflation', label: 'US Inflation', color: '#f59e0b' },
-  { key: 'bitcoin', label: 'Bitcoin', color: '#f97316' },
+  { key: 'sp500', label: 'S&P 500', color: '#3B82F6' },
+  { key: 'inflation', label: 'US Inflation', color: '#38BDF8' },
+  { key: 'bitcoin', label: 'Bitcoin', color: '#06B6D4' },
 ]
 
 const activePeriod = ref('1Y')
@@ -148,7 +148,7 @@ const chartData = computed(() => {
       label: 'Net Worth',
       data: nw.map(p => ((p.value - base) / Math.abs(base)) * 100),
       borderColor: '#14b8a6',
-      backgroundColor: 'rgba(20, 184, 166, 0.08)',
+      backgroundColor: 'rgba(59, 130, 246, 0.12)',
       fill: true,
       tension: 0.35,
       pointRadius: 0,
@@ -179,7 +179,7 @@ const chartData = computed(() => {
       label: 'Net Worth',
       data: nw.map(p => p.value),
       borderColor: '#14b8a6',
-      backgroundColor: 'rgba(20, 184, 166, 0.08)',
+      backgroundColor: 'rgba(59, 130, 246, 0.12)',
       fill: true,
       tension: 0.35,
       pointRadius: 0,
@@ -208,9 +208,11 @@ const chartOptions = computed(() => ({
       }
     },
     tooltip: {
-      backgroundColor: 'rgba(15, 23, 42, 0.9)',
-      titleColor: '#e2e8f0',
-      bodyColor: '#e2e8f0',
+      backgroundColor: '#1E293B',
+      borderColor: 'rgba(56, 189, 248, 0.08)',
+      borderWidth: 1,
+      titleColor: '#F1F5F9',
+      bodyColor: '#F1F5F9',
       padding: 12,
       cornerRadius: 8,
       callbacks: {
@@ -226,7 +228,7 @@ const chartOptions = computed(() => ({
   },
   scales: {
     x: {
-      grid: { color: borderColor.value },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
       ticks: {
         color: textColor.value,
         font: { size: 11 },
@@ -234,14 +236,15 @@ const chartOptions = computed(() => ({
       }
     },
     y: {
-      grid: { color: borderColor.value },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
       ticks: {
         color: textColor.value,
         font: { size: 11 },
         callback: (v) => showingReturn.value ? `${v >= 0 ? '+' : ''}${v.toFixed(1)}%` : formatCurrency(v)
       }
     }
-  }
+  },
+  animation: { duration: 800 },
 }))
 </script>
 
@@ -285,8 +288,8 @@ const chartOptions = computed(() => ({
 }
 
 .period-btn.active {
-  background: var(--electric-teal);
-  color: #000;
+  background: var(--accent-blue);
+  color: #fff;
 }
 
 .benchmark-toggle {
@@ -322,8 +325,8 @@ const chartOptions = computed(() => ({
 }
 
 .benchmark-btn.active {
-  background: rgba(100, 149, 237, 0.1);
-  border-color: rgba(100, 149, 237, 0.3);
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
   color: var(--text-primary);
 }
 

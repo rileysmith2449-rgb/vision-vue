@@ -52,10 +52,10 @@ const chartData = computed(() => ({
   datasets: [{
     data: topHoldings.value.map(h => h.currentValue),
     backgroundColor: topHoldings.value.map(h =>
-      h.currentValue >= h.costBasis ? '#00e68a' : '#f45b69'
+      h.currentValue >= h.costBasis ? '#14B8A6' : '#EF4444'
     ),
     borderColor: 'transparent',
-    borderRadius: 6,
+    borderRadius: 4,
     barThickness: 24,
   }]
 }))
@@ -74,6 +74,13 @@ const chartOptions = computed(() => ({
   plugins: {
     legend: { display: false },
     tooltip: {
+      backgroundColor: '#1E293B',
+      borderColor: 'rgba(56, 189, 248, 0.08)',
+      borderWidth: 1,
+      cornerRadius: 8,
+      titleColor: '#F1F5F9',
+      bodyColor: '#F1F5F9',
+      padding: 12,
       callbacks: {
         label: (context) => {
           const holding = topHoldings.value[context.dataIndex]
@@ -90,18 +97,20 @@ const chartOptions = computed(() => ({
       }
     }
   },
+  animation: { duration: 800 },
   scales: {
     x: {
-      grid: { display: false },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
       ticks: {
         color: textColor.value,
+        font: { size: 11 },
         callback: (value) => formatCurrency(value),
       },
       border: { display: false },
     },
     y: {
-      grid: { display: false },
-      ticks: { color: textColor.value },
+      grid: { color: 'rgba(148, 163, 184, 0.08)' },
+      ticks: { color: textColor.value, font: { size: 11 } },
       border: { display: false },
     }
   }

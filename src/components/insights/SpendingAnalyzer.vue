@@ -620,7 +620,7 @@ const analysis = computed(() => {
 }
 
 .period-btn.active {
-  background: var(--violet-pop);
+  background: var(--accent-blue);
   color: #fff;
 }
 
@@ -638,15 +638,14 @@ const analysis = computed(() => {
   gap: 4px;
   padding: 16px 18px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
 }
 
 .summary-stat.highlight {
-  border-color: rgba(255, 99, 71, 0.2);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .summary-label {
@@ -672,8 +671,7 @@ const analysis = computed(() => {
   margin-bottom: 24px;
   padding: 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
@@ -690,7 +688,7 @@ const analysis = computed(() => {
   margin-bottom: 4px;
 }
 
-.block-title svg { color: var(--violet-pop); }
+.block-title svg { color: var(--accent-blue); }
 
 .block-subtitle {
   font-size: 0.78rem;
@@ -709,14 +707,14 @@ const analysis = computed(() => {
   padding: 14px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-glass);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
   transition: border-color 0.2s ease;
 }
 
-.combo-card.keep { border-color: rgba(0, 230, 138, 0.2); }
-.combo-card.add { border-color: rgba(139, 92, 246, 0.25); }
-.combo-card.evaluate { border-color: rgba(255, 193, 7, 0.25); }
-.combo-card.drop { border-color: rgba(255, 99, 71, 0.2); opacity: 0.6; }
+.combo-card.keep { border-color: rgba(20, 184, 166, 0.2); }
+.combo-card.add { border-color: rgba(59, 130, 246, 0.25); }
+.combo-card.evaluate { border-color: rgba(56, 189, 248, 0.25); }
+.combo-card.drop { border-color: rgba(239, 68, 68, 0.2); opacity: 0.6; }
 .combo-card.suggest { border-color: rgba(59, 130, 246, 0.25); }
 
 .combo-card-header {
@@ -741,16 +739,16 @@ const analysis = computed(() => {
   letter-spacing: 0.04em;
 }
 
-.combo-badge.keep { background: rgba(0, 230, 138, 0.12); color: var(--electric-teal); }
-.combo-badge.add { background: rgba(139, 92, 246, 0.12); color: var(--violet-pop); }
-.combo-badge.evaluate { background: rgba(255, 193, 7, 0.12); color: #ffc107; }
-.combo-badge.drop { background: rgba(255, 99, 71, 0.1); color: var(--persimmon); }
-.combo-badge.suggest { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.combo-badge.keep { background: rgba(20, 184, 166, 0.12); color: var(--electric-teal); }
+.combo-badge.add { background: rgba(59, 130, 246, 0.12); color: #3B82F6; }
+.combo-badge.evaluate { background: rgba(56, 189, 248, 0.12); color: #38BDF8; }
+.combo-badge.drop { background: rgba(239, 68, 68, 0.1); color: var(--persimmon); }
+.combo-badge.suggest { background: rgba(59, 130, 246, 0.12); color: #3B82F6; }
 
 .combo-warning {
   font-size: 0.72rem;
-  color: #ffc107;
-  background: rgba(255, 193, 7, 0.06);
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.06);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   margin-bottom: 8px;
@@ -803,7 +801,7 @@ const analysis = computed(() => {
   border-radius: 5px;
   font-size: 0.65rem;
   font-weight: 600;
-  background: rgba(139, 92, 246, 0.08);
+  background: rgba(59, 130, 246, 0.08);
   color: var(--text-secondary);
 }
 
@@ -918,7 +916,7 @@ const analysis = computed(() => {
 
 .cat-progress {
   height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -953,7 +951,7 @@ const analysis = computed(() => {
   display: flex;
   gap: 8px;
   padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .cat-txn-row:last-of-type {
@@ -961,7 +959,7 @@ const analysis = computed(() => {
 }
 
 .txn-not-optimal {
-  background: rgba(255, 99, 71, 0.03);
+  background: rgba(239, 68, 68, 0.03);
   border-radius: var(--radius-sm);
   padding-left: 4px;
   padding-right: 4px;
@@ -1027,7 +1025,7 @@ const analysis = computed(() => {
   padding: 14px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-glass);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .points-card-header {
@@ -1046,7 +1044,7 @@ const analysis = computed(() => {
 .points-balance {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--violet-pop);
+  color: var(--accent-blue);
 }
 
 .redemption-options {
@@ -1065,8 +1063,8 @@ const analysis = computed(() => {
 }
 
 .redemption-row.best {
-  background: rgba(0, 230, 138, 0.06);
-  border: 1px solid rgba(0, 230, 138, 0.15);
+  background: rgba(20, 184, 166, 0.06);
+  border: 1px solid rgba(20, 184, 166, 0.15);
 }
 
 .redemption-left {
@@ -1081,7 +1079,7 @@ const analysis = computed(() => {
   font-size: 0.6rem;
   font-weight: 800;
   text-transform: uppercase;
-  background: rgba(0, 230, 138, 0.15);
+  background: rgba(20, 184, 166, 0.15);
   color: var(--electric-teal);
 }
 

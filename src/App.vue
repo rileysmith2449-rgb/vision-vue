@@ -63,7 +63,8 @@ onUnmounted(() => {
     justify-content: center;
     width: 100%;
     padding: 24px 20px;
-    border-bottom: 1px solid var(--border-glass);
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-subtle);
   }
 }
 
@@ -78,7 +79,7 @@ onUnmounted(() => {
   width: 1px;
   height: 28px;
   background: var(--text-primary);
-  opacity: 0.25;
+  opacity: 0.18;
 }
 
 .top-bar-text {
@@ -97,16 +98,16 @@ onUnmounted(() => {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
 .fade-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(8px);
 }
 
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-8px);
 }
 </style>

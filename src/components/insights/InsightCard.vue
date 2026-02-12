@@ -65,17 +65,18 @@ const typeIcon = computed(() => {
   flex-direction: column;
   padding: 18px 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
   border-left: 3px solid transparent;
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .insight-card:hover {
   box-shadow: var(--shadow-hover);
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
 }
 
 .insight-card.is-expandable {
@@ -110,17 +111,17 @@ const typeIcon = computed(() => {
 }
 
 .insight-icon-wrap.opportunity {
-  background: rgba(100, 149, 237, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   color: var(--electric-teal);
 }
 
 .insight-icon-wrap.warning {
-  background: rgba(244, 91, 105, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--persimmon);
 }
 
 .insight-icon-wrap.info {
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   color: var(--violet-pop);
 }
 
@@ -150,7 +151,7 @@ const typeIcon = computed(() => {
   border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 700;
-  background: rgba(100, 149, 237, 0.08);
+  background: rgba(59, 130, 246, 0.08);
   color: var(--electric-teal);
 }
 

@@ -88,10 +88,9 @@ onMounted(() => {
   margin-bottom: 24px;
   padding: 20px 24px;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background-image: var(--gradient-card);
   border: 1px solid var(--border-glass);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
 }
 
