@@ -1,73 +1,294 @@
 <template>
   <div class="hero-card">
-    <div class="hero-top">
-      <div class="hero-label">Total Portfolio Value</div>
-      <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
-      <div class="hero-gains">
-        <Badge
-          :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
-          :label="formatPercent(gainPercent)"
-        />
-        <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
-          {{ formatCurrency(portfolioStore.totalGains) }}
-        </span>
+    <div class="hero-layout">
+      <!-- Left side: existing hero content -->
+      <div class="hero-left">
+        <div class="hero-top">
+          <div class="hero-label">Total Portfolio Value</div>
+          <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
+          <div class="hero-gains">
+            <Badge
+              :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
+              :label="formatPercent(gainPercent)"
+            />
+            <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
+              {{ formatCurrency(portfolioStore.totalGains) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="hero-grid">
+          <router-link to="/tax/long-term" class="hero-stat clickable">
+            <div class="stat-icon-wrap green">
+              <TrendingUp :size="16" stroke-width="2" />
+            </div>
+            <div>
+              <span class="stat-label">Long-term Gains</span>
+              <span class="stat-value positive">{{ formatCurrency(portfolioStore.longTermGains) }}</span>
+            </div>
+          </router-link>
+          <router-link to="/tax/short-term" class="hero-stat clickable">
+            <div class="stat-icon-wrap blue">
+              <Clock :size="16" stroke-width="2" />
+            </div>
+            <div>
+              <span class="stat-label">Short-term Gains</span>
+              <span class="stat-value">{{ formatCurrency(portfolioStore.shortTermGains) }}</span>
+            </div>
+          </router-link>
+          <router-link to="/tax/tax-impact" class="hero-stat clickable">
+            <div class="stat-icon-wrap red">
+              <Receipt :size="16" stroke-width="2" />
+            </div>
+            <div>
+              <span class="stat-label">Est. Tax Impact</span>
+              <span class="stat-value negative">{{ formatCurrency(portfolioStore.estimatedTaxImpact) }}</span>
+            </div>
+          </router-link>
+          <router-link to="/tax/harvestable" class="hero-stat clickable">
+            <div class="stat-icon-wrap purple">
+              <Scissors :size="16" stroke-width="2" />
+            </div>
+            <div>
+              <span class="stat-label">Harvestable</span>
+              <span class="stat-value">{{ formatCompactNumber(portfolioStore.harvestableAmount) }}</span>
+            </div>
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Right side: allocation chart + legend -->
+      <div class="hero-right">
+        <div class="chart-container">
+          <Doughnut :data="chartData" :options="chartOptions" :plugins="[centerTextPlugin]" />
+        </div>
+
+        <!-- Custom HTML legend -->
+        <div class="alloc-legend">
+          <button
+            v-if="drillCategory"
+            class="back-btn"
+            @click="goBack"
+          >
+            <ArrowLeft :size="14" /> All Categories
+          </button>
+
+          <template v-if="!drillCategory">
+            <button
+              v-for="(value, category) in portfolioStore.categoryTotals"
+              :key="category"
+              class="legend-row"
+              @click="drillInto(category)"
+            >
+              <span class="legend-dot" :style="{ background: categoryColorMap[category] || '#8B5CF6' }"></span>
+              <span class="legend-name">{{ category }}</span>
+              <span class="legend-pct">{{ getCategoryPct(value) }}%</span>
+            </button>
+          </template>
+
+          <template v-else>
+            <button
+              v-for="(holding, i) in drilledHoldings"
+              :key="holding.id"
+              class="legend-row"
+              @click="onHoldingClick(holding)"
+            >
+              <span class="legend-dot" :style="{ background: holdingColors[i] }"></span>
+              <span class="legend-name">{{ holding.symbol }}</span>
+              <span class="legend-val">{{ formatCurrency(holding.currentValue) }}</span>
+            </button>
+          </template>
+        </div>
       </div>
     </div>
 
-    <div class="hero-grid">
-      <router-link to="/tax/long-term" class="hero-stat clickable">
-        <div class="stat-icon-wrap green">
-          <TrendingUp :size="16" stroke-width="2" />
-        </div>
-        <div>
-          <span class="stat-label">Long-term Gains</span>
-          <span class="stat-value positive">{{ formatCurrency(portfolioStore.longTermGains) }}</span>
-        </div>
-      </router-link>
-      <router-link to="/tax/short-term" class="hero-stat clickable">
-        <div class="stat-icon-wrap blue">
-          <Clock :size="16" stroke-width="2" />
-        </div>
-        <div>
-          <span class="stat-label">Short-term Gains</span>
-          <span class="stat-value">{{ formatCurrency(portfolioStore.shortTermGains) }}</span>
-        </div>
-      </router-link>
-      <router-link to="/tax/tax-impact" class="hero-stat clickable">
-        <div class="stat-icon-wrap red">
-          <Receipt :size="16" stroke-width="2" />
-        </div>
-        <div>
-          <span class="stat-label">Est. Tax Impact</span>
-          <span class="stat-value negative">{{ formatCurrency(portfolioStore.estimatedTaxImpact) }}</span>
-        </div>
-      </router-link>
-      <router-link to="/tax/harvestable" class="hero-stat clickable">
-        <div class="stat-icon-wrap purple">
-          <Scissors :size="16" stroke-width="2" />
-        </div>
-        <div>
-          <span class="stat-label">Harvestable</span>
-          <span class="stat-value">{{ formatCompactNumber(portfolioStore.harvestableAmount) }}</span>
-        </div>
-      </router-link>
-    </div>
+    <SellSimulatorModal
+      v-if="selectedHolding"
+      :holding="selectedHolding"
+      @close="selectedHolding = null"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency, formatPercent, formatCompactNumber } from '@/utils/formatters'
-import { TrendingUp, Clock, Receipt, Scissors } from 'lucide-vue-next'
+import { TrendingUp, Clock, Receipt, Scissors, ArrowLeft } from 'lucide-vue-next'
 import Badge from '@/components/common/Badge.vue'
+import SellSimulatorModal from '@/components/charts/SellSimulatorModal.vue'
+import { Doughnut } from 'vue-chartjs'
+import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
+
+ChartJS.register(ArcElement, Tooltip)
 
 const portfolioStore = usePortfolioStore()
 
+// --- Hero card logic ---
 const gainPercent = computed(() => {
   if (portfolioStore.totalCostBasis === 0) return 0
   return (portfolioStore.totalGains / portfolioStore.totalCostBasis) * 100
 })
+
+// --- Allocation chart logic ---
+const drillCategory = ref(null)
+const selectedHolding = ref(null)
+
+const categoryColorMap = {
+  'Cash': '#14B8A6',
+  'Stocks': '#3B82F6',
+  'Crypto': '#38BDF8',
+  'Real Estate': '#6366F1',
+  'Other': '#8B5CF6',
+}
+
+const holdingColorPalette = [
+  '#3B82F6', '#14B8A6', '#38BDF8', '#06B6D4', '#1E40AF',
+  '#0891B2', '#6366F1', '#8B5CF6', '#A855F7', '#EC4899',
+]
+
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+const textColor = ref('#94A3B8')
+
+onMounted(() => {
+  textColor.value = getCSSVar('--text-secondary') || '#94A3B8'
+})
+
+function goBack() {
+  drillCategory.value = null
+  selectedHolding.value = null
+}
+
+function drillInto(category) {
+  drillCategory.value = category
+}
+
+function onHoldingClick(holding) {
+  if (holding.type !== 'cash') {
+    selectedHolding.value = holding
+  }
+}
+
+const drilledHoldings = computed(() => {
+  if (!drillCategory.value) return []
+  return portfolioStore.getHoldingsByCategory(drillCategory.value)
+})
+
+const holdingColors = computed(() => {
+  return drilledHoldings.value.map((_, i) => holdingColorPalette[i % holdingColorPalette.length])
+})
+
+function getCategoryPct(value) {
+  const total = portfolioStore.totalValue
+  if (!total) return '0.0'
+  return ((value / total) * 100).toFixed(1)
+}
+
+const centerLabel = computed(() => {
+  if (drillCategory.value) {
+    const total = portfolioStore.categoryTotals[drillCategory.value] || 0
+    return { title: drillCategory.value, value: formatCurrency(total) }
+  }
+  return { title: 'Total', value: formatCurrency(portfolioStore.totalValue) }
+})
+
+const centerTextPlugin = {
+  id: 'centerText',
+  afterDraw(chart) {
+    const { ctx, width } = chart
+    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2
+    const centerX = width / 2
+
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    ctx.fillStyle = getCSSVar('--text-secondary') || '#94A3B8'
+    ctx.font = '500 11px Inter, system-ui, sans-serif'
+    ctx.fillText(centerLabel.value.title, centerX, centerY - 9)
+
+    ctx.fillStyle = getCSSVar('--text-primary') || '#F1F5F9'
+    ctx.font = '600 14px Inter, system-ui, sans-serif'
+    ctx.fillText(centerLabel.value.value, centerX, centerY + 9)
+
+    ctx.restore()
+  }
+}
+
+const chartData = computed(() => {
+  if (drillCategory.value) {
+    const holdings = drilledHoldings.value
+    return {
+      labels: holdings.map(h => h.symbol),
+      datasets: [{
+        data: holdings.map(h => h.currentValue),
+        backgroundColor: holdingColors.value,
+        borderColor: '#0B1120',
+        borderWidth: 2,
+        hoverOffset: 4,
+      }]
+    }
+  }
+
+  const totals = portfolioStore.categoryTotals
+  const categories = Object.keys(totals)
+  return {
+    labels: categories,
+    datasets: [{
+      data: Object.values(totals),
+      backgroundColor: categories.map(c => categoryColorMap[c] || '#8B5CF6'),
+      borderColor: '#0B1120',
+      borderWidth: 2,
+      hoverOffset: 4,
+    }]
+  }
+})
+
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '68%',
+  onClick(event, elements) {
+    if (!elements.length) return
+    const index = elements[0].index
+
+    if (drillCategory.value) {
+      const holding = drilledHoldings.value[index]
+      if (holding && holding.type !== 'cash') {
+        selectedHolding.value = holding
+      }
+    } else {
+      const category = Object.keys(portfolioStore.categoryTotals)[index]
+      if (category) {
+        drillCategory.value = category
+      }
+    }
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#1E293B',
+      borderColor: 'rgba(56, 189, 248, 0.08)',
+      borderWidth: 1,
+      cornerRadius: 8,
+      titleColor: '#F1F5F9',
+      bodyColor: '#F1F5F9',
+      padding: 12,
+      callbacks: {
+        label: (context) => {
+          const value = context.parsed
+          const total = context.dataset.data.reduce((a, b) => a + b, 0)
+          const pct = ((value / total) * 100).toFixed(1)
+          return ` ${context.label}: ${formatCurrency(value)} (${pct}%)`
+        }
+      }
+    }
+  },
+  animation: { duration: 600 },
+}))
 </script>
 
 <style scoped>
@@ -91,6 +312,27 @@ const gainPercent = computed(() => {
   height: 300px;
   background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
   pointer-events: none;
+}
+
+.hero-layout {
+  display: flex;
+  gap: 32px;
+  align-items: stretch;
+}
+
+.hero-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-right {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-top {
@@ -136,6 +378,7 @@ const gainPercent = computed(() => {
   gap: 16px;
   padding-top: 24px;
   border-top: 1px solid rgba(59, 130, 246, 0.15);
+  margin-top: auto;
 }
 
 .hero-stat {
@@ -206,7 +449,106 @@ const gainPercent = computed(() => {
 .stat-value.positive { color: var(--accent-teal); }
 .stat-value.negative { color: var(--negative); }
 
+/* --- Chart + legend --- */
+.chart-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.alloc-legend {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.legend-row:hover {
+  background: var(--bg-subtle);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.legend-pct,
+.legend-val {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border-glass);
+  border-radius: 6px;
+  color: var(--accent-blue, #3B82F6);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  width: fit-content;
+}
+
+.back-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: var(--accent-blue, #3B82F6);
+}
+
+/* --- Responsive --- */
 @media (max-width: 1024px) {
+  .hero-layout {
+    flex-direction: column;
+  }
+
+  .hero-right {
+    width: 100%;
+    align-items: center;
+    padding-top: 24px;
+    border-top: 1px solid rgba(59, 130, 246, 0.15);
+  }
+
+  .chart-container {
+    width: 200px;
+    height: 200px;
+  }
+
+  .alloc-legend {
+    max-width: 280px;
+  }
+
   .hero-value {
     font-size: 2rem;
   }
