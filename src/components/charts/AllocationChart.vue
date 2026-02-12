@@ -1,8 +1,18 @@
 <template>
   <Card title="Portfolio Allocation">
-    <div class="chart-container">
-      <Doughnut :data="chartData" :options="chartOptions" />
+    <div class="chart-wrapper">
+      <div class="chart-container">
+        <Doughnut ref="chartRef" :data="chartData" :options="chartOptions" :plugins="[centerTextPlugin]" />
+      </div>
+      <button v-if="drillCategory" class="back-btn" @click="goBack">
+        &larr; All Categories
+      </button>
     </div>
+    <SellSimulatorModal
+      v-if="selectedHolding"
+      :holding="selectedHolding"
+      @close="selectedHolding = null"
+    />
   </Card>
 </template>
 
@@ -13,10 +23,22 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency } from '@/utils/formatters'
 import Card from '@/components/common/Card.vue'
+import SellSimulatorModal from '@/components/charts/SellSimulatorModal.vue'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const portfolioStore = usePortfolioStore()
+const chartRef = ref(null)
+const drillCategory = ref(null)
+const selectedHolding = ref(null)
+
+const categoryIcons = {
+  'Cash': '$',
+  'Stocks': '📈',
+  'Crypto': '₿',
+  'Real Estate': '🏠',
+  'Other': '🔮',
+}
 
 const colors = [
   '#3B82F6', // accent-blue
@@ -25,6 +47,10 @@ const colors = [
   '#06B6D4', // accent-cyan
   '#1E40AF', // deep-blue
   '#0891B2', // dark-cyan
+  '#6366F1', // indigo
+  '#8B5CF6', // violet
+  '#A855F7', // purple
+  '#EC4899', // pink
 ]
 
 function getCSSVar(name) {
@@ -41,11 +67,31 @@ function updateColors() {
 
 onMounted(updateColors)
 
-const chartData = computed(() => {
-  const totals = portfolioStore.categoryTotals
-  const labels = Object.keys(totals)
-  const data = Object.values(totals)
+function goBack() {
+  drillCategory.value = null
+  selectedHolding.value = null
+}
 
+const chartData = computed(() => {
+  if (drillCategory.value) {
+    const holdings = portfolioStore.getHoldingsByCategory(drillCategory.value)
+    const labels = holdings.map(h => `${h.icon} ${h.symbol}`)
+    const data = holdings.map(h => h.currentValue)
+    return {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors.slice(0, labels.length),
+        borderColor: '#0B1120',
+        borderWidth: 2,
+        hoverOffset: 6,
+      }]
+    }
+  }
+
+  const totals = portfolioStore.categoryTotals
+  const labels = Object.keys(totals).map(cat => `${categoryIcons[cat] || ''} ${cat}`)
+  const data = Object.values(totals)
   return {
     labels,
     datasets: [{
@@ -58,10 +104,63 @@ const chartData = computed(() => {
   }
 })
 
+const centerLabel = computed(() => {
+  if (drillCategory.value) {
+    const icon = categoryIcons[drillCategory.value] || ''
+    const total = portfolioStore.categoryTotals[drillCategory.value] || 0
+    return { title: `${icon} ${drillCategory.value}`, value: formatCurrency(total) }
+  }
+  return { title: 'Total', value: formatCurrency(portfolioStore.totalValue) }
+})
+
+const centerTextPlugin = {
+  id: 'centerText',
+  afterDraw(chart) {
+    const { ctx, width } = chart
+    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2
+    const centerX = width / 2
+
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    // Title line
+    ctx.fillStyle = getCSSVar('--text-secondary') || '#94A3B8'
+    ctx.font = '500 12px Inter, system-ui, sans-serif'
+    ctx.fillText(centerLabel.value.title, centerX, centerY - 10)
+
+    // Value line
+    ctx.fillStyle = getCSSVar('--text-primary') || '#F1F5F9'
+    ctx.font = '600 16px Inter, system-ui, sans-serif'
+    ctx.fillText(centerLabel.value.value, centerX, centerY + 10)
+
+    ctx.restore()
+  }
+}
+
 const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   cutout: '65%',
+  onClick(event, elements) {
+    if (!elements.length) return
+    const index = elements[0].index
+
+    if (drillCategory.value) {
+      // Drill level 2: click a holding → open sell simulator
+      const holdings = portfolioStore.getHoldingsByCategory(drillCategory.value)
+      const holding = holdings[index]
+      if (holding && holding.type !== 'cash') {
+        selectedHolding.value = holding
+      }
+    } else {
+      // Drill level 1: click category → drill into holdings
+      const category = Object.keys(portfolioStore.categoryTotals)[index]
+      if (category) {
+        drillCategory.value = category
+      }
+    }
+  },
   plugins: {
     legend: {
       position: 'bottom',
@@ -91,13 +190,37 @@ const chartOptions = computed(() => ({
       }
     }
   },
-  animation: { duration: 800 },
+  animation: { duration: 600 },
 }))
 </script>
 
 <style scoped>
+.chart-wrapper {
+  position: relative;
+}
+
 .chart-container {
   position: relative;
   height: 300px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--border-glass);
+  border-radius: 6px;
+  color: var(--accent-blue, #3B82F6);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.back-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: var(--accent-blue, #3B82F6);
 }
 </style>

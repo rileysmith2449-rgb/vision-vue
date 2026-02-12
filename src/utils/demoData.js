@@ -4,9 +4,8 @@
 export function generateDemoHoldings() {
   const assetTypes = [
     { type: 'cash', symbols: ['Checking', 'Savings', 'Money Market'], icon: '💵', category: 'Cash' },
-    { type: 'stock', symbols: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA'], icon: '📈', category: 'Stocks' },
+    { type: 'stock', symbols: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'VOO', 'QQQ', 'VTI'], icon: '📈', category: 'Stocks' },
     { type: 'crypto', symbols: ['BTC', 'ETH', 'SOL'], icon: '₿', category: 'Crypto' },
-    { type: 'etf', symbols: ['VOO', 'QQQ', 'VTI'], icon: '💎', category: 'ETFs' },
     { type: 'realestate', symbols: ['Property A', 'Property B'], icon: '🏠', category: 'Real Estate' },
     { type: 'other', symbols: ['Gold', 'Collectibles'], icon: '🎯', category: 'Other' }
   ]

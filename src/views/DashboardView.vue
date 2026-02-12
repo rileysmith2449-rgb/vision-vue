@@ -6,7 +6,9 @@
 
     <template v-else>
       <div class="bento-grid">
-        <HeroCard class="span-3" />
+        <HeroCard class="span-2" />
+
+        <AllocationChart class="span-1" />
 
         <HoldingsChart class="span-2" />
 
@@ -26,6 +28,7 @@ import HeroCard from '@/components/portfolio/HeroCard.vue'
 import HoldingsChart from '@/components/charts/HoldingsChart.vue'
 import HoldingsTable from '@/components/portfolio/HoldingsTable.vue'
 import TopMovers from '@/components/portfolio/TopMovers.vue'
+import AllocationChart from '@/components/charts/AllocationChart.vue'
 
 const portfolioStore = usePortfolioStore()
 
@@ -61,6 +64,7 @@ onMounted(() => {
   margin-top: 24px;
 }
 
+.bento-grid .span-1 { grid-column: span 1; }
 .bento-grid .span-2 { grid-column: span 2; }
 .bento-grid .span-3 { grid-column: span 3; }
 
