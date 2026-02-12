@@ -1,8 +1,7 @@
 <template>
   <div class="hero-card">
-    <!-- Top row: value + chart side by side -->
     <div class="hero-top-row">
-      <div class="hero-info">
+      <div class="hero-left">
         <div class="hero-label">Total Portfolio Value</div>
         <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
         <div class="hero-gains">
@@ -13,12 +12,6 @@
           <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
             {{ formatCurrency(portfolioStore.totalGains) }}
           </span>
-        </div>
-      </div>
-
-      <div class="hero-chart-area">
-        <div class="chart-container">
-          <Doughnut :data="chartData" :options="chartOptions" />
         </div>
 
         <div class="alloc-legend">
@@ -56,6 +49,10 @@
             </button>
           </template>
         </div>
+      </div>
+
+      <div class="chart-container">
+        <Doughnut :data="chartData" :options="chartOptions" />
       </div>
     </div>
 
@@ -277,16 +274,9 @@ const chartOptions = computed(() => ({
   margin-bottom: 24px;
 }
 
-.hero-info {
+.hero-left {
   flex: 1;
   min-width: 0;
-}
-
-.hero-chart-area {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 16px;
 }
 
 .hero-label {
@@ -401,16 +391,17 @@ const chartOptions = computed(() => ({
 /* --- Chart + legend --- */
 .chart-container {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 150px;
+  height: 150px;
   flex-shrink: 0;
 }
 
 .alloc-legend {
-  min-width: 140px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin-top: 16px;
+  max-width: 200px;
 }
 
 .legend-row {
@@ -483,8 +474,12 @@ const chartOptions = computed(() => ({
     align-items: flex-start;
   }
 
-  .hero-chart-area {
+  .chart-container {
     align-self: center;
+  }
+
+  .alloc-legend {
+    max-width: 100%;
   }
 
   .hero-value {
