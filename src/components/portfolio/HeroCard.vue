@@ -1,69 +1,26 @@
 <template>
   <div class="hero-card">
-    <div class="hero-layout">
-      <!-- Left side: existing hero content -->
-      <div class="hero-left">
-        <div class="hero-top">
-          <div class="hero-label">Total Portfolio Value</div>
-          <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
-          <div class="hero-gains">
-            <Badge
-              :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
-              :label="formatPercent(gainPercent)"
-            />
-            <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
-              {{ formatCurrency(portfolioStore.totalGains) }}
-            </span>
-          </div>
-        </div>
-
-        <div class="hero-grid">
-          <router-link to="/tax/long-term" class="hero-stat clickable">
-            <div class="stat-icon-wrap green">
-              <TrendingUp :size="16" stroke-width="2" />
-            </div>
-            <div>
-              <span class="stat-label">Long-term Gains</span>
-              <span class="stat-value positive">{{ formatCurrency(portfolioStore.longTermGains) }}</span>
-            </div>
-          </router-link>
-          <router-link to="/tax/short-term" class="hero-stat clickable">
-            <div class="stat-icon-wrap blue">
-              <Clock :size="16" stroke-width="2" />
-            </div>
-            <div>
-              <span class="stat-label">Short-term Gains</span>
-              <span class="stat-value">{{ formatCurrency(portfolioStore.shortTermGains) }}</span>
-            </div>
-          </router-link>
-          <router-link to="/tax/tax-impact" class="hero-stat clickable">
-            <div class="stat-icon-wrap red">
-              <Receipt :size="16" stroke-width="2" />
-            </div>
-            <div>
-              <span class="stat-label">Est. Tax Impact</span>
-              <span class="stat-value negative">{{ formatCurrency(portfolioStore.estimatedTaxImpact) }}</span>
-            </div>
-          </router-link>
-          <router-link to="/tax/harvestable" class="hero-stat clickable">
-            <div class="stat-icon-wrap purple">
-              <Scissors :size="16" stroke-width="2" />
-            </div>
-            <div>
-              <span class="stat-label">Harvestable</span>
-              <span class="stat-value">{{ formatCompactNumber(portfolioStore.harvestableAmount) }}</span>
-            </div>
-          </router-link>
+    <!-- Top row: value + chart side by side -->
+    <div class="hero-top-row">
+      <div class="hero-info">
+        <div class="hero-label">Total Portfolio Value</div>
+        <div class="hero-value">{{ formatCurrency(portfolioStore.totalValue) }}</div>
+        <div class="hero-gains">
+          <Badge
+            :type="portfolioStore.totalGains >= 0 ? 'gain' : 'loss'"
+            :label="formatPercent(gainPercent)"
+          />
+          <span :class="['gain-amount', portfolioStore.totalGains >= 0 ? 'positive' : 'negative']">
+            {{ formatCurrency(portfolioStore.totalGains) }}
+          </span>
         </div>
       </div>
 
-      <!-- Right side: allocation chart + legend -->
-      <div class="hero-right">
+      <div class="hero-chart-area">
         <div class="chart-container">
-          <Doughnut :data="chartData" :options="chartOptions" :plugins="[centerTextPlugin]" />
+          <Doughnut :data="chartData" :options="chartOptions" />
         </div>
 
-        <!-- Custom HTML legend -->
         <div class="alloc-legend">
           <button
             v-if="drillCategory"
@@ -102,6 +59,46 @@
       </div>
     </div>
 
+    <!-- Bottom row: stat grid spanning full width -->
+    <div class="hero-grid">
+      <router-link to="/tax/long-term" class="hero-stat clickable">
+        <div class="stat-icon-wrap green">
+          <TrendingUp :size="16" stroke-width="2" />
+        </div>
+        <div>
+          <span class="stat-label">Long-term Gains</span>
+          <span class="stat-value positive">{{ formatCurrency(portfolioStore.longTermGains) }}</span>
+        </div>
+      </router-link>
+      <router-link to="/tax/short-term" class="hero-stat clickable">
+        <div class="stat-icon-wrap blue">
+          <Clock :size="16" stroke-width="2" />
+        </div>
+        <div>
+          <span class="stat-label">Short-term Gains</span>
+          <span class="stat-value">{{ formatCurrency(portfolioStore.shortTermGains) }}</span>
+        </div>
+      </router-link>
+      <router-link to="/tax/tax-impact" class="hero-stat clickable">
+        <div class="stat-icon-wrap red">
+          <Receipt :size="16" stroke-width="2" />
+        </div>
+        <div>
+          <span class="stat-label">Est. Tax Impact</span>
+          <span class="stat-value negative">{{ formatCurrency(portfolioStore.estimatedTaxImpact) }}</span>
+        </div>
+      </router-link>
+      <router-link to="/tax/harvestable" class="hero-stat clickable">
+        <div class="stat-icon-wrap purple">
+          <Scissors :size="16" stroke-width="2" />
+        </div>
+        <div>
+          <span class="stat-label">Harvestable</span>
+          <span class="stat-value">{{ formatCompactNumber(portfolioStore.harvestableAmount) }}</span>
+        </div>
+      </router-link>
+    </div>
+
     <SellSimulatorModal
       v-if="selectedHolding"
       :holding="selectedHolding"
@@ -111,7 +108,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { formatCurrency, formatPercent, formatCompactNumber } from '@/utils/formatters'
 import { TrendingUp, Clock, Receipt, Scissors, ArrowLeft } from 'lucide-vue-next'
@@ -147,16 +144,6 @@ const holdingColorPalette = [
   '#0891B2', '#6366F1', '#8B5CF6', '#A855F7', '#EC4899',
 ]
 
-function getCSSVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
-
-const textColor = ref('#94A3B8')
-
-onMounted(() => {
-  textColor.value = getCSSVar('--text-secondary') || '#94A3B8'
-})
-
 function goBack() {
   drillCategory.value = null
   selectedHolding.value = null
@@ -185,37 +172,6 @@ function getCategoryPct(value) {
   const total = portfolioStore.totalValue
   if (!total) return '0.0'
   return ((value / total) * 100).toFixed(1)
-}
-
-const centerLabel = computed(() => {
-  if (drillCategory.value) {
-    const total = portfolioStore.categoryTotals[drillCategory.value] || 0
-    return { title: drillCategory.value, value: formatCurrency(total) }
-  }
-  return { title: 'Total', value: formatCurrency(portfolioStore.totalValue) }
-})
-
-const centerTextPlugin = {
-  id: 'centerText',
-  afterDraw(chart) {
-    const { ctx, width } = chart
-    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2
-    const centerX = width / 2
-
-    ctx.save()
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-
-    ctx.fillStyle = getCSSVar('--text-secondary') || '#94A3B8'
-    ctx.font = '500 11px Inter, system-ui, sans-serif'
-    ctx.fillText(centerLabel.value.title, centerX, centerY - 9)
-
-    ctx.fillStyle = getCSSVar('--text-primary') || '#F1F5F9'
-    ctx.font = '600 14px Inter, system-ui, sans-serif'
-    ctx.fillText(centerLabel.value.value, centerX, centerY + 9)
-
-    ctx.restore()
-  }
 }
 
 const chartData = computed(() => {
@@ -314,29 +270,24 @@ const chartOptions = computed(() => ({
   pointer-events: none;
 }
 
-.hero-layout {
+.hero-top-row {
   display: flex;
   gap: 32px;
-  align-items: stretch;
+  align-items: flex-start;
+  margin-bottom: 28px;
 }
 
-.hero-left {
+.hero-info {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
 }
 
-.hero-right {
+.hero-chart-area {
   width: 240px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.hero-top {
-  margin-bottom: 28px;
 }
 
 .hero-label {
@@ -378,7 +329,6 @@ const chartOptions = computed(() => ({
   gap: 16px;
   padding-top: 24px;
   border-top: 1px solid rgba(59, 130, 246, 0.15);
-  margin-top: auto;
 }
 
 .hero-stat {
@@ -529,15 +479,13 @@ const chartOptions = computed(() => ({
 
 /* --- Responsive --- */
 @media (max-width: 1024px) {
-  .hero-layout {
+  .hero-top-row {
     flex-direction: column;
   }
 
-  .hero-right {
+  .hero-chart-area {
     width: 100%;
     align-items: center;
-    padding-top: 24px;
-    border-top: 1px solid rgba(59, 130, 246, 0.15);
   }
 
   .chart-container {
