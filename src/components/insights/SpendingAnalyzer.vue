@@ -385,7 +385,7 @@ const analysis = computed(() => {
   const categories = Object.entries(catMap).map(([name, data]) => {
     totalSpend += data.spend
     const currentCard = Object.entries(data.cardSpend).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown'
-    const best = getBestCardForCategory(name, mode)
+    const best = getBestCardForCategory(name, mode, budgetStore.businessEnabled)
 
     // Current rewards: actual per-card rewards for this category
     let catCurrentRewards = 0
@@ -422,7 +422,7 @@ const analysis = computed(() => {
 
   // Card combination recommendation
   const activeType = mode === 'family' ? 'personal' : mode
-  const allCards = creditCards.filter(c => c.type === activeType)
+  const allCards = creditCards.filter(c => c.type === activeType || (budgetStore.businessEnabled && c.type === 'business'))
   const userCardNames = new Set(Object.keys(cardSpendMap))
   const proratedFactor = monthsBack / 12
 
@@ -504,7 +504,7 @@ const analysis = computed(() => {
       const bestCategories = []
       for (const cat of categories) {
         const rate = card.cashbackRates[cat.name] || card.cashbackRates.default || 0
-        const currentBest = getBestCardForCategory(cat.name, mode)
+        const currentBest = getBestCardForCategory(cat.name, mode, budgetStore.businessEnabled)
         if (rate > currentBest.rate) {
           projectedRewards += cat.spend * rate
           bestCategories.push(cat.name)

@@ -42,7 +42,7 @@ const totalOptimalPercent = computed(() => {
   let totalAmount = 0
   for (const txn of txns) {
     totalAmount += txn.amount
-    const best = getBestCardForCategory(txn.category, budgetStore.budgetMode)
+    const best = getBestCardForCategory(txn.category, budgetStore.budgetMode, budgetStore.businessEnabled)
     if (txn.card === best.cardName) {
       optimalAmount += txn.amount
     }

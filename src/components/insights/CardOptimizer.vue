@@ -239,12 +239,12 @@ const CATEGORY_ICONS = {
   'Internet & Phone': '📡',
 }
 
-// Only cards matching the active budget mode (family maps to personal)
+// Only cards matching the active budget mode (family maps to personal, business is additive)
 const activeCards = computed(() => {
   const mode = budgetStore.budgetMode === 'family' ? 'personal' : budgetStore.budgetMode
   const filtered = {}
   for (const [card, data] of Object.entries(CARD_REWARDS)) {
-    if (data.type === mode) {
+    if (data.type === mode || (budgetStore.businessEnabled && data.type === 'business')) {
       filtered[card] = data.categories
     }
   }

@@ -45,14 +45,20 @@
             <Users :size="14" stroke-width="2" />
             Family
           </button>
-          <button
-            class="mode-btn"
-            :class="{ active: localMode === 'business' }"
-            @click="localMode = 'business'"
-          >
-            <Briefcase :size="14" stroke-width="2" />
-            Business
-          </button>
+        </div>
+
+        <div class="business-toggle-row">
+          <div class="business-toggle-info">
+            <Briefcase :size="14" stroke-width="2" class="business-icon" />
+            <div>
+              <span class="business-toggle-label">Business</span>
+              <span class="business-toggle-hint">Include business credit cards and insights</span>
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" v-model="localBusinessEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
         </div>
 
         <!-- Family member names -->
@@ -244,6 +250,10 @@
             <span class="review-label">Mode</span>
             <span class="review-value">{{ localMode.charAt(0).toUpperCase() + localMode.slice(1) }}</span>
           </div>
+          <div class="review-row">
+            <span class="review-label">Business</span>
+            <span class="review-value" :class="{ 'review-skipped': !localBusinessEnabled }">{{ localBusinessEnabled ? 'Enabled' : 'Disabled' }}</span>
+          </div>
 
           <div v-if="skippedTax" class="review-row">
             <span class="review-label">Tax Information</span>
@@ -345,6 +355,7 @@ const budgetStore = useBudgetStore()
 const step = ref(1)
 const skippedTax = ref(false)
 const localMode = ref('personal')
+const localBusinessEnabled = ref(false)
 const localPersonalMember = ref('mine')
 const localMembers = reactive({
   mine: {
@@ -385,6 +396,7 @@ function filingLabel(status) {
 function finish() {
   // Apply settings to store
   budgetStore.setBudgetMode(localMode.value)
+  budgetStore.setBusinessEnabled(localBusinessEnabled.value)
   budgetStore.setPersonalMember(localPersonalMember.value)
 
   // Copy member data into the store
@@ -541,6 +553,89 @@ function finish() {
 .mode-btn.active {
   background: var(--electric-teal);
   color: #000;
+}
+
+/* Business toggle row */
+.business-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.business-toggle-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.business-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.business-toggle-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.business-toggle-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: 22px;
+  transition: all 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-tertiary);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--electric-teal);
+  border-color: var(--electric-teal);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+  background: #000;
 }
 
 /* Family setup */

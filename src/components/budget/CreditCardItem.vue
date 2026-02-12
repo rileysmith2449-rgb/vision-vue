@@ -57,7 +57,7 @@
               <span class="txn-merchant">{{ txn.merchant }}</span>
               <span class="txn-meta">
                 {{ txn.category }} &middot; {{ formatDate(txn.date) }}
-                <span v-if="!isOptimal(txn)" class="txn-best-hint">&middot; Best: {{ getBestCardForCategory(txn.category, budgetStore.budgetMode).cardName }}</span>
+                <span v-if="!isOptimal(txn)" class="txn-best-hint">&middot; Best: {{ getBestCardForCategory(txn.category, budgetStore.budgetMode, budgetStore.businessEnabled).cardName }}</span>
               </span>
             </div>
             <span class="txn-amount">{{ formatCurrency(txn.amount) }}</span>
@@ -110,7 +110,7 @@ const transactions = computed(() => {
 })
 
 function isOptimal(txn) {
-  const best = getBestCardForCategory(txn.category, budgetStore.budgetMode)
+  const best = getBestCardForCategory(txn.category, budgetStore.budgetMode, budgetStore.businessEnabled)
   return props.card.name === best.cardName
 }
 

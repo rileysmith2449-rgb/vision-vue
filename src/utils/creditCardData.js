@@ -1,6 +1,6 @@
-export function getBestCardForCategory(category, budgetMode = 'personal') {
+export function getBestCardForCategory(category, budgetMode = 'personal', businessEnabled = false) {
   const type = budgetMode === 'family' ? 'personal' : budgetMode
-  const eligible = creditCards.filter(c => c.type === type)
+  const eligible = creditCards.filter(c => c.type === type || (businessEnabled && c.type === 'business'))
   let bestCard = null
   let bestRate = 0
   for (const card of eligible) {

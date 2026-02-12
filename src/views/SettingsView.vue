@@ -18,7 +18,7 @@
       </Card>
 
       <!-- Budget Mode -->
-      <Card title="Budget Mode" subtitle="Switch between personal, family, or business view">
+      <Card title="Budget Mode" subtitle="Switch between personal or family view">
         <div class="mode-toggle">
           <button
             class="mode-btn"
@@ -36,14 +36,20 @@
             <Users :size="14" stroke-width="2" />
             Family
           </button>
-          <button
-            class="mode-btn"
-            :class="{ active: budgetStore.budgetMode === 'business' }"
-            @click="budgetStore.setBudgetMode('business')"
-          >
-            <Briefcase :size="14" stroke-width="2" />
-            Business
-          </button>
+        </div>
+
+        <div class="business-toggle-row">
+          <div class="business-toggle-info">
+            <Briefcase :size="14" stroke-width="2" class="business-icon" />
+            <div>
+              <span class="business-toggle-label">Business</span>
+              <span class="business-toggle-hint">Include business credit cards and insights</span>
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="budgetStore.businessEnabled" @change="budgetStore.setBusinessEnabled($event.target.checked)" />
+            <span class="toggle-slider"></span>
+          </label>
         </div>
       </Card>
 
@@ -388,6 +394,89 @@ const stateOptions = [
 .mode-btn.active {
   background: var(--accent-blue);
   color: #F1F5F9;
+}
+
+/* Business toggle row */
+.business-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.business-toggle-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.business-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.business-toggle-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.business-toggle-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: 22px;
+  transition: all 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-tertiary);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+  background: #F1F5F9;
 }
 
 /* Family Members */

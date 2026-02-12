@@ -15,7 +15,10 @@ export const useBudgetStore = defineStore('budget', () => {
   const settingsConfigured = ref(localStorage.getItem('vision-settings-configured') === 'true')
 
   // State — hydrate from localStorage if previously saved
-  const budgetMode = ref(loadFromStorage('vision-budgetMode', 'personal'))
+  const rawMode = loadFromStorage('vision-budgetMode', 'personal')
+  // Backward compat: old 'business' mode → convert to personal + businessEnabled
+  const budgetMode = ref(rawMode === 'business' ? 'personal' : rawMode)
+  const businessEnabled = ref(rawMode === 'business' ? true : loadFromStorage('vision-businessEnabled', false))
   const salary = ref(150000)
   const businessIncome = ref(50000)
   const shortTermInvestmentIncome = ref(0)
@@ -57,6 +60,7 @@ export const useBudgetStore = defineStore('budget', () => {
 
   // Persist key settings to localStorage on change
   watch(budgetMode, v => localStorage.setItem('vision-budgetMode', JSON.stringify(v)))
+  watch(businessEnabled, v => localStorage.setItem('vision-businessEnabled', JSON.stringify(v)))
   watch(familyMembers, v => localStorage.setItem('vision-familyMembers', JSON.stringify(v)), { deep: true })
   watch(personalMember, v => localStorage.setItem('vision-personalMember', JSON.stringify(v)))
 
@@ -85,17 +89,13 @@ export const useBudgetStore = defineStore('budget', () => {
         if (activeMember.value === 'all') return familyExpenses.value
         return filterExpensesByMember(familyExpenses.value, activeMember.value)
       }
-      return budgetMode.value === 'personal'
-        ? personalExpenses.value
-        : businessExpenses.value
+      return personalExpenses.value
     },
     set(val) {
       if (budgetMode.value === 'family') {
         familyExpenses.value = val
-      } else if (budgetMode.value === 'personal') {
-        personalExpenses.value = val
       } else {
-        businessExpenses.value = val
+        personalExpenses.value = val
       }
     }
   })
@@ -109,10 +109,10 @@ export const useBudgetStore = defineStore('budget', () => {
     return total
   })
 
-  // Filtered cards by active mode (family uses personal cards)
+  // Filtered cards by active mode (family uses personal cards, business is additive)
   const filteredCards = computed(() => {
     const mode = budgetMode.value === 'family' ? 'personal' : budgetMode.value
-    return creditCards.filter(c => c.type === mode)
+    return creditCards.filter(c => c.type === mode || (businessEnabled.value && c.type === 'business'))
   })
 
   // Getters
@@ -328,6 +328,10 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
+  function setBusinessEnabled(val) {
+    businessEnabled.value = val
+  }
+
   function setCurrentCategory(category) {
     currentCategory.value = category
     currentSubcategory.value = null
@@ -377,8 +381,7 @@ export const useBudgetStore = defineStore('budget', () => {
   function reclassifyTransaction(fromCategory, fromSub, txIndex, toCategory, toSub) {
     // Use raw underlying data to avoid index mismatch when viewing a filtered member
     const raw = budgetMode.value === 'family' ? familyExpenses.value
-      : budgetMode.value === 'personal' ? personalExpenses.value
-      : businessExpenses.value
+      : personalExpenses.value
 
     // When filtering by member, find the real index in the raw data
     const source = raw[fromCategory]?.subcategories[fromSub]
@@ -408,6 +411,7 @@ export const useBudgetStore = defineStore('budget', () => {
   function completeOnboarding() {
     // Persist current settings to localStorage
     localStorage.setItem('vision-budgetMode', JSON.stringify(budgetMode.value))
+    localStorage.setItem('vision-businessEnabled', JSON.stringify(businessEnabled.value))
     localStorage.setItem('vision-familyMembers', JSON.stringify(familyMembers.value))
     localStorage.setItem('vision-personalMember', JSON.stringify(personalMember.value))
     // Mark setup complete
@@ -436,6 +440,7 @@ export const useBudgetStore = defineStore('budget', () => {
     // State
     settingsConfigured,
     budgetMode,
+    businessEnabled,
     monthlyBudget,
     salary,
     businessIncome,
@@ -481,6 +486,7 @@ export const useBudgetStore = defineStore('budget', () => {
     loadExpenses,
     loadHistoricalData,
     setBudgetMode,
+    setBusinessEnabled,
     setPersonalMember,
     setActiveMember,
     updateMemberName,
