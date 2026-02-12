@@ -124,7 +124,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (!to.meta.public && !authStore.isAuthenticated) {
     next('/login')
-  } else if ((to.name === 'login' || to.name === 'sign-up') && authStore.isAuthenticated) {
+  } else if ((to.name === 'login' || to.name === 'sign-up') && authStore.isAuthenticated && window.location.hostname !== 'localhost') {
     next('/')
   } else if (authStore.isAuthenticated && localStorage.getItem('vision-settings-configured') !== 'true' && to.name !== 'onboarding') {
     next('/onboarding')
