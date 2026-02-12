@@ -7,18 +7,16 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import { usePortfolioStore } from '@/stores/portfolio'
-import { useThemeStore } from '@/stores/theme'
 import { formatCurrency } from '@/utils/formatters'
 import Card from '@/components/common/Card.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const portfolioStore = usePortfolioStore()
-const themeStore = useThemeStore()
 
 function getCSSVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
@@ -33,10 +31,6 @@ function updateColors() {
 }
 
 onMounted(updateColors)
-
-watch(() => themeStore.isDark, () => {
-  setTimeout(updateColors, 50)
-})
 
 const chartData = computed(() => ({
   labels: ['Long-term Gains', 'Short-term Gains', 'Unrealized Losses'],

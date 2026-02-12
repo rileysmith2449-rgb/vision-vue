@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container" :data-theme="currentTheme">
+  <div class="app-container">
     <Sidebar v-if="!isMobile && !isFullScreenPage" />
     <div class="top-bar" v-if="!isFullScreenPage">
       <div class="top-bar-brand">
@@ -28,16 +28,13 @@
 <script setup>
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useThemeStore } from '@/stores/theme'
 import { useViewportStore } from '@/stores/viewport'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import MobileNav from '@/components/layout/MobileNav.vue'
 
 const route = useRoute()
-const themeStore = useThemeStore()
 const viewportStore = useViewportStore()
 
-const currentTheme = computed(() => themeStore.currentTheme)
 const isMobile = computed(() => viewportStore.isMobile)
 const isFullScreenPage = computed(() => ['login', 'sign-up', 'privacy', 'terms', 'onboarding'].includes(route.name))
 

@@ -15,7 +15,7 @@
 
       <Descope
         flowId="sign-up"
-        :theme="themeStore.isDark ? 'dark' : 'light'"
+        :theme="'dark'"
         @success="handleSuccess"
         @error="handleError"
       />
@@ -26,10 +26,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { Descope } from '@descope/vue-sdk'
-import { useThemeStore } from '@/stores/theme'
-
 const router = useRouter()
-const themeStore = useThemeStore()
 
 function handleSuccess() {
   router.push('/')

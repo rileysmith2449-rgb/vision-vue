@@ -7,18 +7,16 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { usePortfolioStore } from '@/stores/portfolio'
-import { useThemeStore } from '@/stores/theme'
 import { formatCurrency } from '@/utils/formatters'
 import Card from '@/components/common/Card.vue'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const portfolioStore = usePortfolioStore()
-const themeStore = useThemeStore()
 
 const colors = [
   '#3B82F6', // accent-blue
@@ -42,10 +40,6 @@ function updateColors() {
 }
 
 onMounted(updateColors)
-
-watch(() => themeStore.isDark, () => {
-  setTimeout(updateColors, 50)
-})
 
 const chartData = computed(() => {
   const totals = portfolioStore.categoryTotals

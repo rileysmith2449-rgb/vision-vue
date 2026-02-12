@@ -38,7 +38,7 @@
 
         <Descope
           flowId="sign-up-or-in"
-          :theme="themeStore.isDark ? 'dark' : 'light'"
+          :theme="'dark'"
           @success="handleSuccess"
           @error="handleError"
         />
@@ -51,10 +51,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Descope } from '@descope/vue-sdk'
-import { useThemeStore } from '@/stores/theme'
-
 const router = useRouter()
-const themeStore = useThemeStore()
 
 const introActive = ref(true)
 const showWordmark = ref(false)

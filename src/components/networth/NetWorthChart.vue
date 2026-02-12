@@ -34,18 +34,16 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Line } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js'
 import { usePortfolioStore } from '@/stores/portfolio'
-import { useThemeStore } from '@/stores/theme'
 import { formatCurrency } from '@/utils/formatters'
 import Card from '@/components/common/Card.vue'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 
 const portfolioStore = usePortfolioStore()
-const themeStore = useThemeStore()
 
 // --- Controls ---
 const periods = [
@@ -89,7 +87,6 @@ function updateColors() {
   borderColor.value = getCSSVar('--border-glass')
 }
 
-watch(() => themeStore.isDark, () => setTimeout(updateColors, 50))
 onMounted(updateColors)
 
 // --- Sliced data for active period ---

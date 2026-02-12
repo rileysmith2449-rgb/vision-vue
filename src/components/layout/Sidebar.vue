@@ -28,11 +28,6 @@
     </nav>
 
     <div class="sidebar-footer">
-      <button class="theme-toggle" @click="themeStore.toggleTheme()">
-        <Sun v-if="themeStore.isDark" :size="20" stroke-width="1.8" />
-        <Moon v-else :size="20" stroke-width="1.8" />
-        <span class="nav-label">{{ themeStore.isDark ? 'Light Mode' : 'Dark Mode' }}</span>
-      </button>
       <button class="theme-toggle logout-btn" @click="authStore.logout()">
         <LogOut :size="20" stroke-width="1.8" />
         <span class="nav-label">Sign Out</span>
@@ -43,7 +38,6 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import {
   LayoutDashboard,
@@ -51,13 +45,10 @@ import {
   PieChart,
   Lightbulb,
   Settings,
-  Sun,
-  Moon,
   LogOut
 } from 'lucide-vue-next'
 
 const route = useRoute()
-const themeStore = useThemeStore()
 const authStore = useAuthStore()
 
 const navLinks = [

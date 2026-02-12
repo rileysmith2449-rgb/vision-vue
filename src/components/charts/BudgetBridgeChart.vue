@@ -33,18 +33,16 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import { useBudgetStore } from '@/stores/budget'
-import { useThemeStore } from '@/stores/theme'
 import { formatCurrency } from '@/utils/formatters'
 import Card from '@/components/common/Card.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const budgetStore = useBudgetStore()
-const themeStore = useThemeStore()
 
 const viewMode = ref('budget') // 'budget' | 'actual' | 'compare'
 const period = ref('1m')       // '1m' | '3m' | '6m' | 'ytd' | 'year'
@@ -79,7 +77,6 @@ function updateColors() {
 }
 
 onMounted(updateColors)
-watch(() => themeStore.isDark, () => setTimeout(updateColors, 50))
 
 const CATEGORY_SHORT = {
   'Housing & Rent': 'Housing',

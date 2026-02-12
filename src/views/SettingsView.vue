@@ -17,22 +17,6 @@
         </div>
       </Card>
 
-      <!-- Appearance -->
-      <Card title="Appearance" subtitle="Toggle between light and dark mode">
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-label">Theme</span>
-            <span class="setting-description">{{ themeStore.isDark ? 'Dark mode' : 'Light mode' }}</span>
-          </div>
-          <button class="theme-toggle" :class="{ active: themeStore.isDark }" @click="themeStore.toggleTheme()">
-            <span class="toggle-knob">
-              <Moon v-if="themeStore.isDark" :size="12" stroke-width="2" />
-              <Sun v-else :size="12" stroke-width="2" />
-            </span>
-          </button>
-        </div>
-      </Card>
-
       <!-- Budget Mode -->
       <Card title="Budget Mode" subtitle="Switch between personal, family, or business view">
         <div class="mode-toggle">
@@ -307,14 +291,12 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useThemeStore } from '@/stores/theme'
 import { useBudgetStore } from '@/stores/budget'
 import { useAuthStore } from '@/stores/auth'
-import { Sun, Moon, User, Users, Briefcase, LogOut } from 'lucide-vue-next'
+import { User, Users, Briefcase, LogOut } from 'lucide-vue-next'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 
-const themeStore = useThemeStore()
 const budgetStore = useBudgetStore()
 const authStore = useAuthStore()
 
@@ -368,45 +350,6 @@ const stateOptions = [
 .setting-description {
   font-size: 0.78rem;
   color: var(--text-secondary);
-}
-
-/* Theme toggle switch */
-.theme-toggle {
-  width: 52px;
-  height: 28px;
-  border-radius: 14px;
-  border: 1px solid var(--border-glass);
-  background: var(--bg-subtle);
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.theme-toggle.active {
-  background: var(--accent-blue);
-  border-color: var(--accent-blue);
-}
-
-.toggle-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  color: var(--text-secondary);
-}
-
-.theme-toggle.active .toggle-knob {
-  transform: translateX(24px);
-  color: var(--accent-blue);
 }
 
 /* Mode toggle */
