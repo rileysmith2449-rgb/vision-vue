@@ -529,7 +529,19 @@ const analysis = computed(() => {
     }
 
     return { name: card.name, type: card.type, rewards, proratedFee, netValue, bestCategories, action, creditsValue }
-  }).sort((a, b) => {
+  })
+
+  // Ensure at least one business card is promoted when business is enabled
+  if (budgetStore.businessEnabled) {
+    const bizCards = recommendedCards.filter(c => c.type === 'business')
+    const hasNonDrop = bizCards.some(c => c.action !== 'drop')
+    if (!hasNonDrop && bizCards.length > 0) {
+      const best = bizCards.reduce((a, b) => b.netValue > a.netValue ? b : a)
+      best.action = best.netValue >= 0 ? 'add' : 'evaluate'
+    }
+  }
+
+  recommendedCards.sort((a, b) => {
     const order = { keep: 0, add: 1, evaluate: 2, drop: 3 }
     return (order[a.action] ?? 9) - (order[b.action] ?? 9) || b.netValue - a.netValue
   })
