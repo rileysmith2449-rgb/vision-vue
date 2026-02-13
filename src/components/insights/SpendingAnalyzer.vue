@@ -133,7 +133,7 @@
           :class="['combo-card', card.action]"
         >
           <div class="combo-card-header">
-            <span class="combo-card-name">{{ card.name }}</span>
+            <span class="combo-card-name">{{ card.name }} <Badge :label="card.type === 'business' ? 'Business' : 'Personal'" :type="card.type === 'business' ? 'info' : 'neutral'" /></span>
             <span :class="['combo-badge', card.action]">
               {{ card.action === 'keep' ? 'Keep' : card.action === 'add' ? 'Add' : card.action === 'evaluate' ? 'Evaluate' : 'Drop' }}
             </span>
@@ -179,7 +179,7 @@
           class="combo-card suggest"
         >
           <div class="combo-card-header">
-            <span class="combo-card-name">{{ card.name }}</span>
+            <span class="combo-card-name">{{ card.name }} <Badge :label="card.type === 'business' ? 'Business' : 'Personal'" :type="card.type === 'business' ? 'info' : 'neutral'" /></span>
             <span class="combo-badge suggest">Consider</span>
           </div>
           <p class="suggest-highlight">{{ card.highlight }}</p>
@@ -264,6 +264,7 @@ import { TrendingUp, Wallet, BarChart3, Gift, CheckCircle, Circle, ChevronDown, 
 import { useBudgetStore } from '@/stores/budget'
 import { creditCards, getBestCardForCategory, marketCards } from '@/utils/creditCardData'
 import { formatCurrency } from '@/utils/formatters'
+import Badge from '@/components/common/Badge.vue'
 
 const budgetStore = useBudgetStore()
 
@@ -455,7 +456,7 @@ const analysis = computed(() => {
       action = 'drop'
     }
 
-    return { name: card.name, rewards, proratedFee, netValue, bestCategories, action, creditsValue }
+    return { name: card.name, type: card.type, rewards, proratedFee, netValue, bestCategories, action, creditsValue }
   }).sort((a, b) => {
     const order = { keep: 0, add: 1, evaluate: 2, drop: 3 }
     return (order[a.action] ?? 9) - (order[b.action] ?? 9) || b.netValue - a.netValue
@@ -516,6 +517,7 @@ const analysis = computed(() => {
       const netValue = projectedRewards - proratedFee
       return {
         name: card.name,
+        type: 'personal',
         annualFee: card.annualFee,
         projectedRewards,
         netValue,

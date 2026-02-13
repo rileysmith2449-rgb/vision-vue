@@ -37,7 +37,7 @@
               Switch
             </div>
             <div class="card-info">
-              <span class="best-card">{{ opt.bestCard }}</span>
+              <span class="best-card">{{ opt.bestCard }} <Badge :label="opt.bestCardType === 'business' ? 'Business' : 'Personal'" :type="opt.bestCardType === 'business' ? 'info' : 'neutral'" /></span>
               <span class="reward-rate">{{ opt.bestRate }}x {{ opt.rewardType }}</span>
             </div>
           </div>
@@ -98,7 +98,7 @@
           class="enrollment-card"
         >
           <div class="enrollment-card-top">
-            <span class="enrollment-card-name">{{ suggestion.card }}</span>
+            <span class="enrollment-card-name">{{ suggestion.card }} <Badge :label="suggestion.type === 'business' ? 'Business' : 'Personal'" :type="suggestion.type === 'business' ? 'info' : 'neutral'" /></span>
             <span class="enrollment-card-reward">+{{ formatCurrency(suggestion.totalExtraRewards) }}/mo</span>
           </div>
           <div class="enrollment-categories">
@@ -119,6 +119,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { CreditCard, ArrowRight, PlusCircle, ChevronDown } from 'lucide-vue-next'
+import Badge from '@/components/common/Badge.vue'
 import { useBudgetStore } from '@/stores/budget'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 
@@ -315,6 +316,7 @@ const optimizations = computed(() => {
       totalSpend,
       currentCard,
       bestCard,
+      bestCardType: CARD_REWARDS[bestCard]?.type || 'personal',
       bestRate,
       rewardType: bestRewardType,
       missedRewards: Math.max(0, missedRewards),
@@ -353,6 +355,7 @@ const enrollmentSuggestions = computed(() => {
       if (!suggestions[opt.bestCard]) {
         suggestions[opt.bestCard] = {
           card: opt.bestCard,
+          type: CARD_REWARDS[opt.bestCard]?.type || 'personal',
           categories: [],
           totalExtraRewards: 0,
         }
