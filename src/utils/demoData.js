@@ -455,8 +455,8 @@ export function generateBusinessExpenseData() {
         'Software Subscriptions': [
           { merchant: 'Adobe Creative Cloud', amount: 54.99, date: '2026-02-01', card: 'Chase Ink Business' },
           { merchant: 'Slack', amount: 12.50, date: '2026-02-01', card: 'Chase Ink Business' },
-          { merchant: 'Notion', amount: 10.00, date: '2026-02-01', card: 'Chase Ink Business' },
-          { merchant: 'GitHub', amount: 4.00, date: '2026-02-01', card: 'Chase Ink Business' }
+          { merchant: 'Notion', amount: 10.00, date: '2026-02-01', card: 'Ink Business Cash' },
+          { merchant: 'GitHub', amount: 4.00, date: '2026-02-01', card: 'Ink Business Cash' }
         ],
         'Office Supplies': [
           { merchant: 'Staples', amount: 87.45, date: '2026-02-03', card: 'Amex Business Gold' },
@@ -503,7 +503,7 @@ export function generateBusinessExpenseData() {
           { merchant: 'AT&T Business', amount: 129.99, date: '2026-02-01', card: 'Chase Ink Business' }
         ],
         'Phone Lines': [
-          { merchant: 'T-Mobile Business', amount: 85.00, date: '2026-02-01', card: 'Chase Ink Business' }
+          { merchant: 'T-Mobile Business', amount: 85.00, date: '2026-02-01', card: 'Ink Business Cash' }
         ]
       }
     }

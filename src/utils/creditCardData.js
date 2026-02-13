@@ -80,6 +80,20 @@ export const creditCards = [
     statementCredits: []
   },
   {
+    name: 'Ink Business Cash',
+    type: 'business',
+    annualFee: 0,
+    color: '#1A1A2E',
+    cashbackRates: {
+      'Office & Software': 0.02,
+      'Internet & Phone': 0.02,
+      'Meals & Entertainment': 0.01,
+      default: 0.01
+    },
+    statementCredits: [],
+    upgradeTo: 'Chase Ink Business'
+  },
+  {
     name: 'Amex Business Gold',
     type: 'business',
     annualFee: 375,
@@ -107,6 +121,19 @@ export const creditCards = [
     statementCredits: []
   }
 ]
+
+export function getUpgradeRecommendation(card, annualSpendOnBonusCategories) {
+  if (!card.upgradeTo) return null
+  const target = creditCards.find(c => c.name === card.upgradeTo)
+  if (!target) return null
+  const extraRewardRate = 0.03 // difference: 5% - 2% on bonus categories
+  const extraAnnualRewards = annualSpendOnBonusCategories * extraRewardRate
+  const netBenefit = extraAnnualRewards - target.annualFee
+  if (netBenefit > 0) {
+    return { targetCard: target, extraRewards: extraAnnualRewards, netBenefit }
+  }
+  return null
+}
 
 export const marketCards = [
   {

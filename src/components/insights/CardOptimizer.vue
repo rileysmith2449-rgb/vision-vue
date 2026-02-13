@@ -206,6 +206,14 @@ const CARD_REWARDS = {
     }
   },
   // Business cards
+  'Ink Business Cash': {
+    type: 'business',
+    categories: {
+      'Office & Software': { rate: 2, type: '%' },
+      'Internet & Phone': { rate: 2, type: '%' },
+      'Meals & Entertainment': { rate: 1, type: '%' },
+    }
+  },
   'Amex Business Gold': {
     type: 'business',
     categories: {

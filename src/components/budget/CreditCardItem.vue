@@ -3,7 +3,10 @@
     <div class="card-visual" :style="{ background: gradientBg }" @click="expanded = !expanded">
       <div class="card-visual-top">
         <span class="card-name">{{ card.name }}</span>
-        <Badge v-if="analysis.bestFor" :label="'Best for ' + analysis.bestFor" type="neutral" />
+        <div class="card-badges">
+          <Badge :label="card.type === 'business' ? 'Business' : 'Personal'" :type="card.type === 'business' ? 'info' : 'neutral'" />
+          <Badge v-if="analysis.bestFor" :label="'Best for ' + analysis.bestFor" type="neutral" />
+        </div>
       </div>
       <div class="card-visual-bottom">
         <span class="tap-hint">{{ expanded ? 'Tap to collapse' : 'Tap for transactions' }}</span>
@@ -42,6 +45,17 @@
             </span>
           </div>
         </div>
+      </div>
+
+      <!-- Upgrade recommendation -->
+      <div v-if="upgradeRec" class="upgrade-banner">
+        <div class="upgrade-title">
+          <ArrowUpCircle :size="16" stroke-width="2" class="upgrade-icon" />
+          <span>Upgrade to {{ upgradeRec.targetCard.name }} &mdash; save {{ formatCurrency(upgradeRec.netBenefit) }}/yr more</span>
+        </div>
+        <p class="upgrade-detail">
+          You spend {{ formatCurrency(bonusCategorySpend) }}/yr on bonus categories. The {{ formatCurrency(upgradeRec.targetCard.annualFee) }}/yr fee pays for itself.
+        </p>
       </div>
 
       <!-- Transactions (expanded) -->
@@ -85,8 +99,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { formatCurrency, formatDate } from '@/utils/formatters'
-import { getBestCardForCategory } from '@/utils/creditCardData'
-import { CheckCircle, Circle, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-vue-next'
+import { getBestCardForCategory, getUpgradeRecommendation } from '@/utils/creditCardData'
+import { CheckCircle, Circle, ChevronDown, CheckCircle2, AlertCircle, ArrowUpCircle } from 'lucide-vue-next'
 import { useBudgetStore } from '@/stores/budget'
 import Badge from '@/components/common/Badge.vue'
 
@@ -126,6 +140,24 @@ const optimalPercent = computed(() => {
     }
   }
   return totalAmount > 0 ? (optimalAmount / totalAmount) * 100 : 100
+})
+
+const bonusCategorySpend = computed(() => {
+  if (!props.card.upgradeTo) return 0
+  const txns = transactions.value
+  const bonusCategories = Object.keys(props.card.cashbackRates).filter(k => k !== 'default')
+  let spend = 0
+  for (const txn of txns) {
+    if (bonusCategories.includes(txn.category)) {
+      spend += txn.amount
+    }
+  }
+  return spend * 12 // annualize from monthly data
+})
+
+const upgradeRec = computed(() => {
+  if (!props.card.upgradeTo) return null
+  return getUpgradeRecommendation(props.card, bonusCategorySpend.value)
 })
 </script>
 
@@ -396,5 +428,41 @@ const optimalPercent = computed(() => {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+.card-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.upgrade-banner {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(20, 184, 166, 0.08);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: var(--radius-md);
+}
+
+.upgrade-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--electric-teal);
+}
+
+.upgrade-icon {
+  flex-shrink: 0;
+}
+
+.upgrade-detail {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
 </style>
