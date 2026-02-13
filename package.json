@@ -27,7 +27,7 @@
     "@vercel/kv": "^3.0.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
+    "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "^1.0.0",
     "@vitest/ui": "^1.0.0",
     "@vue/test-utils": "^2.4.0",
