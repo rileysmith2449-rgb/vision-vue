@@ -16,89 +16,197 @@
       No spending data available yet.
     </div>
 
-    <div v-else class="optimization-list">
-      <div
-        v-for="opt in optimizations"
-        :key="opt.category"
-        :class="['optimization-item', { expanded: expandedCategory === opt.category }]"
-      >
-        <div class="optimization-row" @click="toggleCategory(opt.category)">
-          <div class="category-info">
-            <span class="category-icon">{{ opt.icon }}</span>
-            <div class="category-details">
-              <span class="category-name">{{ opt.category }}</span>
-              <span class="category-spend">{{ formatCurrency(opt.totalSpend) }} spent</span>
+    <template v-else>
+      <!-- Personal Optimizations -->
+      <div v-if="personalOptimizations.length > 0" class="optimization-list">
+        <h5 v-if="businessOptimizations.length > 0" class="section-subheading">Personal</h5>
+        <div
+          v-for="opt in personalOptimizations"
+          :key="opt.category"
+          :class="['optimization-item', { expanded: expandedCategory === opt.category }]"
+        >
+          <div class="optimization-row" @click="toggleCategory(opt.category)">
+            <div class="category-info">
+              <span class="category-icon">{{ opt.icon }}</span>
+              <div class="category-details">
+                <span class="category-name">{{ opt.category }}</span>
+                <span class="category-spend">{{ formatCurrency(opt.totalSpend) }} spent</span>
+              </div>
+            </div>
+
+            <div class="card-recommendation">
+              <div v-if="opt.currentCard !== opt.bestCard" class="switch-badge">
+                <ArrowRight :size="12" />
+                Switch
+              </div>
+              <div class="card-info">
+                <span class="best-card">{{ opt.bestCard }}</span>
+                <span class="reward-rate">{{ opt.bestRate }}x {{ opt.rewardType }}</span>
+              </div>
+            </div>
+
+            <div class="savings-info">
+              <span v-if="opt.missedRewards > 0" class="missed-rewards">
+                +{{ formatCurrency(opt.missedRewards) }}/mo
+              </span>
+              <span v-else class="already-optimal">Optimal</span>
+            </div>
+
+            <div class="opt-chevron" :class="{ rotated: expandedCategory === opt.category }">
+              <ChevronDown :size="16" stroke-width="2" />
             </div>
           </div>
 
-          <div class="card-recommendation">
-            <div v-if="opt.currentCard !== opt.bestCard" class="switch-badge">
-              <ArrowRight :size="12" />
-              Switch
+          <div v-if="expandedCategory === opt.category" class="category-drilldown">
+            <div class="drilldown-header">
+              <span class="drilldown-cell drilldown-hd">Merchant</span>
+              <span class="drilldown-cell drilldown-hd">Card Used</span>
+              <span class="drilldown-cell drilldown-hd">Best Card</span>
+              <span class="drilldown-cell drilldown-hd drilldown-right">Amount</span>
             </div>
-            <div class="card-info">
-              <span class="best-card">{{ opt.bestCard }} <Badge :label="opt.bestCardType === 'business' ? 'Business' : 'Personal'" :type="opt.bestCardType === 'business' ? 'info' : 'neutral'" /></span>
-              <span class="reward-rate">{{ opt.bestRate }}x {{ opt.rewardType }}</span>
+            <div
+              v-for="(txn, i) in getCategoryTransactions(opt.category)"
+              :key="i"
+              :class="['drilldown-row', { 'is-optimal': txn.card === opt.bestCard }]"
+            >
+              <span class="drilldown-cell txn-merchant-cell">{{ txn.merchant }}</span>
+              <span class="drilldown-cell" :class="{ 'wrong-card': txn.card !== opt.bestCard }">{{ txn.card }}</span>
+              <span class="drilldown-cell best-card-cell">{{ opt.bestCard }}</span>
+              <span class="drilldown-cell drilldown-right">{{ formatCurrency(txn.amount) }}</span>
             </div>
-          </div>
-
-          <div class="savings-info">
-            <span v-if="opt.missedRewards > 0" class="missed-rewards">
-              +{{ formatCurrency(opt.missedRewards) }}/mo
-            </span>
-            <span v-else class="already-optimal">Optimal</span>
-          </div>
-
-          <div class="opt-chevron" :class="{ rotated: expandedCategory === opt.category }">
-            <ChevronDown :size="16" stroke-width="2" />
+            <div class="drilldown-summary">
+              <span>{{ getCategoryTransactions(opt.category).length }} transactions</span>
+              <span v-if="opt.currentCard !== opt.bestCard" class="drilldown-tip">
+                Use <strong>{{ opt.bestCard }}</strong> for {{ opt.bestRate }}x {{ opt.rewardType }} on {{ opt.category }}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div v-if="expandedCategory === opt.category" class="category-drilldown">
-          <div class="drilldown-header">
-            <span class="drilldown-cell drilldown-hd">Merchant</span>
-            <span class="drilldown-cell drilldown-hd">Card Used</span>
-            <span class="drilldown-cell drilldown-hd">Best Card</span>
-            <span class="drilldown-cell drilldown-hd drilldown-right">Amount</span>
-          </div>
-          <div
-            v-for="(txn, i) in getCategoryTransactions(opt.category)"
-            :key="i"
-            :class="['drilldown-row', { 'is-optimal': txn.card === opt.bestCard }]"
-          >
-            <span class="drilldown-cell txn-merchant-cell">{{ txn.merchant }}</span>
-            <span class="drilldown-cell" :class="{ 'wrong-card': txn.card !== opt.bestCard }">{{ txn.card }}</span>
-            <span class="drilldown-cell best-card-cell">{{ opt.bestCard }}</span>
-            <span class="drilldown-cell drilldown-right">{{ formatCurrency(txn.amount) }}</span>
-          </div>
-          <div class="drilldown-summary">
-            <span>{{ getCategoryTransactions(opt.category).length }} transactions</span>
-            <span v-if="opt.currentCard !== opt.bestCard" class="drilldown-tip">
-              Use <strong>{{ opt.bestCard }}</strong> for {{ opt.bestRate }}x {{ opt.rewardType }} on {{ opt.category }}
-            </span>
-          </div>
+        <div v-if="totalPersonalMissed > 0" class="total-savings">
+          <span class="total-label">Potential extra rewards</span>
+          <span class="total-value">{{ formatCurrency(totalPersonalMissed) }}/mo</span>
         </div>
       </div>
 
-      <div v-if="totalMissedRewards > 0" class="total-savings">
-        <span class="total-label">Potential extra rewards</span>
-        <span class="total-value">{{ formatCurrency(totalMissedRewards) }}/mo</span>
-      </div>
-    </div>
+      <!-- Business Optimizations -->
+      <div v-if="budgetStore.businessEnabled && businessOptimizations.length > 0" class="optimization-list optimization-list-business">
+        <h5 class="section-subheading">Business</h5>
+        <div
+          v-for="opt in businessOptimizations"
+          :key="opt.category"
+          :class="['optimization-item', { expanded: expandedCategory === opt.category }]"
+        >
+          <div class="optimization-row" @click="toggleCategory(opt.category)">
+            <div class="category-info">
+              <span class="category-icon">{{ opt.icon }}</span>
+              <div class="category-details">
+                <span class="category-name">{{ opt.category }}</span>
+                <span class="category-spend">{{ formatCurrency(opt.totalSpend) }} spent</span>
+              </div>
+            </div>
 
-    <div v-if="enrollmentSuggestions.length > 0" class="enrollment-section">
+            <div class="card-recommendation">
+              <div v-if="opt.currentCard !== opt.bestCard" class="switch-badge">
+                <ArrowRight :size="12" />
+                Switch
+              </div>
+              <div class="card-info">
+                <span class="best-card">{{ opt.bestCard }}</span>
+                <span class="reward-rate">{{ opt.bestRate }}x {{ opt.rewardType }}</span>
+              </div>
+            </div>
+
+            <div class="savings-info">
+              <span v-if="opt.missedRewards > 0" class="missed-rewards">
+                +{{ formatCurrency(opt.missedRewards) }}/mo
+              </span>
+              <span v-else class="already-optimal">Optimal</span>
+            </div>
+
+            <div class="opt-chevron" :class="{ rotated: expandedCategory === opt.category }">
+              <ChevronDown :size="16" stroke-width="2" />
+            </div>
+          </div>
+
+          <div v-if="expandedCategory === opt.category" class="category-drilldown">
+            <div class="drilldown-header">
+              <span class="drilldown-cell drilldown-hd">Merchant</span>
+              <span class="drilldown-cell drilldown-hd">Card Used</span>
+              <span class="drilldown-cell drilldown-hd">Best Card</span>
+              <span class="drilldown-cell drilldown-hd drilldown-right">Amount</span>
+            </div>
+            <div
+              v-for="(txn, i) in getCategoryTransactions(opt.category)"
+              :key="i"
+              :class="['drilldown-row', { 'is-optimal': txn.card === opt.bestCard }]"
+            >
+              <span class="drilldown-cell txn-merchant-cell">{{ txn.merchant }}</span>
+              <span class="drilldown-cell" :class="{ 'wrong-card': txn.card !== opt.bestCard }">{{ txn.card }}</span>
+              <span class="drilldown-cell best-card-cell">{{ opt.bestCard }}</span>
+              <span class="drilldown-cell drilldown-right">{{ formatCurrency(txn.amount) }}</span>
+            </div>
+            <div class="drilldown-summary">
+              <span>{{ getCategoryTransactions(opt.category).length }} transactions</span>
+              <span v-if="opt.currentCard !== opt.bestCard" class="drilldown-tip">
+                Use <strong>{{ opt.bestCard }}</strong> for {{ opt.bestRate }}x {{ opt.rewardType }} on {{ opt.category }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="totalBusinessMissed > 0" class="total-savings">
+          <span class="total-label">Potential extra rewards</span>
+          <span class="total-value">{{ formatCurrency(totalBusinessMissed) }}/mo</span>
+        </div>
+      </div>
+    </template>
+
+    <!-- Personal Enrollment Suggestions -->
+    <div v-if="personalEnrollmentSuggestions.length > 0" class="enrollment-section">
       <div class="enrollment-header">
         <PlusCircle :size="16" stroke-width="2" />
         <span>Cards to Consider</span>
       </div>
+      <h5 v-if="businessEnrollmentSuggestions.length > 0" class="section-subheading">Personal</h5>
       <div class="enrollment-list">
         <div
-          v-for="suggestion in enrollmentSuggestions"
+          v-for="suggestion in personalEnrollmentSuggestions"
           :key="suggestion.card"
           class="enrollment-card"
         >
           <div class="enrollment-card-top">
-            <span class="enrollment-card-name">{{ suggestion.card }} <Badge :label="suggestion.type === 'business' ? 'Business' : 'Personal'" :type="suggestion.type === 'business' ? 'info' : 'neutral'" /></span>
+            <span class="enrollment-card-name">{{ suggestion.card }}</span>
+            <span class="enrollment-card-reward">+{{ formatCurrency(suggestion.totalExtraRewards) }}/mo</span>
+          </div>
+          <div class="enrollment-categories">
+            <span
+              v-for="cat in suggestion.categories"
+              :key="cat.name"
+              class="enrollment-category-tag"
+            >
+              {{ cat.name }} {{ cat.rate }}x {{ cat.rewardType }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business Enrollment Suggestions -->
+    <div v-if="budgetStore.businessEnabled && businessEnrollmentSuggestions.length > 0" class="enrollment-section">
+      <div v-if="personalEnrollmentSuggestions.length === 0" class="enrollment-header">
+        <PlusCircle :size="16" stroke-width="2" />
+        <span>Cards to Consider</span>
+      </div>
+      <h5 class="section-subheading">Business</h5>
+      <div class="enrollment-list">
+        <div
+          v-for="suggestion in businessEnrollmentSuggestions"
+          :key="suggestion.card"
+          class="enrollment-card"
+        >
+          <div class="enrollment-card-top">
+            <span class="enrollment-card-name">{{ suggestion.card }}</span>
             <span class="enrollment-card-reward">+{{ formatCurrency(suggestion.totalExtraRewards) }}/mo</span>
           </div>
           <div class="enrollment-categories">
@@ -331,6 +439,22 @@ const totalMissedRewards = computed(() => {
   return optimizations.value.reduce((sum, opt) => sum + opt.missedRewards, 0)
 })
 
+const personalOptimizations = computed(() =>
+  optimizations.value.filter(opt => opt.bestCardType === 'personal')
+)
+
+const businessOptimizations = computed(() =>
+  optimizations.value.filter(opt => opt.bestCardType === 'business')
+)
+
+const totalPersonalMissed = computed(() =>
+  personalOptimizations.value.reduce((sum, opt) => sum + opt.missedRewards, 0)
+)
+
+const totalBusinessMissed = computed(() =>
+  businessOptimizations.value.reduce((sum, opt) => sum + opt.missedRewards, 0)
+)
+
 // Cards the user currently uses (from transaction data)
 const userCards = computed(() => {
   const cards = new Set()
@@ -372,6 +496,14 @@ const enrollmentSuggestions = computed(() => {
 
   return Object.values(suggestions).sort((a, b) => b.totalExtraRewards - a.totalExtraRewards)
 })
+
+const personalEnrollmentSuggestions = computed(() =>
+  enrollmentSuggestions.value.filter(s => s.type === 'personal')
+)
+
+const businessEnrollmentSuggestions = computed(() =>
+  enrollmentSuggestions.value.filter(s => s.type === 'business')
+)
 </script>
 
 <style scoped>
@@ -417,10 +549,23 @@ const enrollmentSuggestions = computed(() => {
   margin-top: 1px;
 }
 
+.section-subheading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
 .optimization-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.optimization-list-business {
+  margin-top: 20px;
 }
 
 .optimization-item {

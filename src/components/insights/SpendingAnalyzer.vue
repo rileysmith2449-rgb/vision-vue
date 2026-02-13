@@ -126,14 +126,53 @@
       </h4>
       <p class="block-subtitle">The optimal wallet for your {{ periodLabel }} spending pattern</p>
 
-      <div class="combo-grid">
+      <h5 v-if="personalRecommendedCards.length > 0 && businessRecommendedCards.length > 0" class="section-subheading">Personal</h5>
+      <div v-if="personalRecommendedCards.length > 0" class="combo-grid">
         <div
-          v-for="card in analysis.recommendedCards"
+          v-for="card in personalRecommendedCards"
           :key="card.name"
           :class="['combo-card', card.action]"
         >
           <div class="combo-card-header">
-            <span class="combo-card-name">{{ card.name }} <Badge :label="card.type === 'business' ? 'Business' : 'Personal'" :type="card.type === 'business' ? 'info' : 'neutral'" /></span>
+            <span class="combo-card-name">{{ card.name }}</span>
+            <span :class="['combo-badge', card.action]">
+              {{ card.action === 'keep' ? 'Keep' : card.action === 'add' ? 'Add' : card.action === 'evaluate' ? 'Evaluate' : 'Drop' }}
+            </span>
+          </div>
+          <div v-if="card.action === 'evaluate'" class="combo-warning">
+            Fee exceeds rewards — consider if perks justify the cost
+          </div>
+          <div class="combo-stats">
+            <div class="combo-stat">
+              <span class="combo-stat-label">Rewards</span>
+              <span class="combo-stat-value gain">{{ formatCurrency(card.rewards) }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Fee (prorated)</span>
+              <span class="combo-stat-value">{{ card.proratedFee > 0 ? formatCurrency(card.proratedFee) : 'Free' }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Net Value</span>
+              <span class="combo-stat-value" :class="card.netValue >= 0 ? 'gain' : 'loss'">
+                {{ card.netValue >= 0 ? '+' : '' }}{{ formatCurrency(card.netValue) }}
+              </span>
+            </div>
+          </div>
+          <div v-if="card.bestCategories.length" class="combo-categories">
+            <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
+          </div>
+        </div>
+      </div>
+
+      <h5 v-if="businessRecommendedCards.length > 0" class="section-subheading section-subheading-business">Business</h5>
+      <div v-if="businessRecommendedCards.length > 0" class="combo-grid">
+        <div
+          v-for="card in businessRecommendedCards"
+          :key="card.name"
+          :class="['combo-card', card.action]"
+        >
+          <div class="combo-card-header">
+            <span class="combo-card-name">{{ card.name }}</span>
             <span :class="['combo-badge', card.action]">
               {{ card.action === 'keep' ? 'Keep' : card.action === 'add' ? 'Add' : card.action === 'evaluate' ? 'Evaluate' : 'Drop' }}
             </span>
@@ -165,21 +204,54 @@
     </div>
 
     <!-- Cards to Consider -->
-    <div v-if="analysis.suggestedCards.length" class="section-block">
+    <div v-if="personalSuggestedCards.length || businessSuggestedCards.length" class="section-block">
       <h4 class="block-title">
         <PlusCircle :size="16" stroke-width="2" />
         Cards to Consider
       </h4>
       <p class="block-subtitle">Popular cards that could boost your rewards based on your spending</p>
 
-      <div class="combo-grid">
+      <h5 v-if="personalSuggestedCards.length > 0 && businessSuggestedCards.length > 0" class="section-subheading">Personal</h5>
+      <div v-if="personalSuggestedCards.length > 0" class="combo-grid">
         <div
-          v-for="card in analysis.suggestedCards"
+          v-for="card in personalSuggestedCards"
           :key="card.name"
           class="combo-card suggest"
         >
           <div class="combo-card-header">
-            <span class="combo-card-name">{{ card.name }} <Badge :label="card.type === 'business' ? 'Business' : 'Personal'" :type="card.type === 'business' ? 'info' : 'neutral'" /></span>
+            <span class="combo-card-name">{{ card.name }}</span>
+            <span class="combo-badge suggest">Consider</span>
+          </div>
+          <p class="suggest-highlight">{{ card.highlight }}</p>
+          <div class="combo-stats">
+            <div class="combo-stat">
+              <span class="combo-stat-label">Projected Rewards</span>
+              <span class="combo-stat-value gain">{{ formatCurrency(card.projectedRewards) }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Annual Fee</span>
+              <span class="combo-stat-value">{{ card.annualFee > 0 ? formatCurrency(card.annualFee) : 'Free' }}</span>
+            </div>
+            <div class="combo-stat">
+              <span class="combo-stat-label">Net Value</span>
+              <span class="combo-stat-value gain">+{{ formatCurrency(card.netValue) }}</span>
+            </div>
+          </div>
+          <div v-if="card.bestCategories.length" class="combo-categories">
+            <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
+          </div>
+        </div>
+      </div>
+
+      <h5 v-if="businessSuggestedCards.length > 0" class="section-subheading section-subheading-business">Business</h5>
+      <div v-if="businessSuggestedCards.length > 0" class="combo-grid">
+        <div
+          v-for="card in businessSuggestedCards"
+          :key="card.name"
+          class="combo-card suggest"
+        >
+          <div class="combo-card-header">
+            <span class="combo-card-name">{{ card.name }}</span>
             <span class="combo-badge suggest">Consider</span>
           </div>
           <p class="suggest-highlight">{{ card.highlight }}</p>
@@ -550,6 +622,22 @@ const analysis = computed(() => {
     totalCreditsValue,
   }
 })
+
+const personalRecommendedCards = computed(() =>
+  analysis.value.recommendedCards.filter(c => c.type === 'personal')
+)
+
+const businessRecommendedCards = computed(() =>
+  analysis.value.recommendedCards.filter(c => c.type === 'business')
+)
+
+const personalSuggestedCards = computed(() =>
+  analysis.value.suggestedCards.filter(c => c.type === 'personal')
+)
+
+const businessSuggestedCards = computed(() =>
+  analysis.value.suggestedCards.filter(c => c.type === 'business')
+)
 </script>
 
 <style scoped>
@@ -696,6 +784,19 @@ const analysis = computed(() => {
   font-size: 0.78rem;
   color: var(--text-secondary);
   margin-bottom: 16px;
+}
+
+.section-subheading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.section-subheading-business {
+  margin-top: 16px;
 }
 
 /* Card Combo Grid */

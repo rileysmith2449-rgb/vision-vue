@@ -42,7 +42,17 @@
         </div>
         <div class="summary-card-content">
           <span class="summary-card-label">Income</span>
-          <span class="summary-card-value">{{ formatCurrency(budgetStore.monthlyNetIncome) }}</span>
+          <div class="currency-input-wrap">
+            <span class="currency-input-symbol">$</span>
+            <input
+              type="number"
+              class="currency-input"
+              :value="incomeInput"
+              min="0"
+              step="100"
+              @input="incomeInput = Math.max(0, Number($event.target.value))"
+            />
+          </div>
         </div>
       </div>
       <div class="summary-card">
@@ -51,7 +61,17 @@
         </div>
         <div class="summary-card-content">
           <span class="summary-card-label">Fixed Expenses</span>
-          <span class="summary-card-value">{{ formatCurrency(fixedExpenses) }}</span>
+          <div class="currency-input-wrap">
+            <span class="currency-input-symbol">$</span>
+            <input
+              type="number"
+              class="currency-input"
+              :value="fixedExpensesInput"
+              min="0"
+              step="100"
+              @input="fixedExpensesInput = Math.max(0, Number($event.target.value))"
+            />
+          </div>
         </div>
       </div>
       <div class="summary-card">
@@ -171,7 +191,7 @@
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { formatCurrency } from '@/utils/formatters'
 import Header from '@/components/layout/Header.vue'
@@ -185,7 +205,7 @@ const budgetStore = useBudgetStore()
 
 const FIXED_CATEGORIES = ['Housing & Rent', 'Bills & Utilities', 'Internet & Phone']
 
-const fixedExpenses = computed(() => {
+const computedFixedExpenses = computed(() => {
   const expenses = budgetStore.categoryExpenses
   let total = 0
   for (const [name, data] of Object.entries(expenses)) {
@@ -194,8 +214,13 @@ const fixedExpenses = computed(() => {
   return total
 })
 
+const incomeInput = ref(0)
+const fixedExpensesInput = ref(0)
+
+const fixedExpenses = computed(() => fixedExpensesInput.value)
+
 const variableExpenses = computed(() => {
-  return budgetStore.totalExpenses - fixedExpenses.value
+  return budgetStore.totalExpenses - computedFixedExpenses.value
 })
 
 const fixedOpen = ref(true)
@@ -212,11 +237,11 @@ const variableCategories = computed(() => {
 const savingsRate = ref(20)
 
 const targetSavings = computed(() => {
-  return budgetStore.monthlyNetIncome * (savingsRate.value / 100)
+  return incomeInput.value * (savingsRate.value / 100)
 })
 
 const targetVariableExpenses = computed(() => {
-  return Math.max(0, budgetStore.monthlyNetIncome - fixedExpenses.value - targetSavings.value)
+  return Math.max(0, incomeInput.value - fixedExpensesInput.value - targetSavings.value)
 })
 
 onMounted(() => {
@@ -225,6 +250,15 @@ onMounted(() => {
   }
   budgetStore.loadHistoricalData()
 })
+
+// Initialize inputs from computed values, update when underlying data changes
+watch(() => budgetStore.monthlyNetIncome, (val) => {
+  if (incomeInput.value === 0) incomeInput.value = Math.round(val)
+}, { immediate: true })
+
+watch(computedFixedExpenses, (val) => {
+  if (fixedExpensesInput.value === 0) fixedExpensesInput.value = Math.round(val)
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -348,6 +382,47 @@ onMounted(() => {
 
 .under-hint {
   color: var(--electric-teal);
+}
+
+.currency-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: 6px;
+  padding: 2px 6px;
+  transition: border-color 0.2s ease;
+  width: fit-content;
+}
+
+.currency-input-wrap:focus-within {
+  border-color: var(--accent-blue);
+}
+
+.currency-input-symbol {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.currency-input {
+  width: 72px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: 'Lexend', sans-serif;
+  text-align: right;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.currency-input::-webkit-outer-spin-button,
+.currency-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .savings-target-row {
