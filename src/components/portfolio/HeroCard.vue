@@ -30,7 +30,7 @@
 
         <template v-if="!drillCategory">
           <button
-            v-for="(value, category) in portfolioStore.categoryTotals"
+            v-for="{ category, value } in sortedCategories"
             :key="category"
             class="legend-row"
             @click="drillInto(category)"
@@ -171,6 +171,14 @@ function getCategoryPct(value) {
   return ((value / total) * 100).toFixed(1)
 }
 
+// Sort categories by value descending (largest % first)
+const sortedCategories = computed(() => {
+  const totals = portfolioStore.categoryTotals
+  return Object.entries(totals)
+    .sort(([, a], [, b]) => b - a)
+    .map(([category, value]) => ({ category, value }))
+})
+
 const chartData = computed(() => {
   if (drillCategory.value) {
     const holdings = drilledHoldings.value
@@ -186,12 +194,12 @@ const chartData = computed(() => {
     }
   }
 
-  const totals = portfolioStore.categoryTotals
-  const categories = Object.keys(totals)
+  const categories = sortedCategories.value.map(c => c.category)
+  const values = sortedCategories.value.map(c => c.value)
   return {
     labels: categories,
     datasets: [{
-      data: Object.values(totals),
+      data: values,
       backgroundColor: categories.map(c => categoryColorMap[c] || '#8B5CF6'),
       borderColor: '#0B1120',
       borderWidth: 2,
@@ -214,7 +222,7 @@ const chartOptions = computed(() => ({
         selectedHolding.value = holding
       }
     } else {
-      const category = Object.keys(portfolioStore.categoryTotals)[index]
+      const category = sortedCategories.value[index]?.category
       if (category) {
         drillCategory.value = category
       }

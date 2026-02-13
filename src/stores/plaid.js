@@ -13,6 +13,20 @@ export const usePlaidStore = defineStore('plaid', () => {
     yours: { isConnected: false, isLinking: false, error: null, itemId: null }
   })
 
+  function getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' }
+    try {
+      const token = sessionStorage.getItem('DS_SESSION_TOKEN')
+        || localStorage.getItem('DS_SESSION_TOKEN')
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+    } catch {
+      // No auth token available — localhost fallback will be used server-side
+    }
+    return headers
+  }
+
   async function createLinkToken(memberId) {
     if (memberId) {
       memberConnections.value[memberId].error = null
@@ -20,7 +34,13 @@ export const usePlaidStore = defineStore('plaid', () => {
       error.value = null
     }
     const url = memberId ? `/api/link-token?member=${memberId}` : '/api/link-token'
-    const res = await fetch(url, { method: 'POST' })
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        products: ['transactions', 'investments', 'liabilities']
+      }),
+    })
     if (!res.ok) throw new Error('Failed to create link token')
     const data = await res.json()
     return data.link_token
@@ -34,7 +54,7 @@ export const usePlaidStore = defineStore('plaid', () => {
     }
     const res = await fetch('/api/exchange-token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ public_token: publicToken, member: memberId || undefined }),
     })
     if (!res.ok) throw new Error('Failed to exchange token')
@@ -48,10 +68,54 @@ export const usePlaidStore = defineStore('plaid', () => {
     }
   }
 
+  async function fetchTransactions(memberId, start, end) {
+    const params = new URLSearchParams({ start, end })
+    if (memberId) params.set('member', memberId)
+    const res = await fetch(`/api/transactions?${params}`, {
+      headers: getAuthHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to fetch transactions')
+    const data = await res.json()
+    return data.transactions
+  }
+
+  async function fetchHoldings(memberId) {
+    const params = new URLSearchParams()
+    if (memberId) params.set('member', memberId)
+    const res = await fetch(`/api/holdings?${params}`, {
+      headers: getAuthHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to fetch holdings')
+    const data = await res.json()
+    return data.holdings
+  }
+
+  async function fetchAccounts(memberId) {
+    const params = new URLSearchParams()
+    if (memberId) params.set('member', memberId)
+    const res = await fetch(`/api/accounts?${params}`, {
+      headers: getAuthHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to fetch accounts')
+    const data = await res.json()
+    return data.accounts
+  }
+
+  async function fetchLiabilities(memberId) {
+    const params = new URLSearchParams()
+    if (memberId) params.set('member', memberId)
+    const res = await fetch(`/api/liabilities?${params}`, {
+      headers: getAuthHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to fetch liabilities')
+    const data = await res.json()
+    return data.liabilities
+  }
+
   async function disconnect(memberId) {
     await fetch('/api/disconnect', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ member: memberId || undefined }),
     })
     if (memberId) {
@@ -69,8 +133,13 @@ export const usePlaidStore = defineStore('plaid', () => {
     error,
     itemId,
     memberConnections,
+    getAuthHeaders,
     createLinkToken,
     exchangeToken,
+    fetchTransactions,
+    fetchHoldings,
+    fetchAccounts,
+    fetchLiabilities,
     disconnect,
   }
 })

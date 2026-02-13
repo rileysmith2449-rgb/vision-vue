@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { generateExpenseData, generateBusinessExpenseData, generateFamilyExpenseData, generateHistoricalTransactions } from '@/utils/demoData'
 import { creditCards } from '@/utils/creditCardData'
+import { useSettingsStore } from '@/stores/settings'
+import { usePlaidStore } from '@/stores/plaid'
 
 function loadFromStorage(key, fallback) {
   try {
@@ -306,14 +308,121 @@ export const useBudgetStore = defineStore('budget', () => {
     return options
   })
 
+  // Category mapping for Plaid transactions
+  const CATEGORY_ICONS = {
+    'Housing & Rent': '🏠',
+    'Dining & Food': '🍽️',
+    'Transportation': '🚗',
+    'Shopping': '🛍️',
+    'Entertainment': '🎬',
+    'Travel': '✈️',
+    'Bills & Utilities': '💡',
+  }
+
+  const DEFAULT_BUDGETS = {
+    'Housing & Rent': 2800,
+    'Dining & Food': 1200,
+    'Transportation': 800,
+    'Shopping': 600,
+    'Entertainment': 400,
+    'Travel': 500,
+    'Bills & Utilities': 450,
+  }
+
+  function buildExpenseStructure(transactions) {
+    const result = {}
+    for (const tx of transactions) {
+      const cat = tx.category || 'Shopping'
+      if (!result[cat]) {
+        result[cat] = {
+          icon: CATEGORY_ICONS[cat] || '🛍️',
+          budget: DEFAULT_BUDGETS[cat] || 600,
+          subcategories: {}
+        }
+      }
+      const sub = tx.subcategory || cat
+      if (!result[cat].subcategories[sub]) {
+        result[cat].subcategories[sub] = []
+      }
+      result[cat].subcategories[sub].push({
+        merchant: tx.merchant,
+        amount: tx.amount,
+        date: tx.date,
+        card: tx.card,
+        ...(tx.owner ? { owner: tx.owner } : {}),
+      })
+    }
+    // Preserve any user-set budget amounts
+    for (const [catName, catData] of Object.entries(result)) {
+      const existing = personalExpenses.value[catName] || familyExpenses.value[catName]
+      if (existing?.budget) {
+        catData.budget = existing.budget
+      }
+    }
+    return result
+  }
+
+  async function loadFromPlaid() {
+    const plaidStore = usePlaidStore()
+    const now = new Date()
+    const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+    const today = now.toISOString().split('T')[0]
+
+    try {
+      if (budgetMode.value === 'family') {
+        // Fetch for both members
+        const [mineTxns, yoursTxns] = await Promise.all([
+          plaidStore.fetchTransactions('mine', startOfMonth, today),
+          plaidStore.fetchTransactions('yours', startOfMonth, today),
+        ])
+        const allTxns = [
+          ...mineTxns.map(t => ({ ...t, owner: 'mine' })),
+          ...yoursTxns.map(t => ({ ...t, owner: 'yours' })),
+        ]
+        familyExpenses.value = buildExpenseStructure(allTxns)
+      } else {
+        const txns = await plaidStore.fetchTransactions(null, startOfMonth, today)
+        personalExpenses.value = buildExpenseStructure(txns)
+      }
+    } catch (err) {
+      console.error('Failed to load Plaid transactions, falling back to demo:', err)
+      personalExpenses.value = generateExpenseData()
+      familyExpenses.value = generateFamilyExpenseData()
+    }
+  }
+
+  async function loadHistoricalFromPlaid() {
+    const plaidStore = usePlaidStore()
+    const now = new Date()
+    const today = now.toISOString().split('T')[0]
+    const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), 1)
+    const start = yearAgo.toISOString().split('T')[0]
+
+    try {
+      const txns = await plaidStore.fetchTransactions(null, start, today)
+      historicalTransactions.value = txns.sort((a, b) => new Date(b.date) - new Date(a.date))
+    } catch (err) {
+      console.error('Failed to load Plaid historical data, falling back to demo:', err)
+      historicalTransactions.value = generateHistoricalTransactions()
+    }
+  }
+
   // Actions
   function loadExpenses() {
+    const settingsStore = useSettingsStore()
+    if (settingsStore.dataSource === 'plaid') {
+      return loadFromPlaid()
+    }
     personalExpenses.value = generateExpenseData()
     businessExpenses.value = generateBusinessExpenseData()
     familyExpenses.value = generateFamilyExpenseData()
   }
 
   function loadHistoricalData() {
+    const settingsStore = useSettingsStore()
+    if (settingsStore.dataSource === 'plaid') {
+      return loadHistoricalFromPlaid()
+    }
     if (historicalTransactions.value.length === 0) {
       historicalTransactions.value = generateHistoricalTransactions()
     }
@@ -498,7 +607,8 @@ export const useBudgetStore = defineStore('budget', () => {
     updateCategoryBudget,
     getCategoryTransactions,
     reclassifyTransaction,
-    completeOnboarding
+    completeOnboarding,
+    loadFromPlaid,
   }
 })
 

@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { generateDemoHoldings, generateDemoLiabilities, generateNetWorthHistory, generateBenchmarkData, generatePropertyValues } from '@/utils/demoData'
 import { calculateTaxTreatment, daysUntilLongTerm } from '@/utils/taxCalculations'
+import { useSettingsStore } from '@/stores/settings'
+import { usePlaidStore } from '@/stores/plaid'
 
 export const usePortfolioStore = defineStore('portfolio', () => {
   // State
@@ -134,8 +136,24 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     return totals
   })
 
-  function loadNetWorthData() {
-    liabilities.value = generateDemoLiabilities()
+  async function loadLiabilitiesFromPlaid() {
+    const plaidStore = usePlaidStore()
+    try {
+      const plaidLiabilities = await plaidStore.fetchLiabilities()
+      liabilities.value = plaidLiabilities
+    } catch (err) {
+      console.error('Failed to load Plaid liabilities, falling back to demo:', err)
+      liabilities.value = generateDemoLiabilities()
+    }
+  }
+
+  async function loadNetWorthData() {
+    const settingsStore = useSettingsStore()
+    if (settingsStore.dataSource === 'plaid') {
+      await loadLiabilitiesFromPlaid()
+    } else {
+      liabilities.value = generateDemoLiabilities()
+    }
     propertyValues.value = generatePropertyValues()
     // Pin today's net worth so the chart's last point matches the hero cards
     const assets = (totalValue.value || 0) + (totalPropertyValue.value || 0)
@@ -147,12 +165,16 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
   // Actions
   async function loadHoldings() {
+    const settingsStore = useSettingsStore()
     loading.value = true
     error.value = null
     try {
+      if (settingsStore.dataSource === 'plaid') {
+        return await loadFromPlaid()
+      }
       await new Promise(resolve => setTimeout(resolve, 300))
       holdings.value = generateDemoHoldings()
-      loadNetWorthData()
+      await loadNetWorthData()
       dataSource.value = 'demo'
     } catch (err) {
       error.value = err.message
@@ -162,16 +184,20 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   }
 
   async function loadFromPlaid() {
+    const plaidStore = usePlaidStore()
     loading.value = true
     error.value = null
     try {
-      const res = await fetch('/api/holdings')
-      if (!res.ok) throw new Error('Failed to fetch holdings from Plaid')
-      const data = await res.json()
-      holdings.value = data.holdings
+      const plaidHoldings = await plaidStore.fetchHoldings()
+      holdings.value = plaidHoldings
+      await loadNetWorthData()
       dataSource.value = 'plaid'
     } catch (err) {
       error.value = err.message
+      // Fall back to demo on error
+      holdings.value = generateDemoHoldings()
+      await loadNetWorthData()
+      dataSource.value = 'demo'
     } finally {
       loading.value = false
     }
@@ -232,6 +258,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     // Actions
     loadHoldings,
     loadFromPlaid,
+    loadLiabilitiesFromPlaid,
     loadNetWorthData,
     addHolding,
     updateHolding,

@@ -89,10 +89,12 @@ import Card from '@/components/common/Card.vue'
 import { usePlaidStore } from '@/stores/plaid'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { useBudgetStore } from '@/stores/budget'
+import { useSettingsStore } from '@/stores/settings'
 
 const plaidStore = usePlaidStore()
 const portfolioStore = usePortfolioStore()
 const budgetStore = useBudgetStore()
+const settingsStore = useSettingsStore()
 
 const plaidReady = ref(false)
 
@@ -130,7 +132,11 @@ async function handleConnect(memberId) {
       onSuccess: async (publicToken) => {
         try {
           await plaidStore.exchangeToken(publicToken, memberId)
-          await portfolioStore.loadFromPlaid()
+          // Load all data from Plaid — holdings, transactions, liabilities
+          await Promise.all([
+            portfolioStore.loadFromPlaid(),
+            budgetStore.loadFromPlaid(),
+          ])
         } catch (err) {
           if (memberId) {
             plaidStore.memberConnections[memberId].error = err.message
@@ -176,7 +182,20 @@ async function handleConnect(memberId) {
 
 async function handleDisconnect(memberId) {
   await plaidStore.disconnect(memberId)
-  portfolioStore.loadHoldings() // Revert to demo data
+
+  // If no connections remain, switch back to demo
+  const hasAnyConnection = plaidStore.isConnected
+    || plaidStore.memberConnections.mine.isConnected
+    || plaidStore.memberConnections.yours.isConnected
+  if (!hasAnyConnection) {
+    settingsStore.setDataSource('demo')
+  }
+
+  // Reload with current data source (demo or remaining Plaid connections)
+  await Promise.all([
+    portfolioStore.loadHoldings(),
+    budgetStore.loadExpenses(),
+  ])
 }
 </script>
 

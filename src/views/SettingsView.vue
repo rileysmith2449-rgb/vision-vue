@@ -17,6 +17,35 @@
         </div>
       </Card>
 
+      <!-- Data Source -->
+      <Card title="Data Source" subtitle="Choose between demo data or real bank data via Plaid">
+        <div class="mode-toggle">
+          <button
+            class="mode-btn"
+            :class="{ active: settingsStore.dataSource === 'demo' }"
+            @click="switchDataSource('demo')"
+          >
+            <Database :size="14" stroke-width="2" />
+            Demo Data
+          </button>
+          <button
+            class="mode-btn"
+            :class="{ active: settingsStore.dataSource === 'plaid' }"
+            @click="switchDataSource('plaid')"
+          >
+            <Landmark :size="14" stroke-width="2" />
+            Plaid (Sandbox)
+          </button>
+        </div>
+
+        <div v-if="settingsStore.dataSource === 'plaid'" class="data-source-detail">
+          <PlaidLink />
+        </div>
+        <p v-else class="data-source-hint">
+          Using generated demo data for budget, investments, and liabilities.
+        </p>
+      </Card>
+
       <!-- Budget Mode -->
       <Card title="Budget Mode" subtitle="Switch between personal or family view">
         <div class="mode-toggle">
@@ -299,12 +328,26 @@
 import { computed } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useAuthStore } from '@/stores/auth'
-import { User, Users, Briefcase, LogOut } from 'lucide-vue-next'
+import { useSettingsStore } from '@/stores/settings'
+import { usePortfolioStore } from '@/stores/portfolio'
+import { User, Users, Briefcase, LogOut, Database, Landmark } from 'lucide-vue-next'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
+import PlaidLink from '@/components/banking/PlaidLink.vue'
 
 const budgetStore = useBudgetStore()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
+const portfolioStore = usePortfolioStore()
+
+async function switchDataSource(source) {
+  settingsStore.setDataSource(source)
+  // Reload stores with the new data source
+  await Promise.all([
+    budgetStore.loadExpenses(),
+    portfolioStore.loadHoldings(),
+  ])
+}
 
 const activeMember = computed(() => budgetStore.familyMembers[budgetStore.personalMember])
 
@@ -706,6 +749,16 @@ const stateOptions = [
 .sign-out-btn:hover {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.5);
+}
+
+.data-source-detail {
+  margin-top: 16px;
+}
+
+.data-source-hint {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
 }
 
 @media (max-width: 640px) {

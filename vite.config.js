@@ -18,6 +18,8 @@ export default defineConfig({
     }
   },
   server: {
+    // For local dev with serverless functions, use `vercel dev` instead of `vite`.
+    // This proxy is a fallback for standalone `vite` dev with the Express server.
     proxy: {
       '/api': 'http://localhost:3001'
     }
