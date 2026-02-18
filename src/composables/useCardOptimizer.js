@@ -8,7 +8,7 @@ import {
   findBestCard,
 } from '@/services/cardOptimizationService'
 
-export function useCardOptimizer() {
+export function useCardOptimizer(periodRef) {
   const cardStore = useCreditCardStore()
   const budgetStore = useBudgetStore()
 
@@ -16,6 +16,8 @@ export function useCardOptimizer() {
   const recommendations = ref([])
   const cheatSheet = ref([])
   const isAnalyzing = ref(false)
+
+  const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 }
 
   /** Convert budget store transactions to Plaid-like format for the engine */
   function toBudgetPlaidTransactions() {
@@ -72,8 +74,9 @@ export function useCardOptimizer() {
               primary: mapping.primary,
               detailed,
             },
-            _cardKey: null, // Budget data doesn't map to cardKeys in the API portfolio
-            _budgetCard: t.card, // Keep original budget card name for reference
+            _cardKey: null,
+            _budgetCard: t.card,
+            _budgetCategory: catName,
             date: t.date,
           })
         }
@@ -81,6 +84,16 @@ export function useCardOptimizer() {
     }
     return txns
   }
+
+  /** Filter transactions by selected period */
+  const filteredTransactions = computed(() => {
+    const all = toBudgetPlaidTransactions()
+    if (!periodRef) return all
+    const months = PERIOD_MONTHS[periodRef.value] || 3
+    const now = new Date()
+    const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate())
+    return all.filter(t => new Date(t.date) >= cutoff)
+  })
 
   function runAnalysis() {
     const active = cardStore.activeCards
@@ -94,7 +107,7 @@ export function useCardOptimizer() {
     isAnalyzing.value = true
 
     try {
-      const transactions = toBudgetPlaidTransactions()
+      const transactions = filteredTransactions.value
       const r = analyzeTransactions(transactions, cardStore.plaidMappings, active, cardStore.cardDetails)
       report.value = r
 
@@ -105,9 +118,9 @@ export function useCardOptimizer() {
     }
   }
 
-  // Re-analyze when transactions or active cards change
+  // Re-analyze when transactions, active cards, or period change
   watch(
-    () => [budgetStore.allTransactions.length, cardStore.activeCards.length],
+    () => [budgetStore.allTransactions.length, cardStore.activeCards.length, periodRef?.value],
     () => { runAnalysis() },
     { immediate: false }
   )
@@ -119,7 +132,6 @@ export function useCardOptimizer() {
     if (!report.value?.totals) return 100
     const { optimalRewards, actualRewards } = report.value.totals
     if (optimalRewards === 0) return 100
-    // When we don't have actual card tracking, show potential vs base
     return Math.round((1 - (report.value.totals.missedRewards / optimalRewards)) * 100)
   })
 
@@ -147,6 +159,7 @@ export function useCardOptimizer() {
     totalOptimalRewards,
     totalSpend,
     topCategories,
+    filteredTransactions,
     runAnalysis,
     getBestCardFor,
   }

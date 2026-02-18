@@ -111,7 +111,7 @@ const router = createRouter({
       path: '/insights',
       name: 'insights',
       component: () => import('@/views/InsightsView.vue'),
-      meta: { title: 'Tax Insights' }
+      meta: { title: 'Tax & Portfolio Insights' }
     },
     {
       path: '/settings',

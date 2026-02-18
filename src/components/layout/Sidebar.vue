@@ -61,7 +61,7 @@ const navLinks = [
   { to: '/cashflow', icon: Banknote, label: 'Cash Flow' },
   { to: '/goals', icon: Target, label: 'Goals' },
   { to: '/cards', icon: CreditCard, label: 'Cards' },
-  { to: '/insights', icon: Lightbulb, label: 'Insights' },
+  { to: '/insights', icon: Lightbulb, label: 'Tax Insights' },
   { to: '/settings', icon: Settings, label: 'Settings' }
 ]
 

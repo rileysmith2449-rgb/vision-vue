@@ -25,7 +25,7 @@
 
       <div class="score-stats">
         <div class="score-stat">
-          <span class="stat-label">Monthly Spend</span>
+          <span class="stat-label">{{ periodLabel }} Spend</span>
           <span class="stat-value">{{ formatCurrency(totalSpend) }}</span>
         </div>
         <div class="score-stat">
@@ -38,10 +38,20 @@
         </div>
       </div>
 
-      <button class="manage-btn" @click="showCardManager = true">
-        <Settings :size="16" stroke-width="2" />
-        Manage Cards
-      </button>
+      <div class="banner-right">
+        <div class="period-toggle">
+          <button
+            v-for="p in periods"
+            :key="p.key"
+            :class="['period-btn', { active: selectedPeriod === p.key }]"
+            @click="selectedPeriod = p.key"
+          >{{ p.label }}</button>
+        </div>
+        <button class="manage-btn" @click="showCardManager = true">
+          <Settings :size="16" stroke-width="2" />
+          Manage Cards
+        </button>
+      </div>
     </div>
 
     <!-- View Toggle -->
@@ -76,29 +86,70 @@
 
     <template v-else>
       <!-- Recommendations View -->
-      <div v-if="activeView === 'recommendations'" class="recommendations-grid">
-        <div v-if="recommendations.length === 0" class="empty-section">
+      <div v-if="activeView === 'recommendations'" class="recommendations-view">
+        <div v-if="recommendations.length === 0 && marketCardSuggestions.length === 0" class="empty-section">
           Your card usage is already optimized. Nice work!
         </div>
-        <div
-          v-for="(rec, i) in recommendations"
-          :key="i"
-          :class="['rec-card', `rec-${rec.type}`, `priority-${rec.priority}`]"
-        >
-          <div class="rec-header">
-            <div :class="['rec-type-icon', `rec-icon-${rec.type}`]">
-              <component :is="recIcon(rec.type)" :size="16" stroke-width="2" />
+        <div v-if="recommendations.length > 0" class="recommendations-grid">
+          <div
+            v-for="(rec, i) in recommendations"
+            :key="i"
+            :class="['rec-card', `rec-${rec.type}`, `priority-${rec.priority}`]"
+          >
+            <div class="rec-header">
+              <div :class="['rec-type-icon', `rec-icon-${rec.type}`]">
+                <component :is="recIcon(rec.type)" :size="16" stroke-width="2" />
+              </div>
+              <span class="rec-type-label">{{ recTypeLabel(rec.type) }}</span>
+              <span :class="['rec-priority', `priority-${rec.priority}`]">{{ rec.priority }}</span>
             </div>
-            <span class="rec-type-label">{{ recTypeLabel(rec.type) }}</span>
-            <span :class="['rec-priority', `priority-${rec.priority}`]">{{ rec.priority }}</span>
+            <h4 class="rec-title">{{ rec.title }}</h4>
+            <p class="rec-message">{{ rec.message }}</p>
+            <div class="rec-footer">
+              <span v-if="rec.impact" class="rec-impact">
+                {{ rec.type === 'signup' ? '' : '+' }}{{ rec.type === 'signup' ? rec.impact.toLocaleString() + ' pts' : formatCurrencyCents(rec.impact) }}
+              </span>
+              <span v-if="rec.daysLeft" class="rec-deadline">{{ rec.daysLeft }} days left</span>
+            </div>
           </div>
-          <h4 class="rec-title">{{ rec.title }}</h4>
-          <p class="rec-message">{{ rec.message }}</p>
-          <div class="rec-footer">
-            <span v-if="rec.impact" class="rec-impact">
-              {{ rec.type === 'signup' ? '' : '+' }}{{ rec.type === 'signup' ? rec.impact.toLocaleString() + ' pts' : formatCurrencyCents(rec.impact) }}
-            </span>
-            <span v-if="rec.daysLeft" class="rec-deadline">{{ rec.daysLeft }} days left</span>
+        </div>
+
+        <!-- Cards to Consider -->
+        <div v-if="marketCardSuggestions.length > 0" class="section-block">
+          <h4 class="block-title">
+            <PlusCircle :size="16" stroke-width="2" />
+            Cards to Consider
+          </h4>
+          <p class="block-subtitle">Popular cards that could boost your rewards based on your spending</p>
+          <div class="combo-grid">
+            <div
+              v-for="card in marketCardSuggestions"
+              :key="card.name"
+              class="combo-card suggest"
+            >
+              <div class="combo-card-header">
+                <span class="combo-card-name">{{ card.name }}</span>
+                <span class="combo-badge suggest">Consider</span>
+              </div>
+              <p class="suggest-highlight">{{ card.highlight }}</p>
+              <div class="combo-stats">
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Projected Rewards</span>
+                  <span class="combo-stat-value gain">{{ formatCurrency(card.projectedRewards) }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Annual Fee</span>
+                  <span class="combo-stat-value">{{ card.annualFee > 0 ? formatCurrency(card.annualFee) : 'Free' }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Net Value</span>
+                  <span class="combo-stat-value gain">+{{ formatCurrency(card.netValue) }}</span>
+                </div>
+              </div>
+              <div v-if="card.bestCategories.length" class="combo-categories">
+                <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -116,27 +167,68 @@
             <span class="cat-cell">Rate</span>
             <span class="cat-cell cat-right">Rewards</span>
           </div>
-          <div
-            v-for="cat in topCategories"
-            :key="cat.category"
-            class="cat-row"
-          >
-            <span class="cat-cell cat-name-cell">
-              <span class="cat-icon">{{ categoryIcon(cat.category) }}</span>
-              {{ formatCatName(cat.category) }}
-            </span>
-            <span class="cat-cell">{{ formatCurrency(cat.spend) }}</span>
-            <span class="cat-cell cat-card-name">{{ getCardName(cat.bestCard) }}</span>
-            <span class="cat-cell">
-              <span class="rate-badge">{{ cat.bestRate?.earnMultiplier || 1 }}x</span>
-            </span>
-            <span class="cat-cell cat-right">
-              {{ formatCurrencyCents(cat.optimalRewards) }}
-              <span v-if="cat.missedRewards > 0.5" class="missed-tag">
-                -{{ formatCurrencyCents(cat.missedRewards) }}
+          <template v-for="cat in topCategories" :key="cat.category">
+            <div
+              :class="['cat-row', 'cat-data-row', { 'cat-row-expanded': expandedCat === cat.category }]"
+              @click="expandedCat = expandedCat === cat.category ? null : cat.category"
+            >
+              <span class="cat-cell cat-name-cell">
+                <span class="cat-icon">{{ categoryIcon(cat.category) }}</span>
+                {{ formatCatName(cat.category) }}
               </span>
-            </span>
-          </div>
+              <span class="cat-cell">{{ formatCurrency(cat.spend) }}</span>
+              <span class="cat-cell cat-card-name">{{ getCardName(cat.bestCard) }}</span>
+              <span class="cat-cell">
+                <span class="rate-badge">{{ cat.bestRate?.earnMultiplier || 1 }}x</span>
+              </span>
+              <span class="cat-cell cat-right">
+                {{ formatCurrencyCents(cat.optimalRewards) }}
+                <span v-if="cat.missedRewards > 0.5" class="missed-tag">
+                  -{{ formatCurrencyCents(cat.missedRewards) }}
+                </span>
+              </span>
+              <ChevronDown :size="14" stroke-width="2" :class="['cat-chevron', { rotated: expandedCat === cat.category }]" />
+            </div>
+
+            <!-- Drilldown -->
+            <div v-if="expandedCat === cat.category" class="cat-drilldown">
+              <div v-if="getCategoryBudget(cat.category)" class="cat-budget-bar">
+                <div class="cat-budget-bar-info">
+                  <span>{{ formatCurrency(cat.spend) }} of {{ formatCurrency(getCategoryBudget(cat.category)) }}</span>
+                  <span :class="cat.spend > getCategoryBudget(cat.category) ? 'over-budget' : 'under-budget'">
+                    {{ cat.spend > getCategoryBudget(cat.category) ? 'Over by ' + formatCurrency(cat.spend - getCategoryBudget(cat.category)) : formatCurrency(getCategoryBudget(cat.category) - cat.spend) + ' remaining' }}
+                  </span>
+                </div>
+                <div class="cat-progress">
+                  <div
+                    class="cat-progress-fill"
+                    :class="{ over: cat.spend > getCategoryBudget(cat.category) }"
+                    :style="{ width: Math.min((cat.spend / getCategoryBudget(cat.category)) * 100, 100) + '%' }"
+                  />
+                </div>
+              </div>
+
+              <div class="cat-txn-header">
+                <span class="cat-txn-cell cat-txn-merchant">Merchant</span>
+                <span class="cat-txn-cell">Card</span>
+                <span class="cat-txn-cell">Date</span>
+                <span class="cat-txn-cell cat-txn-right">Amount</span>
+              </div>
+              <div
+                v-for="(txn, i) in getCategoryTransactions(cat.category)"
+                :key="i"
+                class="cat-txn-row"
+              >
+                <span class="cat-txn-cell cat-txn-merchant">{{ txn.merchant_name || txn.name }}</span>
+                <span class="cat-txn-cell">{{ txn._budgetCard || 'N/A' }}</span>
+                <span class="cat-txn-cell cat-txn-date">{{ txn.date }}</span>
+                <span class="cat-txn-cell cat-txn-right">{{ formatCurrency(txn.amount) }}</span>
+              </div>
+              <div class="cat-txn-footer">
+                <span>{{ getCategoryTransactions(cat.category).length }} transactions</span>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -145,38 +237,163 @@
         <div v-if="!report?.byCard || Object.keys(report.byCard).length === 0" class="empty-section">
           No card assignments yet.
         </div>
-        <div
-          v-for="card in sortedCards"
-          :key="card.cardKey"
-          class="stack-card"
-        >
-          <div class="stack-card-header">
-            <img
-              v-if="cardStore.getCardImageUrl(card.cardKey)"
-              :src="cardStore.getCardImageUrl(card.cardKey)"
-              :alt="getCardName(card.cardKey)"
-              class="stack-card-img"
-            />
-            <div v-else class="stack-card-img stack-card-placeholder">
-              <CreditCard :size="20" stroke-width="1.5" />
+        <template v-else>
+          <div v-if="personalCards.length > 0 && businessCards.length > 0" class="section-subheading">Personal</div>
+          <div
+            v-for="card in personalCards"
+            :key="card.cardKey"
+            :class="['stack-card', card.action ? card.action : '']"
+          >
+            <div class="stack-card-header">
+              <img
+                v-if="cardStore.getCardImageUrl(card.cardKey)"
+                :src="cardStore.getCardImageUrl(card.cardKey)"
+                :alt="getCardName(card.cardKey)"
+                class="stack-card-img"
+              />
+              <div v-else class="stack-card-img stack-card-placeholder">
+                <CreditCard :size="20" stroke-width="1.5" />
+              </div>
+              <div class="stack-card-info">
+                <span class="stack-card-name">{{ getCardName(card.cardKey) }}</span>
+                <span class="stack-card-issuer">{{ getCardIssuer(card.cardKey) }}</span>
+              </div>
+              <span v-if="card.action" :class="['combo-badge', card.action]">
+                {{ card.action === 'keep' ? 'Keep' : card.action === 'add' ? 'Add' : card.action === 'evaluate' ? 'Evaluate' : 'Drop' }}
+              </span>
+              <div class="stack-card-stat">
+                <span class="stack-rewards">{{ formatCurrencyCents(card.rewards) }}</span>
+                <span class="stack-spend">on {{ formatCurrency(card.spend) }}</span>
+              </div>
             </div>
-            <div class="stack-card-info">
-              <span class="stack-card-name">{{ getCardName(card.cardKey) }}</span>
-              <span class="stack-card-issuer">{{ getCardIssuer(card.cardKey) }}</span>
+            <div v-if="card.action === 'evaluate'" class="combo-warning">
+              Fee exceeds rewards — consider if perks justify the cost
             </div>
-            <div class="stack-card-stat">
-              <span class="stack-rewards">{{ formatCurrencyCents(card.rewards) }}</span>
-              <span class="stack-spend">on {{ formatCurrency(card.spend) }}</span>
+            <div v-if="card.netValue !== undefined" class="stack-card-net">
+              <span class="combo-stat-label">Fee (prorated)</span>
+              <span class="combo-stat-value">{{ card.proratedFee > 0 ? formatCurrency(card.proratedFee) : 'Free' }}</span>
+              <span class="combo-stat-label" style="margin-left: 14px;">Net Value</span>
+              <span class="combo-stat-value" :class="card.netValue >= 0 ? 'gain' : 'loss'">
+                {{ card.netValue >= 0 ? '+' : '' }}{{ formatCurrency(card.netValue) }}
+              </span>
+            </div>
+            <div class="stack-card-categories">
+              <span
+                v-for="cat in card.categories"
+                :key="cat"
+                class="stack-cat-tag"
+              >
+                {{ categoryIcon(cat) }} {{ formatCatName(cat) }}
+              </span>
             </div>
           </div>
-          <div class="stack-card-categories">
-            <span
-              v-for="cat in card.categories"
-              :key="cat"
-              class="stack-cat-tag"
-            >
-              {{ categoryIcon(cat) }} {{ formatCatName(cat) }}
-            </span>
+
+          <div v-if="businessCards.length > 0" class="section-subheading section-subheading-business">Business</div>
+          <div
+            v-for="card in businessCards"
+            :key="card.cardKey"
+            :class="['stack-card', card.action ? card.action : '']"
+          >
+            <div class="stack-card-header">
+              <img
+                v-if="cardStore.getCardImageUrl(card.cardKey)"
+                :src="cardStore.getCardImageUrl(card.cardKey)"
+                :alt="getCardName(card.cardKey)"
+                class="stack-card-img"
+              />
+              <div v-else class="stack-card-img stack-card-placeholder">
+                <CreditCard :size="20" stroke-width="1.5" />
+              </div>
+              <div class="stack-card-info">
+                <span class="stack-card-name">{{ getCardName(card.cardKey) }}</span>
+                <span class="stack-card-issuer">{{ getCardIssuer(card.cardKey) }}</span>
+              </div>
+              <span v-if="card.action" :class="['combo-badge', card.action]">
+                {{ card.action === 'keep' ? 'Keep' : card.action === 'add' ? 'Add' : card.action === 'evaluate' ? 'Evaluate' : 'Drop' }}
+              </span>
+              <div class="stack-card-stat">
+                <span class="stack-rewards">{{ formatCurrencyCents(card.rewards) }}</span>
+                <span class="stack-spend">on {{ formatCurrency(card.spend) }}</span>
+              </div>
+            </div>
+            <div v-if="card.action === 'evaluate'" class="combo-warning">
+              Fee exceeds rewards — consider if perks justify the cost
+            </div>
+            <div v-if="card.netValue !== undefined" class="stack-card-net">
+              <span class="combo-stat-label">Fee (prorated)</span>
+              <span class="combo-stat-value">{{ card.proratedFee > 0 ? formatCurrency(card.proratedFee) : 'Free' }}</span>
+              <span class="combo-stat-label" style="margin-left: 14px;">Net Value</span>
+              <span class="combo-stat-value" :class="card.netValue >= 0 ? 'gain' : 'loss'">
+                {{ card.netValue >= 0 ? '+' : '' }}{{ formatCurrency(card.netValue) }}
+              </span>
+            </div>
+            <div class="stack-card-categories">
+              <span
+                v-for="cat in card.categories"
+                :key="cat"
+                class="stack-cat-tag"
+              >
+                {{ categoryIcon(cat) }} {{ formatCatName(cat) }}
+              </span>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Points & Credits View -->
+      <div v-if="activeView === 'points'" class="points-view">
+        <div v-if="pointsPrograms.length === 0 && creditsSummary.length === 0" class="empty-section">
+          No points or credit data available. Use cards with rewards programs to see redemption strategies.
+        </div>
+
+        <template v-if="pointsPrograms.length > 0">
+          <h4 class="block-title">
+            <Gift :size="16" stroke-width="2" />
+            Points & Redemption Strategy
+          </h4>
+          <p class="block-subtitle">Maximize the value of your earned rewards</p>
+
+          <div class="points-grid">
+            <div v-for="program in pointsPrograms" :key="program.name" class="points-card">
+              <div class="points-card-header">
+                <span class="points-program-name">{{ program.name }}</span>
+                <span class="points-balance">{{ program.points.toLocaleString() }} {{ program.unit }}</span>
+              </div>
+              <div class="redemption-options">
+                <div
+                  v-for="opt in program.redemptions"
+                  :key="opt.method"
+                  :class="['redemption-row', { best: opt.best }]"
+                >
+                  <div class="redemption-left">
+                    <span v-if="opt.best" class="best-tag">Best</span>
+                    <span class="redemption-method">{{ opt.method }}</span>
+                    <span class="redemption-rate">{{ opt.rate }}</span>
+                  </div>
+                  <span class="redemption-value" :class="{ 'best-value': opt.best }">{{ formatCurrency(opt.value) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Statement Credits -->
+        <div v-if="creditsSummary.length > 0" class="credits-block">
+          <h5 class="credits-block-title">Statement Credits Status</h5>
+          <div class="credits-block-list">
+            <div v-for="credit in creditsSummary" :key="credit.card + credit.name" class="credit-block-row">
+              <div class="credit-block-left">
+                <CheckCircle v-if="credit.used" :size="14" stroke-width="2" class="credit-used-icon" />
+                <Circle v-else :size="14" stroke-width="2" class="credit-unused-icon" />
+                <span class="credit-block-card">{{ credit.card }}</span>
+                <span class="credit-block-name">{{ credit.name }}</span>
+              </div>
+              <span class="credit-block-amount">{{ formatCurrency(credit.amount) }}</span>
+            </div>
+          </div>
+          <div class="credits-total">
+            <span>Total credits value</span>
+            <span class="credits-total-value">{{ formatCurrency(totalCreditsValue) }}</span>
           </div>
         </div>
       </div>
@@ -217,15 +434,32 @@ import {
   CreditCard, Settings, Plus, ArrowRight, Loader2,
   LayoutList, BarChart3, Wallet, BookOpen,
   TrendingUp, Gift, Zap, AlertTriangle,
+  ChevronDown, PlusCircle, CheckCircle, Circle,
 } from 'lucide-vue-next'
 import { useCreditCardStore } from '@/stores/creditCardStore'
 import { useBudgetStore } from '@/stores/budget'
 import { useCardOptimizer } from '@/composables/useCardOptimizer'
 import { formatCurrency } from '@/utils/formatters'
+import { creditCards, getBestCardForCategory, marketCards } from '@/utils/creditCardData'
 import CardManager from '@/components/CardManager.vue'
 
 const cardStore = useCreditCardStore()
 const budgetStore = useBudgetStore()
+
+// Period toggle
+const periods = [
+  { key: '1m', label: '1M', months: 1 },
+  { key: '3m', label: '3M', months: 3 },
+  { key: '6m', label: '6M', months: 6 },
+  { key: '1y', label: '1Y', months: 12 },
+]
+const selectedPeriod = ref('3m')
+
+const periodLabel = computed(() => {
+  const p = periods.find(p => p.key === selectedPeriod.value)
+  return p.months === 1 ? '1-Month' : p.months === 12 ? '12-Month' : `${p.months}-Month`
+})
+
 const {
   report,
   recommendations,
@@ -236,16 +470,19 @@ const {
   totalOptimalRewards,
   totalSpend,
   topCategories,
+  filteredTransactions,
   runAnalysis,
-} = useCardOptimizer()
+} = useCardOptimizer(selectedPeriod)
 
 const showCardManager = ref(false)
 const activeView = ref('recommendations')
+const expandedCat = ref(null)
 
 const views = [
   { key: 'recommendations', label: 'Recommendations', icon: Zap },
   { key: 'categories', label: 'By Category', icon: BarChart3 },
   { key: 'cards', label: 'By Card', icon: Wallet },
+  { key: 'points', label: 'Points & Credits', icon: Gift },
   { key: 'cheatsheet', label: 'Cheat Sheet', icon: BookOpen },
 ]
 
@@ -255,10 +492,209 @@ const ringOffset = computed(() => {
   return circumference * pct
 })
 
+// ── By Card: sorted with keep/add/drop/evaluate actions ──
+const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 }
+
 const sortedCards = computed(() => {
   if (!report.value?.byCard) return []
-  return Object.values(report.value.byCard).sort((a, b) => b.rewards - a.rewards)
+  const byCard = Object.values(report.value.byCard)
+  const months = PERIOD_MONTHS[selectedPeriod.value] || 3
+  const proratedFactor = months / 12
+
+  return byCard.map(card => {
+    const cardDetail = cardStore.cardDetails[card.cardKey]
+    const annualFee = cardDetail?.annualFee || 0
+    const proratedFee = annualFee * proratedFactor
+    const netValue = card.rewards - proratedFee
+
+    let action = 'keep'
+    if (netValue < 0 && card.categories?.length > 0) {
+      action = 'evaluate'
+    } else if (netValue < 0) {
+      action = 'drop'
+    } else if (card.spend === 0 && card.categories?.length > 0) {
+      action = 'add'
+    } else if (card.spend === 0) {
+      action = 'drop'
+    }
+
+    return {
+      ...card,
+      proratedFee,
+      netValue,
+      action,
+      type: cardDetail?.cardType || 'personal',
+    }
+  }).sort((a, b) => {
+    const order = { keep: 0, add: 1, evaluate: 2, drop: 3 }
+    return (order[a.action] ?? 9) - (order[b.action] ?? 9) || b.rewards - a.rewards
+  })
 })
+
+const personalCards = computed(() => sortedCards.value.filter(c => c.type !== 'business'))
+const businessCards = computed(() => sortedCards.value.filter(c => c.type === 'business'))
+
+// ── Points & Credits ──
+const CARD_PROGRAMS = {
+  'Amex Gold': {
+    program: 'Amex Membership Rewards',
+    unit: 'MR pts',
+    redemptions: [
+      { method: 'Statement Credit', multiplier: 0.6, rate: '0.6¢/pt' },
+      { method: 'Amex Travel Portal', multiplier: 1.0, rate: '1¢/pt' },
+      { method: 'Airline Transfers', multiplier: 2.0, rate: '2¢/pt' },
+    ]
+  },
+  'Chase Sapphire': {
+    program: 'Chase Ultimate Rewards',
+    unit: 'UR pts',
+    redemptions: [
+      { method: 'Statement Credit', multiplier: 1.0, rate: '1¢/pt' },
+      { method: 'Chase Travel Portal', multiplier: 1.5, rate: '1.5¢/pt' },
+      { method: 'Airline/Hotel Transfers', multiplier: 2.0, rate: '2¢/pt' },
+    ]
+  },
+  'Capital One Savor': {
+    program: 'Capital One Rewards',
+    unit: 'miles',
+    redemptions: [
+      { method: 'Statement Credit', multiplier: 1.0, rate: '1¢/mi' },
+      { method: 'Travel Portal', multiplier: 1.25, rate: '1.25¢/mi' },
+      { method: 'Airline Transfers', multiplier: 1.4, rate: '1.4¢/mi' },
+    ]
+  },
+  'Apple Card': {
+    program: 'Apple Daily Cash',
+    unit: 'cash',
+    redemptions: [
+      { method: 'Daily Cash', multiplier: 1.0, rate: 'Direct' },
+    ]
+  },
+  'Citi Double': {
+    program: 'Citi ThankYou Rewards',
+    unit: 'TY pts',
+    redemptions: [
+      { method: 'Statement Credit', multiplier: 1.0, rate: '1¢/pt' },
+      { method: 'Airline Transfers', multiplier: 1.6, rate: '1.6¢/pt' },
+    ]
+  },
+}
+
+const pointsPrograms = computed(() => {
+  const txns = filteredTransactions.value
+  // Build card → budget-category → spend map from filtered transactions
+  const cardSpendMap = {}
+  for (const t of txns) {
+    const cardName = t._budgetCard
+    if (!cardName) continue
+    if (!cardSpendMap[cardName]) cardSpendMap[cardName] = {}
+    const cat = t._budgetCategory || 'Other'
+    cardSpendMap[cardName][cat] = (cardSpendMap[cardName][cat] || 0) + t.amount
+  }
+
+  const programs = []
+  for (const [cardName, program] of Object.entries(CARD_PROGRAMS)) {
+    const cardData = creditCards.find(c => c.name === cardName)
+    if (!cardData) continue
+    let baseCashback = 0
+    const spend = cardSpendMap[cardName]
+    if (spend) {
+      for (const [category, amount] of Object.entries(spend)) {
+        const rate = cardData.cashbackRates[category] || cardData.cashbackRates.default || 0
+        baseCashback += amount * rate
+      }
+    }
+    if (baseCashback <= 0) continue
+
+    const points = Math.round(baseCashback * 100)
+    const redemptions = program.redemptions.map(r => ({
+      method: r.method,
+      rate: r.rate,
+      value: baseCashback * r.multiplier,
+      best: false,
+    }))
+    const maxValue = Math.max(...redemptions.map(r => r.value))
+    redemptions.forEach(r => { if (r.value === maxValue) r.best = true })
+
+    programs.push({ name: program.program, unit: program.unit, points, redemptions, bestValue: maxValue })
+  }
+  return programs.sort((a, b) => b.bestValue - a.bestValue)
+})
+
+const creditsSummary = computed(() => {
+  const mode = budgetStore.budgetMode
+  const activeType = mode === 'family' ? 'personal' : mode
+  const allCards = creditCards.filter(c => c.type === activeType || (budgetStore.businessEnabled && c.type === 'business'))
+  const credits = []
+  for (const card of allCards) {
+    for (const credit of card.statementCredits) {
+      credits.push({ card: card.name, name: credit.name, amount: credit.amount, used: credit.used })
+    }
+  }
+  return credits
+})
+
+const totalCreditsValue = computed(() => creditsSummary.value.reduce((s, c) => s + c.amount, 0))
+
+// ── Cards to Consider (market cards) ──
+const marketCardSuggestions = computed(() => {
+  const mode = budgetStore.budgetMode
+  const months = PERIOD_MONTHS[selectedPeriod.value] || 3
+  const proratedFactor = months / 12
+  const cats = topCategories.value
+
+  return marketCards.map(card => {
+    let projectedRewards = 0
+    const bestCategories = []
+    for (const cat of cats) {
+      const catName = formatCatName(cat.category)
+      const rate = card.cashbackRates[catName] || card.cashbackRates.default || 0
+      const currentBest = getBestCardForCategory(catName, mode, budgetStore.businessEnabled)
+      if (rate > currentBest.rate) {
+        projectedRewards += cat.spend * rate
+        bestCategories.push(catName)
+      }
+    }
+    const proratedFee = card.annualFee * proratedFactor
+    const netValue = projectedRewards - proratedFee
+    return {
+      name: card.name,
+      annualFee: card.annualFee,
+      projectedRewards,
+      netValue,
+      bestCategories,
+      highlight: card.highlight,
+    }
+  }).filter(c => c.bestCategories.length > 0 && c.netValue > 0)
+    .sort((a, b) => b.netValue - a.netValue)
+})
+
+// ── Category drilldowns ──
+// Map Plaid primary categories back to budget category names for budget lookups
+const PLAID_TO_BUDGET = {
+  'FOOD_AND_DRINK': 'Dining & Food',
+  'TRANSPORTATION': 'Transportation',
+  'TRAVEL': 'Travel',
+  'ENTERTAINMENT': 'Entertainment',
+  'GENERAL_MERCHANDISE': 'Shopping',
+  'RENT_AND_UTILITIES': 'Housing & Rent',
+  'GENERAL_SERVICES': 'Office & Software',
+}
+
+function getCategoryBudget(plaidCategory) {
+  const budgetCatName = PLAID_TO_BUDGET[plaidCategory]
+  if (!budgetCatName) return 0
+  const months = PERIOD_MONTHS[selectedPeriod.value] || 3
+  const budgetData = budgetStore.expenses[budgetCatName]
+  return (budgetData?.budget || 0) * months
+}
+
+function getCategoryTransactions(plaidCategory) {
+  return filteredTransactions.value
+    .filter(t => t.personal_finance_category?.primary === plaidCategory)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 20)
+}
 
 function formatCurrencyCents(val) {
   if (val >= 1) return `$${val.toFixed(2)}`
@@ -311,15 +747,13 @@ function onCardManagerClose() {
 }
 
 onMounted(async () => {
-  // Initialize card store
   await cardStore.initialize()
 
-  // Ensure budget data is loaded
   if (Object.keys(budgetStore.expenses).length === 0) {
     await budgetStore.loadExpenses()
   }
 
-  // Run initial analysis
+  budgetStore.loadHistoricalData()
   runAnalysis()
 })
 </script>
@@ -420,6 +854,45 @@ onMounted(async () => {
 .stat-teal { color: var(--accent-teal); }
 .stat-negative { color: var(--negative); }
 
+.banner-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.period-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+
+.period-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.period-btn:hover {
+  color: var(--text-primary);
+}
+
+.period-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
 .manage-btn {
   display: flex;
   align-items: center;
@@ -434,7 +907,6 @@ onMounted(async () => {
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s ease;
-  flex-shrink: 0;
 }
 
 .manage-btn:hover {
@@ -539,6 +1011,50 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 
+/* ── Section Blocks ── */
+.section-block {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--bg-card);
+  background-image: var(--gradient-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+}
+
+.block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.block-title svg { color: var(--accent-blue); }
+
+.block-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.section-subheading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+  margin-top: 8px;
+}
+
+.section-subheading-business {
+  margin-top: 16px;
+}
+
 /* ── Recommendations Grid ── */
 .recommendations-grid {
   display: grid;
@@ -639,6 +1155,112 @@ onMounted(async () => {
   color: var(--text-tertiary);
 }
 
+/* ── Combo / Cards to Consider ── */
+.combo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.combo-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.2s ease;
+}
+
+.combo-card.suggest { border-color: rgba(59, 130, 246, 0.25); }
+
+.combo-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.combo-card-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.combo-badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.combo-badge.keep { background: rgba(20, 184, 166, 0.12); color: var(--accent-teal); }
+.combo-badge.add { background: rgba(59, 130, 246, 0.12); color: #3B82F6; }
+.combo-badge.evaluate { background: rgba(56, 189, 248, 0.12); color: #38BDF8; }
+.combo-badge.drop { background: rgba(239, 68, 68, 0.1); color: var(--negative); }
+.combo-badge.suggest { background: rgba(59, 130, 246, 0.12); color: #3B82F6; }
+
+.combo-warning {
+  font-size: 0.72rem;
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.06);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.suggest-highlight {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.combo-stats {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.combo-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.combo-stat-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.combo-stat-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.combo-stat-value.gain { color: var(--accent-teal); }
+.combo-stat-value.loss { color: var(--negative); }
+
+.combo-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.combo-cat-tag {
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--text-secondary);
+}
+
 /* ── Category Table ── */
 .category-table-wrap {
   overflow-x: auto;
@@ -673,6 +1295,19 @@ onMounted(async () => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-tertiary);
+}
+
+.cat-data-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cat-data-row:hover {
+  background: var(--bg-subtle);
+}
+
+.cat-row-expanded {
+  background: var(--bg-subtle);
 }
 
 .cat-cell {
@@ -725,6 +1360,118 @@ onMounted(async () => {
   opacity: 0.8;
 }
 
+.cat-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.cat-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* ── Category Drilldown ── */
+.cat-drilldown {
+  padding: 12px 18px 16px;
+  border-bottom: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.cat-budget-bar {
+  margin-bottom: 14px;
+}
+
+.cat-budget-bar-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.over-budget { color: var(--negative); font-weight: 700; }
+.under-budget { color: var(--accent-teal); }
+
+.cat-progress {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cat-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent-teal);
+  transition: width 0.3s ease;
+}
+
+.cat-progress-fill.over {
+  background: var(--negative);
+}
+
+.cat-txn-header {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cat-txn-header .cat-txn-cell {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cat-txn-row {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.cat-txn-row:last-of-type {
+  border-bottom: none;
+}
+
+.cat-txn-cell {
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-txn-merchant {
+  flex: 1.3;
+  font-weight: 600;
+}
+
+.cat-txn-date {
+  color: var(--text-tertiary);
+}
+
+.cat-txn-right {
+  text-align: right;
+  flex: 0.7;
+  font-weight: 600;
+}
+
+.cat-txn-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
 /* ── Card Stack ── */
 .card-stack {
   display: flex;
@@ -740,6 +1487,11 @@ onMounted(async () => {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
 }
+
+.stack-card.keep { border-color: rgba(20, 184, 166, 0.2); }
+.stack-card.add { border-color: rgba(59, 130, 246, 0.25); }
+.stack-card.evaluate { border-color: rgba(56, 189, 248, 0.25); }
+.stack-card.drop { border-color: rgba(239, 68, 68, 0.2); opacity: 0.6; }
 
 .stack-card-header {
   display: flex;
@@ -799,6 +1551,15 @@ onMounted(async () => {
   color: var(--text-tertiary);
 }
 
+.stack-card-net {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
 .stack-card-categories {
   display: flex;
   flex-wrap: wrap;
@@ -813,6 +1574,176 @@ onMounted(async () => {
   font-weight: 600;
   background: rgba(59, 130, 246, 0.06);
   color: var(--text-secondary);
+}
+
+/* ── Points & Credits ── */
+.points-view {
+  animation: viewFadeIn 0.2s ease-out;
+}
+
+.points-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.points-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  background-image: var(--gradient-card);
+}
+
+.points-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.points-program-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.points-balance {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.redemption-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.redemption-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.redemption-row.best {
+  background: rgba(20, 184, 166, 0.06);
+  border: 1px solid rgba(20, 184, 166, 0.15);
+}
+
+.redemption-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.best-tag {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: rgba(20, 184, 166, 0.15);
+  color: var(--accent-teal);
+}
+
+.redemption-method {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.redemption-rate {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.redemption-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.redemption-value.best-value {
+  color: var(--accent-teal);
+}
+
+/* Credits */
+.credits-block {
+  padding: 20px;
+  margin-top: 16px;
+  background: var(--bg-card);
+  background-image: var(--gradient-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+}
+
+.credits-block-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.credits-block-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.credit-block-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.credit-block-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.credit-used-icon { color: var(--accent-teal); }
+.credit-unused-icon { color: var(--text-tertiary); }
+
+.credit-block-card {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.credit-block-name {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+}
+
+.credit-block-amount {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.credits-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-glass);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.credits-total-value {
+  font-weight: 800;
+  color: var(--accent-teal);
 }
 
 /* ── Cheat Sheet ── */
@@ -895,8 +1826,15 @@ onMounted(async () => {
     width: 100%;
   }
 
-  .manage-btn {
+  .banner-right {
     width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .manage-btn {
+    flex: 1;
     justify-content: center;
   }
 
@@ -915,9 +1853,17 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 
+  .combo-grid {
+    grid-template-columns: 1fr;
+  }
+
   .cat-row {
     padding: 10px 14px;
     gap: 6px;
+  }
+
+  .points-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

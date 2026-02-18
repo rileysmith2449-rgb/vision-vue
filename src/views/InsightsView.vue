@@ -1,12 +1,10 @@
 <template>
   <div class="insights">
-    <Header title="Insights" subtitle="AI-powered optimization for credit cards, spending, and taxes" />
+    <Header title="Tax & Portfolio Insights" subtitle="AI-powered insights for investments and taxes" />
 
     <div v-if="portfolioStore.loading" class="loading">Analyzing portfolio...</div>
 
     <template v-else>
-      <CardOptimizer />
-      <SpendingAnalyzer />
       <AIAdvisor />
     </template>
   </div>
@@ -15,21 +13,14 @@
 <script setup>
 import { onMounted } from 'vue'
 import { usePortfolioStore } from '@/stores/portfolio'
-import { useBudgetStore } from '@/stores/budget'
 import Header from '@/components/layout/Header.vue'
 import AIAdvisor from '@/components/insights/AIAdvisor.vue'
-import CardOptimizer from '@/components/insights/CardOptimizer.vue'
-import SpendingAnalyzer from '@/components/insights/SpendingAnalyzer.vue'
 
 const portfolioStore = usePortfolioStore()
-const budgetStore = useBudgetStore()
 
 onMounted(() => {
   if (portfolioStore.holdings.length === 0) {
     portfolioStore.loadHoldings()
-  }
-  if (Object.keys(budgetStore.expenses).length === 0) {
-    budgetStore.loadExpenses()
   }
 })
 </script>
