@@ -97,10 +97,14 @@ export function analyzeTransaction(transaction, plaidMappings, activeCards, card
   const plaidDetailed = transaction.personal_finance_category?.detailed || ''
   const amount = Math.abs(transaction.amount || 0)
 
-  const best = findBestCard(plaidDetailed, plaidMappings, activeCards, null, cardDetails)
+  // If the transaction was on a business card, only recommend business cards
+  const actualCard = transaction._cardKey || null
+  const actualType = actualCard && cardDetails[actualCard]?.cardType
+  const preferType = actualType === 'Business' ? 'Business' : null
+
+  const best = findBestCard(plaidDetailed, plaidMappings, activeCards, preferType, cardDetails)
 
   let actualRate = null
-  let actualCard = transaction._cardKey || null
   if (actualCard && plaidMappings[actualCard]) {
     actualRate = getRewardRate(plaidMappings[actualCard], plaidDetailed)
   }
