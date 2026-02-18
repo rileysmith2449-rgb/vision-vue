@@ -302,7 +302,10 @@ async function switchDataSource(source) {
     budgetStore.loadExpenses(),
     portfolioStore.loadHoldings(),
   ])
-  if (source === 'csv') refreshCSVSummary()
+  if (source === 'csv') {
+    refreshCSVSummary()
+    budgetStore.loadHistoricalData()
+  }
 }
 
 // CSV upload state

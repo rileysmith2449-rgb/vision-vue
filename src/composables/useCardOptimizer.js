@@ -1,6 +1,7 @@
 import { ref, computed, watch } from 'vue'
 import { useCreditCardStore } from '@/stores/creditCardStore'
 import { useBudgetStore } from '@/stores/budget'
+import { useSettingsStore } from '@/stores/settings'
 import {
   analyzeTransactions,
   generateRecommendations,
@@ -8,9 +9,44 @@ import {
   findBestCard,
 } from '@/services/cardOptimizationService'
 
+// Map budget category names to Plaid primary/detailed codes
+const CATEGORY_MAP = {
+  'Housing & Rent': { primary: 'RENT_AND_UTILITIES', detailed: 'RENT_AND_UTILITIES_RENT' },
+  'Dining & Food': { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_RESTAURANT' },
+  'Transportation': { primary: 'TRANSPORTATION', detailed: 'TRANSPORTATION_GAS' },
+  'Shopping': { primary: 'GENERAL_MERCHANDISE', detailed: 'GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE' },
+  'Entertainment': { primary: 'ENTERTAINMENT', detailed: 'ENTERTAINMENT_OTHER_ENTERTAINMENT' },
+  'Travel': { primary: 'TRAVEL', detailed: 'TRAVEL_OTHER_TRAVEL' },
+  'Bills & Utilities': { primary: 'RENT_AND_UTILITIES', detailed: 'RENT_AND_UTILITIES_OTHER_UTILITIES' },
+  'Office & Software': { primary: 'GENERAL_SERVICES', detailed: 'GENERAL_SERVICES_OTHER_GENERAL_SERVICES' },
+  'Meals & Entertainment': { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_RESTAURANT' },
+  'Internet & Phone': { primary: 'RENT_AND_UTILITIES', detailed: 'RENT_AND_UTILITIES_TELECOMMUNICATION_SERVICES' },
+}
+
+// Sub-category to more specific Plaid detailed codes
+const SUB_MAP = {
+  'Groceries': 'FOOD_AND_DRINK_GROCERIES',
+  'Restaurants': 'FOOD_AND_DRINK_RESTAURANT',
+  'Coffee Shops': 'FOOD_AND_DRINK_COFFEE',
+  'Fast Food': 'FOOD_AND_DRINK_FAST_FOOD',
+  'Gas & Fuel': 'TRANSPORTATION_GAS',
+  'Rideshare': 'TRANSPORTATION_TAXIS_AND_RIDE_SHARES',
+  'Public Transit': 'TRANSPORTATION_PUBLIC_TRANSIT',
+  'Parking': 'TRANSPORTATION_PARKING',
+  'Flights': 'TRAVEL_FLIGHTS',
+  'Hotels': 'TRAVEL_LODGING',
+  'Streaming': 'ENTERTAINMENT_TV_AND_MOVIES',
+  'Games': 'ENTERTAINMENT_GAMES',
+  'Clothing': 'GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES',
+  'Electronics': 'GENERAL_MERCHANDISE_ELECTRONICS',
+  'Rent': 'RENT_AND_UTILITIES_RENT',
+  'Renters Insurance': 'RENT_AND_UTILITIES_OTHER_UTILITIES',
+}
+
 export function useCardOptimizer(periodRef) {
   const cardStore = useCreditCardStore()
   const budgetStore = useBudgetStore()
+  const settingsStore = useSettingsStore()
 
   const report = ref(null)
   const recommendations = ref([])
@@ -19,45 +55,11 @@ export function useCardOptimizer(periodRef) {
 
   const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 }
 
-  /** Convert budget store transactions to Plaid-like format for the engine */
+  /** Convert budget store expenses (structured) to Plaid-like format */
   function toBudgetPlaidTransactions() {
     const txns = []
     const expenses = budgetStore.expenses
     if (!expenses) return txns
-
-    // Map budget category names to Plaid primary/detailed codes
-    const CATEGORY_MAP = {
-      'Housing & Rent': { primary: 'RENT_AND_UTILITIES', detailed: 'RENT_AND_UTILITIES_RENT' },
-      'Dining & Food': { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_RESTAURANT' },
-      'Transportation': { primary: 'TRANSPORTATION', detailed: 'TRANSPORTATION_GAS' },
-      'Shopping': { primary: 'GENERAL_MERCHANDISE', detailed: 'GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE' },
-      'Entertainment': { primary: 'ENTERTAINMENT', detailed: 'ENTERTAINMENT_OTHER_ENTERTAINMENT' },
-      'Travel': { primary: 'TRAVEL', detailed: 'TRAVEL_OTHER_TRAVEL' },
-      'Bills & Utilities': { primary: 'RENT_AND_UTILITIES', detailed: 'RENT_AND_UTILITIES_OTHER_UTILITIES' },
-      'Office & Software': { primary: 'GENERAL_SERVICES', detailed: 'GENERAL_SERVICES_OTHER_GENERAL_SERVICES' },
-      'Meals & Entertainment': { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_RESTAURANT' },
-      'Internet & Phone': { primary: 'RENT_AND_UTILITIES', detailed: 'RENT_AND_UTILITIES_TELECOMMUNICATION_SERVICES' },
-    }
-
-    // Sub-category to more specific Plaid detailed codes
-    const SUB_MAP = {
-      'Groceries': 'FOOD_AND_DRINK_GROCERIES',
-      'Restaurants': 'FOOD_AND_DRINK_RESTAURANT',
-      'Coffee Shops': 'FOOD_AND_DRINK_COFFEE',
-      'Fast Food': 'FOOD_AND_DRINK_FAST_FOOD',
-      'Gas & Fuel': 'TRANSPORTATION_GAS',
-      'Rideshare': 'TRANSPORTATION_TAXIS_AND_RIDE_SHARES',
-      'Public Transit': 'TRANSPORTATION_PUBLIC_TRANSIT',
-      'Parking': 'TRANSPORTATION_PARKING',
-      'Flights': 'TRAVEL_FLIGHTS',
-      'Hotels': 'TRAVEL_LODGING',
-      'Streaming': 'ENTERTAINMENT_TV_AND_MOVIES',
-      'Games': 'ENTERTAINMENT_GAMES',
-      'Clothing': 'GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES',
-      'Electronics': 'GENERAL_MERCHANDISE_ELECTRONICS',
-      'Rent': 'RENT_AND_UTILITIES_RENT',
-      'Renters Insurance': 'RENT_AND_UTILITIES_OTHER_UTILITIES',
-    }
 
     let idCounter = 0
     for (const [catName, catData] of Object.entries(expenses)) {
@@ -85,9 +87,42 @@ export function useCardOptimizer(periodRef) {
     return txns
   }
 
+  /** Convert flat historical transactions (from CSV) to Plaid-like format */
+  function toHistoricalPlaidTransactions() {
+    const txns = []
+    const historical = budgetStore.historicalTransactions
+    if (!historical || historical.length === 0) return txns
+
+    for (let i = 0; i < historical.length; i++) {
+      const t = historical[i]
+      const catName = t.category || 'Shopping'
+      const mapping = CATEGORY_MAP[catName] || { primary: 'OTHER', detailed: 'OTHER' }
+      const detailed = (t.subcategory && SUB_MAP[t.subcategory]) || mapping.detailed
+      txns.push({
+        transaction_id: `csv_${i}`,
+        amount: t.amount,
+        merchant_name: t.merchant,
+        name: t.merchant,
+        personal_finance_category: {
+          primary: mapping.primary,
+          detailed,
+        },
+        _cardKey: null,
+        _budgetCard: t.card,
+        _budgetCategory: catName,
+        date: t.date,
+      })
+    }
+    return txns
+  }
+
   /** Filter transactions by selected period */
   const filteredTransactions = computed(() => {
-    const all = toBudgetPlaidTransactions()
+    // For CSV, use historical transactions (all uploaded data) since
+    // expenses only holds current month which may be empty
+    const all = settingsStore.dataSource === 'csv'
+      ? toHistoricalPlaidTransactions()
+      : toBudgetPlaidTransactions()
     if (!periodRef) return all
     const months = PERIOD_MONTHS[periodRef.value] || 3
     const now = new Date()
@@ -120,7 +155,7 @@ export function useCardOptimizer(periodRef) {
 
   // Re-analyze when transactions, active cards, or period change
   watch(
-    () => [budgetStore.allTransactions.length, cardStore.activeCards.length, periodRef?.value],
+    () => [budgetStore.allTransactions.length, budgetStore.historicalTransactions.length, cardStore.activeCards.length, periodRef?.value],
     () => { runAnalysis() },
     { immediate: false }
   )
