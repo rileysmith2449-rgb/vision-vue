@@ -133,204 +133,126 @@
         </div>
       </Card>
 
-      <!-- Tax Information -->
-      <Card title="Tax Information" :subtitle="budgetStore.budgetMode === 'family' ? 'Income and filing details for each family member' : 'Income and filing details'">
-        <!-- Family mode: two member columns -->
-        <template v-if="budgetStore.budgetMode === 'family'">
-          <div class="tax-members">
-            <div v-for="id in ['mine', 'yours']" :key="id" class="tax-member-col">
-              <div class="tax-member-header">
-                <div class="member-color" :class="id"></div>
-                <span class="tax-member-name">{{ budgetStore.familyMembers[id].name }}</span>
-              </div>
+      <!-- Tax Brackets -->
+      <Card title="Tax Brackets" subtitle="Select your federal income and capital gains brackets">
+        <!-- Family mode: tabs for each member -->
+        <div v-if="budgetStore.budgetMode === 'family'" class="bracket-member-tabs">
+          <button
+            v-for="id in ['mine', 'yours']"
+            :key="id"
+            class="bracket-member-tab"
+            :class="{ active: activeTaxMember === id }"
+            @click="activeTaxMember = id"
+          >
+            <div class="member-color" :class="id"></div>
+            {{ budgetStore.familyMembers[id].name }}
+          </button>
+        </div>
 
-              <div class="tax-field">
-                <label class="field-label">Salary</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input
-                    type="number"
-                    class="number-input"
-                    :value="budgetStore.familyMembers[id].salary"
-                    @input="budgetStore.updateMemberSetting(id, 'salary', Number($event.target.value))"
-                    min="0"
-                    step="1000"
-                  />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Business Income</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input
-                    type="number"
-                    class="number-input"
-                    :value="budgetStore.familyMembers[id].businessIncome"
-                    @input="budgetStore.updateMemberSetting(id, 'businessIncome', Number($event.target.value))"
-                    min="0"
-                    step="1000"
-                  />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Short-term Investment Income</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input
-                    type="number"
-                    class="number-input"
-                    :value="budgetStore.familyMembers[id].shortTermInvestmentIncome"
-                    @input="budgetStore.updateMemberSetting(id, 'shortTermInvestmentIncome', Number($event.target.value))"
-                    min="0"
-                    step="500"
-                  />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Long-term Investment Income</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input
-                    type="number"
-                    class="number-input"
-                    :value="budgetStore.familyMembers[id].longTermInvestmentIncome"
-                    @input="budgetStore.updateMemberSetting(id, 'longTermInvestmentIncome', Number($event.target.value))"
-                    min="0"
-                    step="500"
-                  />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Filing Status</label>
-                <select
-                  class="select-input"
-                  :value="budgetStore.familyMembers[id].filingStatus"
-                  @change="budgetStore.updateMemberSetting(id, 'filingStatus', $event.target.value)"
-                >
-                  <option value="single">Single</option>
-                  <option value="married">Married Filing Jointly</option>
-                  <option value="hoh">Head of Household</option>
-                </select>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">State</label>
-                <select
-                  class="select-input"
-                  :value="budgetStore.familyMembers[id].state"
-                  @change="budgetStore.updateMemberSetting(id, 'state', $event.target.value)"
-                >
-                  <option v-for="s in stateOptions" :key="s" :value="s">{{ s }}</option>
-                </select>
-              </div>
+        <!-- Filing status + State row -->
+        <div class="bracket-row">
+          <div class="tax-field">
+            <label class="field-label">Filing Status</label>
+            <div class="filing-toggle">
+              <button
+                v-for="f in filingOptions"
+                :key="f.value"
+                class="filing-btn"
+                :class="{ active: currentTaxMember.filingStatus === f.value }"
+                @click="updateTaxMember('filingStatus', f.value)"
+              >{{ f.label }}</button>
             </div>
           </div>
-        </template>
+          <div class="tax-field">
+            <label class="field-label">State</label>
+            <select class="select-input" :value="currentTaxMember.state" @change="updateTaxMember('state', $event.target.value)">
+              <option v-for="s in stateOptions" :key="s" :value="s">{{ s }}</option>
+            </select>
+          </div>
+        </div>
 
-        <!-- Personal / Business mode: single person -->
-        <template v-else>
-          <div class="tax-single">
-            <div class="tax-field">
-              <label class="field-label">Salary</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input
-                  type="number"
-                  class="number-input"
-                  :value="activeMember.salary"
-                  @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'salary', Number($event.target.value))"
-                  min="0"
-                  step="1000"
-                />
-              </div>
-            </div>
+        <!-- Federal bracket picker -->
+        <div class="tax-field">
+          <label class="field-label">Federal Income Tax Bracket</label>
+          <div class="bracket-grid">
+            <button
+              v-for="b in incomeBrackets"
+              :key="b.rate"
+              class="bracket-card"
+              :class="{ selected: currentBracket === b.rate }"
+              @click="selectBracket(b.rate)"
+            >
+              <span class="bracket-rate">{{ b.rate }}%</span>
+              <span class="bracket-range">{{ b.range(currentTaxMember.filingStatus) }}</span>
+            </button>
+          </div>
+        </div>
 
-            <div class="tax-field">
-              <label class="field-label">Business Income</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input
-                  type="number"
-                  class="number-input"
-                  :value="activeMember.businessIncome"
-                  @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'businessIncome', Number($event.target.value))"
-                  min="0"
-                  step="1000"
-                />
-              </div>
-            </div>
+        <!-- Capital gains picker -->
+        <div class="tax-field">
+          <label class="field-label">Long-Term Capital Gains Rate</label>
+          <div class="capgains-grid">
+            <button
+              v-for="c in capGainsOptions"
+              :key="c.rate"
+              class="bracket-card capgains-card"
+              :class="{ selected: currentCapGains === c.rate }"
+              @click="selectCapGains(c.rate)"
+            >
+              <span class="bracket-rate">{{ c.rate }}%</span>
+              <span class="bracket-range">{{ c.label }}</span>
+            </button>
+          </div>
+        </div>
 
-            <div class="tax-field">
-              <label class="field-label">Short-term Investment Income</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input
-                  type="number"
-                  class="number-input"
-                  :value="activeMember.shortTermInvestmentIncome"
-                  @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'shortTermInvestmentIncome', Number($event.target.value))"
-                  min="0"
-                  step="500"
-                />
-              </div>
-            </div>
+        <!-- Advanced toggle -->
+        <button class="advanced-toggle" @click="showAdvanced = !showAdvanced">
+          <ChevronDown :size="14" stroke-width="2" :class="['adv-chevron', { rotated: showAdvanced }]" />
+          Advanced — edit exact income
+        </button>
 
-            <div class="tax-field">
-              <label class="field-label">Long-term Investment Income</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input
-                  type="number"
-                  class="number-input"
-                  :value="activeMember.longTermInvestmentIncome"
-                  @input="budgetStore.updateMemberSetting(budgetStore.personalMember, 'longTermInvestmentIncome', Number($event.target.value))"
-                  min="0"
-                  step="500"
-                />
-              </div>
-            </div>
-
-            <div class="tax-field">
-              <label class="field-label">Filing Status</label>
-              <select
-                class="select-input"
-                :value="activeMember.filingStatus"
-                @change="budgetStore.updateMemberSetting(budgetStore.personalMember, 'filingStatus', $event.target.value)"
-              >
-                <option value="single">Single</option>
-                <option value="married">Married Filing Jointly</option>
-                <option value="hoh">Head of Household</option>
-              </select>
-            </div>
-
-            <div class="tax-field">
-              <label class="field-label">State</label>
-              <select
-                class="select-input"
-                :value="activeMember.state"
-                @change="budgetStore.updateMemberSetting(budgetStore.personalMember, 'state', $event.target.value)"
-              >
-                <option v-for="s in stateOptions" :key="s" :value="s">{{ s }}</option>
-              </select>
+        <div v-if="showAdvanced" class="advanced-section">
+          <div class="tax-field">
+            <label class="field-label">Salary</label>
+            <div class="currency-input-wrap">
+              <span class="currency-prefix">$</span>
+              <input type="number" class="number-input" :value="currentTaxMember.salary" @input="updateTaxMember('salary', Number($event.target.value))" min="0" step="1000" />
             </div>
           </div>
-        </template>
+          <div class="tax-field">
+            <label class="field-label">Business Income</label>
+            <div class="currency-input-wrap">
+              <span class="currency-prefix">$</span>
+              <input type="number" class="number-input" :value="currentTaxMember.businessIncome" @input="updateTaxMember('businessIncome', Number($event.target.value))" min="0" step="1000" />
+            </div>
+          </div>
+          <div class="tax-field">
+            <label class="field-label">Short-term Investment Income</label>
+            <div class="currency-input-wrap">
+              <span class="currency-prefix">$</span>
+              <input type="number" class="number-input" :value="currentTaxMember.shortTermInvestmentIncome" @input="updateTaxMember('shortTermInvestmentIncome', Number($event.target.value))" min="0" step="500" />
+            </div>
+          </div>
+          <div class="tax-field">
+            <label class="field-label">Long-term Investment Income</label>
+            <div class="currency-input-wrap">
+              <span class="currency-prefix">$</span>
+              <input type="number" class="number-input" :value="currentTaxMember.longTermInvestmentIncome" @input="updateTaxMember('longTermInvestmentIncome', Number($event.target.value))" min="0" step="500" />
+            </div>
+          </div>
+        </div>
       </Card>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import { usePortfolioStore } from '@/stores/portfolio'
-import { User, Users, Briefcase, LogOut, Database, Landmark } from 'lucide-vue-next'
+import { User, Users, Briefcase, LogOut, Database, Landmark, ChevronDown } from 'lucide-vue-next'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import PlaidLink from '@/components/banking/PlaidLink.vue'
@@ -342,7 +264,6 @@ const portfolioStore = usePortfolioStore()
 
 async function switchDataSource(source) {
   settingsStore.setDataSource(source)
-  // Reload stores with the new data source
   await Promise.all([
     budgetStore.loadExpenses(),
     portfolioStore.loadHoldings(),
@@ -358,6 +279,94 @@ const stateOptions = [
   'NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI',
   'SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'
 ]
+
+// --- Tax Bracket Picker ---
+const activeTaxMember = ref('mine')
+const showAdvanced = ref(false)
+
+const filingOptions = [
+  { label: 'Single', value: 'single' },
+  { label: 'Married', value: 'married' },
+  { label: 'Head of Household', value: 'hoh' },
+]
+
+const incomeBrackets = [
+  { rate: 10, range: (f) => f === 'married' ? 'Up to $23K' : f === 'hoh' ? 'Up to $17K' : 'Up to $12K' },
+  { rate: 12, range: (f) => f === 'married' ? '$23K – $94K' : f === 'hoh' ? '$17K – $63K' : '$12K – $47K' },
+  { rate: 22, range: (f) => f === 'married' ? '$94K – $201K' : f === 'hoh' ? '$63K – $101K' : '$47K – $101K' },
+  { rate: 24, range: (f) => f === 'married' ? '$201K – $384K' : f === 'hoh' ? '$101K – $192K' : '$101K – $192K' },
+  { rate: 32, range: (f) => f === 'married' ? '$384K – $487K' : f === 'hoh' ? '$192K – $244K' : '$192K – $244K' },
+  { rate: 35, range: (f) => f === 'married' ? '$487K – $731K' : f === 'hoh' ? '$244K – $609K' : '$244K – $609K' },
+  { rate: 37, range: (f) => f === 'married' ? 'Over $731K' : f === 'hoh' ? 'Over $609K' : 'Over $609K' },
+]
+
+const capGainsOptions = [
+  { rate: 0,  label: 'Lower incomes' },
+  { rate: 15, label: 'Most taxpayers' },
+  { rate: 20, label: 'High earners' },
+]
+
+const BRACKET_SALARY_MAP = {
+  single:  { 10: 20000, 12: 44000, 22: 90000, 24: 165000, 32: 230000, 35: 440000, 37: 700000 },
+  married: { 10: 30000, 12: 88000, 22: 177000, 24: 322000, 32: 465000, 35: 638000, 37: 850000 },
+  hoh:     { 10: 22000, 12: 55000, 22: 100000, 24: 165000, 32: 235000, 35: 445000, 37: 700000 },
+}
+
+// Reverse-map: salary → closest bracket rate
+function salaryToBracket(salary, filingStatus) {
+  const map = BRACKET_SALARY_MAP[filingStatus] || BRACKET_SALARY_MAP.single
+  let closest = 22
+  let minDiff = Infinity
+  for (const [rate, mid] of Object.entries(map)) {
+    const diff = Math.abs(salary - mid)
+    if (diff < minDiff) { minDiff = diff; closest = Number(rate) }
+  }
+  return closest
+}
+
+const currentTaxMember = computed(() => {
+  if (budgetStore.budgetMode === 'family') return budgetStore.familyMembers[activeTaxMember.value]
+  return budgetStore.familyMembers[budgetStore.personalMember]
+})
+
+const currentBracket = computed(() =>
+  salaryToBracket(currentTaxMember.value.salary, currentTaxMember.value.filingStatus)
+)
+
+const currentCapGains = computed(() => {
+  const ltgi = currentTaxMember.value.longTermInvestmentIncome || 0
+  if (ltgi === 0) return 15
+  // Approximate: check which cap gains rate best fits
+  const salary = currentTaxMember.value.salary
+  const total = salary + ltgi
+  if (currentTaxMember.value.filingStatus === 'married') {
+    if (total <= 94050) return 0
+    if (total <= 583750) return 15
+    return 20
+  }
+  if (total <= 47025) return 0
+  if (total <= 518900) return 15
+  return 20
+})
+
+function selectBracket(rate) {
+  const memberId = budgetStore.budgetMode === 'family' ? activeTaxMember.value : budgetStore.personalMember
+  const filing = currentTaxMember.value.filingStatus
+  const salaryMap = BRACKET_SALARY_MAP[filing] || BRACKET_SALARY_MAP.single
+  budgetStore.updateMemberSetting(memberId, 'salary', salaryMap[rate] || 90000)
+}
+
+function selectCapGains(rate) {
+  const memberId = budgetStore.budgetMode === 'family' ? activeTaxMember.value : budgetStore.personalMember
+  // Set a representative long-term investment income based on rate
+  const ltgiMap = { 0: 0, 15: 5000, 20: 25000 }
+  budgetStore.updateMemberSetting(memberId, 'longTermInvestmentIncome', ltgiMap[rate] ?? 5000)
+}
+
+function updateTaxMember(field, value) {
+  const memberId = budgetStore.budgetMode === 'family' ? activeTaxMember.value : budgetStore.personalMember
+  budgetStore.updateMemberSetting(memberId, field, value)
+}
 </script>
 
 <style scoped>
@@ -761,10 +770,175 @@ const stateOptions = [
   color: var(--text-tertiary);
 }
 
+/* Tax Bracket Picker */
+.bracket-member-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.bracket-member-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bracket-member-tab:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.bracket-member-tab.active {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.bracket-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filing-toggle {
+  display: flex;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.filing-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filing-btn:hover {
+  color: var(--text-primary);
+}
+
+.filing-btn.active {
+  background: var(--accent-blue);
+  color: #F1F5F9;
+}
+
+.bracket-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.bracket-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bracket-card:hover {
+  border-color: var(--text-tertiary);
+  background: var(--bg-base);
+}
+
+.bracket-card.selected {
+  border-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.bracket-rate {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bracket-card.selected .bracket-rate {
+  color: var(--accent-blue);
+}
+
+.bracket-range {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.capgains-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.advanced-toggle:hover {
+  color: var(--text-secondary);
+}
+
+.adv-chevron {
+  transition: transform 0.2s ease;
+}
+
+.adv-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.advanced-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-glass);
+}
+
 @media (max-width: 640px) {
-  .tax-members {
+  .bracket-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bracket-row {
     grid-template-columns: 1fr;
-    gap: 28px;
   }
 }
 </style>
