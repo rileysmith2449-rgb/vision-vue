@@ -107,123 +107,80 @@
         </div>
       </div>
 
-      <!-- Step 2: Tax Information -->
+      <!-- Step 2: Tax Bracket -->
       <div v-if="step === 2" class="step-content">
-        <h2 class="step-heading">Tax Information</h2>
-        <p class="step-description">Enter your income and filing details</p>
+        <h2 class="step-heading">Tax Bracket</h2>
+        <p class="step-description">Select your approximate tax brackets — you can fine-tune in Settings later</p>
 
-        <!-- Family mode: two columns -->
-        <template v-if="localMode === 'family'">
-          <div class="tax-members">
-            <div v-for="id in ['mine', 'yours']" :key="id" class="tax-member-col">
-              <div class="tax-member-header">
-                <div class="member-color" :class="id"></div>
-                <span class="tax-member-name">{{ localMembers[id].name }}</span>
-              </div>
+        <!-- Family mode: tabs for each member -->
+        <div v-if="localMode === 'family'" class="family-bracket-tabs">
+          <button
+            v-for="id in ['mine', 'yours']"
+            :key="id"
+            class="bracket-member-tab"
+            :class="{ active: activeBracketMember === id }"
+            @click="activeBracketMember = id"
+          >
+            <div class="member-color" :class="id"></div>
+            {{ localMembers[id].name }}
+          </button>
+        </div>
 
-              <div class="tax-field">
-                <label class="field-label">Salary</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input type="number" class="number-input" v-model.number="localMembers[id].salary" min="0" step="1000" />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Business Income</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input type="number" class="number-input" v-model.number="localMembers[id].businessIncome" min="0" step="1000" />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Short-term Investment Income</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input type="number" class="number-input" v-model.number="localMembers[id].shortTermInvestmentIncome" min="0" step="500" />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Long-term Investment Income</label>
-                <div class="currency-input-wrap">
-                  <span class="currency-prefix">$</span>
-                  <input type="number" class="number-input" v-model.number="localMembers[id].longTermInvestmentIncome" min="0" step="500" />
-                </div>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">Filing Status</label>
-                <select class="select-input" v-model="localMembers[id].filingStatus">
-                  <option value="single">Single</option>
-                  <option value="married">Married Filing Jointly</option>
-                  <option value="hoh">Head of Household</option>
-                </select>
-              </div>
-
-              <div class="tax-field">
-                <label class="field-label">State</label>
-                <select class="select-input" v-model="localMembers[id].state">
-                  <option v-for="s in stateOptions" :key="s" :value="s">{{ s }}</option>
-                </select>
-              </div>
+        <!-- Filing status + State row -->
+        <div class="bracket-row">
+          <div class="tax-field bracket-field">
+            <label class="field-label">Filing Status</label>
+            <div class="filing-toggle">
+              <button
+                v-for="f in filingOptions"
+                :key="f.value"
+                class="filing-btn"
+                :class="{ active: currentMemberData.filingStatus === f.value }"
+                @click="currentMemberData.filingStatus = f.value"
+              >{{ f.label }}</button>
             </div>
           </div>
-        </template>
-
-        <!-- Personal / Business mode: single -->
-        <template v-else>
-          <div class="tax-single">
-            <div class="tax-field">
-              <label class="field-label">Salary</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input type="number" class="number-input" v-model.number="localMembers[localPersonalMember].salary" min="0" step="1000" />
-              </div>
-            </div>
-
-            <div class="tax-field">
-              <label class="field-label">Business Income</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input type="number" class="number-input" v-model.number="localMembers[localPersonalMember].businessIncome" min="0" step="1000" />
-              </div>
-            </div>
-
-            <div class="tax-field">
-              <label class="field-label">Short-term Investment Income</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input type="number" class="number-input" v-model.number="localMembers[localPersonalMember].shortTermInvestmentIncome" min="0" step="500" />
-              </div>
-            </div>
-
-            <div class="tax-field">
-              <label class="field-label">Long-term Investment Income</label>
-              <div class="currency-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input type="number" class="number-input" v-model.number="localMembers[localPersonalMember].longTermInvestmentIncome" min="0" step="500" />
-              </div>
-            </div>
-
-            <div class="tax-field">
-              <label class="field-label">Filing Status</label>
-              <select class="select-input" v-model="localMembers[localPersonalMember].filingStatus">
-                <option value="single">Single</option>
-                <option value="married">Married Filing Jointly</option>
-                <option value="hoh">Head of Household</option>
-              </select>
-            </div>
-
-            <div class="tax-field">
-              <label class="field-label">State</label>
-              <select class="select-input" v-model="localMembers[localPersonalMember].state">
-                <option v-for="s in stateOptions" :key="s" :value="s">{{ s }}</option>
-              </select>
-            </div>
+          <div class="tax-field bracket-field">
+            <label class="field-label">State</label>
+            <select class="select-input" v-model="currentMemberData.state">
+              <option v-for="s in stateOptions" :key="s" :value="s">{{ s }}</option>
+            </select>
           </div>
-        </template>
+        </div>
+
+        <!-- Federal income bracket picker -->
+        <div class="tax-field">
+          <label class="field-label">Federal Income Tax Bracket</label>
+          <div class="bracket-grid">
+            <button
+              v-for="b in incomeBrackets"
+              :key="b.rate"
+              class="bracket-card"
+              :class="{ selected: currentMemberData.selectedBracket === b.rate }"
+              @click="currentMemberData.selectedBracket = b.rate"
+            >
+              <span class="bracket-rate">{{ b.rate }}%</span>
+              <span class="bracket-range">{{ b.range(currentMemberData.filingStatus) }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Capital gains rate picker -->
+        <div class="tax-field">
+          <label class="field-label">Long-Term Capital Gains Rate</label>
+          <div class="capgains-grid">
+            <button
+              v-for="c in capGainsOptions"
+              :key="c.rate"
+              class="bracket-card capgains-card"
+              :class="{ selected: currentMemberData.selectedCapGains === c.rate }"
+              @click="currentMemberData.selectedCapGains = c.rate"
+            >
+              <span class="bracket-rate">{{ c.rate }}%</span>
+              <span class="bracket-range">{{ c.label }}</span>
+            </button>
+          </div>
+        </div>
 
         <div class="step-actions">
           <button class="btn-secondary" @click="step = 1">
@@ -231,7 +188,7 @@
             Back
           </button>
           <button class="btn-skip" @click="skippedTax = true; step = 3">
-            Skip
+            Skip for now
           </button>
           <button class="btn-primary" @click="skippedTax = false; step = 3">
             Continue
@@ -256,8 +213,8 @@
           </div>
 
           <div v-if="skippedTax" class="review-row">
-            <span class="review-label">Tax Information</span>
-            <span class="review-value review-skipped">Skipped</span>
+            <span class="review-label">Tax Brackets</span>
+            <span class="review-value review-skipped">Skipped — defaults applied</span>
           </div>
 
           <template v-if="!skippedTax">
@@ -270,20 +227,12 @@
                 </div>
                 <div class="review-details">
                   <div class="review-row">
-                    <span class="review-label">Salary</span>
-                    <span class="review-value">${{ localMembers[id].salary.toLocaleString() }}</span>
+                    <span class="review-label">Federal Bracket</span>
+                    <span class="review-value">{{ localMembers[id].selectedBracket || 22 }}%</span>
                   </div>
-                  <div class="review-row" v-if="localMembers[id].businessIncome">
-                    <span class="review-label">Business Income</span>
-                    <span class="review-value">${{ localMembers[id].businessIncome.toLocaleString() }}</span>
-                  </div>
-                  <div class="review-row" v-if="localMembers[id].shortTermInvestmentIncome">
-                    <span class="review-label">Short-term Investments</span>
-                    <span class="review-value">${{ localMembers[id].shortTermInvestmentIncome.toLocaleString() }}</span>
-                  </div>
-                  <div class="review-row" v-if="localMembers[id].longTermInvestmentIncome">
-                    <span class="review-label">Long-term Investments</span>
-                    <span class="review-value">${{ localMembers[id].longTermInvestmentIncome.toLocaleString() }}</span>
+                  <div class="review-row">
+                    <span class="review-label">Capital Gains</span>
+                    <span class="review-value">{{ localMembers[id].selectedCapGains ?? 15 }}%</span>
                   </div>
                   <div class="review-row">
                     <span class="review-label">Filing Status</span>
@@ -300,20 +249,12 @@
             <template v-else>
               <div class="review-details">
                 <div class="review-row">
-                  <span class="review-label">Salary</span>
-                  <span class="review-value">${{ localMembers[localPersonalMember].salary.toLocaleString() }}</span>
+                  <span class="review-label">Federal Bracket</span>
+                  <span class="review-value">{{ localMembers[localPersonalMember].selectedBracket || 22 }}%</span>
                 </div>
-                <div class="review-row" v-if="localMembers[localPersonalMember].businessIncome">
-                  <span class="review-label">Business Income</span>
-                  <span class="review-value">${{ localMembers[localPersonalMember].businessIncome.toLocaleString() }}</span>
-                </div>
-                <div class="review-row" v-if="localMembers[localPersonalMember].shortTermInvestmentIncome">
-                  <span class="review-label">Short-term Investments</span>
-                  <span class="review-value">${{ localMembers[localPersonalMember].shortTermInvestmentIncome.toLocaleString() }}</span>
-                </div>
-                <div class="review-row" v-if="localMembers[localPersonalMember].longTermInvestmentIncome">
-                  <span class="review-label">Long-term Investments</span>
-                  <span class="review-value">${{ localMembers[localPersonalMember].longTermInvestmentIncome.toLocaleString() }}</span>
+                <div class="review-row">
+                  <span class="review-label">Capital Gains</span>
+                  <span class="review-value">{{ localMembers[localPersonalMember].selectedCapGains ?? 15 }}%</span>
                 </div>
                 <div class="review-row">
                   <span class="review-label">Filing Status</span>
@@ -344,7 +285,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBudgetStore } from '@/stores/budget'
 import { User, Users, Briefcase, ChevronRight, ChevronLeft, Rocket } from 'lucide-vue-next'
@@ -357,6 +298,7 @@ const skippedTax = ref(false)
 const localMode = ref('personal')
 const localBusinessEnabled = ref(false)
 const localPersonalMember = ref('mine')
+const activeBracketMember = ref('mine')
 const localMembers = reactive({
   mine: {
     id: 'mine',
@@ -366,7 +308,9 @@ const localMembers = reactive({
     shortTermInvestmentIncome: 0,
     longTermInvestmentIncome: 0,
     filingStatus: 'single',
-    state: 'CA'
+    state: 'CA',
+    selectedBracket: 22,
+    selectedCapGains: 15,
   },
   yours: {
     id: 'yours',
@@ -376,9 +320,67 @@ const localMembers = reactive({
     shortTermInvestmentIncome: 0,
     longTermInvestmentIncome: 0,
     filingStatus: 'single',
-    state: 'CA'
+    state: 'CA',
+    selectedBracket: 22,
+    selectedCapGains: 15,
   }
 })
+
+const currentMemberData = computed(() => {
+  if (localMode.value === 'family') return localMembers[activeBracketMember.value]
+  return localMembers[localPersonalMember.value]
+})
+
+const filingOptions = [
+  { label: 'Single', value: 'single' },
+  { label: 'Married', value: 'married' },
+  { label: 'Head of Household', value: 'hoh' },
+]
+
+// Federal income tax brackets with income ranges per filing status
+const incomeBrackets = [
+  {
+    rate: 10,
+    range: (f) => f === 'married' ? 'Up to $23K' : f === 'hoh' ? 'Up to $17K' : 'Up to $12K'
+  },
+  {
+    rate: 12,
+    range: (f) => f === 'married' ? '$23K – $94K' : f === 'hoh' ? '$17K – $63K' : '$12K – $47K'
+  },
+  {
+    rate: 22,
+    range: (f) => f === 'married' ? '$94K – $201K' : f === 'hoh' ? '$63K – $101K' : '$47K – $101K'
+  },
+  {
+    rate: 24,
+    range: (f) => f === 'married' ? '$201K – $384K' : f === 'hoh' ? '$101K – $192K' : '$101K – $192K'
+  },
+  {
+    rate: 32,
+    range: (f) => f === 'married' ? '$384K – $487K' : f === 'hoh' ? '$192K – $244K' : '$192K – $244K'
+  },
+  {
+    rate: 35,
+    range: (f) => f === 'married' ? '$487K – $731K' : f === 'hoh' ? '$244K – $609K' : '$244K – $609K'
+  },
+  {
+    rate: 37,
+    range: (f) => f === 'married' ? 'Over $731K' : f === 'hoh' ? 'Over $609K' : 'Over $609K'
+  },
+]
+
+const capGainsOptions = [
+  { rate: 0,  label: 'Lower incomes' },
+  { rate: 15, label: 'Most taxpayers' },
+  { rate: 20, label: 'High earners' },
+]
+
+// Map selected bracket → representative salary (midpoint of bracket range + standard deduction)
+const BRACKET_SALARY_MAP = {
+  single: { 10: 20000, 12: 44000, 22: 90000, 24: 165000, 32: 230000, 35: 440000, 37: 700000 },
+  married: { 10: 30000, 12: 88000, 22: 177000, 24: 322000, 32: 465000, 35: 638000, 37: 850000 },
+  hoh: { 10: 22000, 12: 55000, 22: 100000, 24: 165000, 32: 235000, 35: 445000, 37: 700000 },
+}
 
 const stateOptions = [
   'AL','AK','AZ','AR','CA','CO','CT','DC','DE','FL',
@@ -399,16 +401,22 @@ function finish() {
   budgetStore.setBusinessEnabled(localBusinessEnabled.value)
   budgetStore.setPersonalMember(localPersonalMember.value)
 
-  // Copy member data into the store
+  // Copy member data into the store, mapping brackets to salary
   for (const id of ['mine', 'yours']) {
     const m = localMembers[id]
     budgetStore.updateMemberName(id, m.name)
-    budgetStore.updateMemberSetting(id, 'salary', m.salary)
-    budgetStore.updateMemberSetting(id, 'businessIncome', m.businessIncome)
-    budgetStore.updateMemberSetting(id, 'shortTermInvestmentIncome', m.shortTermInvestmentIncome)
-    budgetStore.updateMemberSetting(id, 'longTermInvestmentIncome', m.longTermInvestmentIncome)
     budgetStore.updateMemberSetting(id, 'filingStatus', m.filingStatus)
     budgetStore.updateMemberSetting(id, 'state', m.state)
+
+    if (!skippedTax.value) {
+      // Map selected bracket to representative salary
+      const salaryMap = BRACKET_SALARY_MAP[m.filingStatus] || BRACKET_SALARY_MAP.single
+      const salary = salaryMap[m.selectedBracket] || 90000
+      budgetStore.updateMemberSetting(id, 'salary', salary)
+      budgetStore.updateMemberSetting(id, 'businessIncome', 0)
+      budgetStore.updateMemberSetting(id, 'shortTermInvestmentIncome', 0)
+      budgetStore.updateMemberSetting(id, 'longTermInvestmentIncome', 0)
+    }
   }
 
   budgetStore.completeOnboarding()
@@ -975,14 +983,160 @@ function finish() {
   font-size: 0.92rem;
 }
 
+/* Bracket picker */
+.family-bracket-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.bracket-member-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+  padding: 10px 14px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bracket-member-tab:hover {
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.bracket-member-tab.active {
+  background: var(--electric-teal);
+  color: #000;
+  border-color: var(--electric-teal);
+}
+
+.bracket-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.bracket-field { margin-bottom: 0; }
+
+.filing-toggle {
+  display: flex;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.filing-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filing-btn:hover { color: var(--text-primary); }
+
+.filing-btn.active {
+  background: var(--electric-teal);
+  color: #000;
+}
+
+.bracket-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.capgains-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.bracket-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 14px 8px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bracket-card:hover {
+  border-color: var(--text-tertiary);
+  transform: translateY(-1px);
+}
+
+.bracket-card.selected {
+  border-color: var(--electric-teal);
+  background: rgba(20, 184, 166, 0.08);
+  box-shadow: 0 0 0 1px var(--electric-teal);
+}
+
+.bracket-rate {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.bracket-card.selected .bracket-rate {
+  color: var(--electric-teal);
+}
+
+.bracket-range {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.capgains-card {
+  padding: 16px 12px;
+}
+
+.capgains-card .bracket-range {
+  font-size: 0.72rem;
+}
+
 @media (max-width: 640px) {
   .onboarding-card {
     padding: 28px 20px;
   }
 
-  .tax-members {
+  .bracket-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .bracket-row {
     grid-template-columns: 1fr;
-    gap: 28px;
+  }
+}
+
+@media (max-width: 420px) {
+  .bracket-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 </style>

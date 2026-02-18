@@ -110,9 +110,11 @@ onBeforeUnmount(() => { if (chartInst) chartInst.destroy() })
   flex-direction: column;
   align-items: center;
   pointer-events: none;
-  top: calc(90px - 30px);
+  top: 0;
   left: 50%;
+  height: 220px;
   transform: translateX(-50%);
+  justify-content: center;
 }
 .donut-label    { font-size: 0.65rem; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
 .donut-count    { font-size: 1.6rem; font-weight: 800; color: #f1f5f9; line-height: 1; }
