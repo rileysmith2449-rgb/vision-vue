@@ -1,141 +1,137 @@
 <template>
-  <div class="net-worth">
-    <Header title="Net Worth" subtitle="Complete picture of your financial position" />
+  <div class="networth-view">
 
-    <div v-if="portfolioStore.loading" class="loading">Loading...</div>
+    <!-- Header -->
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Net Worth</h1>
+        <p class="view-subtitle">All assets and liabilities in one place</p>
+      </div>
+    </div>
 
-    <template v-else>
-      <!-- Hero stats -->
-      <div class="stats-row">
-        <div class="stat-card hero">
-          <span class="stat-label">Net Worth</span>
-          <span class="stat-value" :class="{ negative: latestNetWorth < 0 }">
-            {{ formatCurrency(latestNetWorth) }}
+    <!-- Hero KPIs -->
+    <div class="hero-strip">
+      <div class="hero-main glass-card">
+        <div class="hero-label">Total Net Worth</div>
+        <div class="hero-value">{{ formatCurrency(store.netWorth) }}</div>
+        <div class="hero-sub">
+          <span class="hero-breakdown">
+            <span class="asset-tag">↑ {{ formatCurrency(store.totalAssets) }} assets</span>
+            <span class="separator"> · </span>
+            <span class="liab-tag">↓ {{ formatCurrency(store.totalLiabilities) }} liabilities</span>
           </span>
         </div>
-        <div class="stat-card">
-          <span class="stat-label">Total Assets</span>
-          <span class="stat-value assets">{{ formatCurrency(totalAssets) }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Total Liabilities</span>
-          <span class="stat-value liabilities">{{ formatCurrency(portfolioStore.totalLiabilities) }}</span>
-        </div>
       </div>
 
-      <!-- Net Worth Chart -->
-      <NetWorthChart class="chart-section" />
-
-      <!-- Assets Section -->
-      <div class="section">
-        <h3 class="section-title">Assets</h3>
-        <div class="group-list">
-          <AssetGroup
-            v-for="(holdings, category) in portfolioStore.holdingsByCategory"
-            :key="category"
-            :category="category"
-            :holdings="holdings"
-            :total="portfolioStore.categoryTotals[category]"
-            :icon="categoryIcons[category] || '📊'"
-          />
+      <div class="hero-side">
+        <div class="glass-card kpi-tile">
+          <div class="kpi-label">30-Day Change</div>
+          <div class="kpi-val" :class="store.monthlyChange.amount >= 0 ? 'pos' : 'neg'">
+            {{ store.monthlyChange.amount >= 0 ? '+' : '' }}{{ formatCurrency(store.monthlyChange.amount) }}
+          </div>
+          <div class="kpi-pct" :class="store.monthlyChange.amount >= 0 ? 'pos' : 'neg'">
+            {{ store.monthlyChange.percent >= 0 ? '▲' : '▼' }} {{ Math.abs(store.monthlyChange.percent).toFixed(1) }}%
+          </div>
         </div>
-      </div>
-
-      <!-- Property Values -->
-      <div v-if="portfolioStore.propertyValues.length > 0" class="section">
-        <h3 class="section-title">Property Values</h3>
-        <div class="property-list">
-          <div v-for="prop in portfolioStore.propertyValues" :key="prop.id" class="property-card clickable" @click="router.push(`/property/${prop.id}`)">
-            <div class="property-info">
-              <span class="property-name">{{ prop.name }}</span>
-              <span class="property-address">{{ prop.address }}</span>
-            </div>
-            <div class="property-values">
-              <div class="property-stat">
-                <span class="property-stat-label">Estimated Value</span>
-                <span class="property-stat-value">{{ formatCurrency(prop.estimatedValue) }}</span>
-              </div>
-              <div class="property-stat">
-                <span class="property-stat-label">Purchase Price</span>
-                <span class="property-stat-value muted">{{ formatCurrency(prop.purchasePrice) }}</span>
-              </div>
-              <div class="property-stat">
-                <span class="property-stat-label">Gain</span>
-                <span class="property-stat-value gain">{{ formatCurrency(prop.estimatedValue - prop.purchasePrice) }}</span>
-              </div>
-            </div>
+        <div class="glass-card kpi-tile">
+          <div class="kpi-label">1-Year Change</div>
+          <div class="kpi-val" :class="store.yearlyChange.amount >= 0 ? 'pos' : 'neg'">
+            {{ store.yearlyChange.amount >= 0 ? '+' : '' }}{{ formatCurrency(store.yearlyChange.amount) }}
+          </div>
+          <div class="kpi-pct" :class="store.yearlyChange.amount >= 0 ? 'pos' : 'neg'">
+            {{ store.yearlyChange.percent >= 0 ? '▲' : '▼' }} {{ Math.abs(store.yearlyChange.percent).toFixed(1) }}%
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Liabilities Section -->
-      <div class="section">
-        <h3 class="section-title">Liabilities</h3>
-        <div class="group-list">
-          <LiabilityGroup
-            v-for="(items, category) in portfolioStore.liabilitiesByCategory"
-            :key="category"
-            :category="category"
-            :items="items"
-            :total="portfolioStore.liabilityCategoryTotals[category]"
-            :icon="liabilityIcons[category] || '📋'"
-          />
+    <!-- History Chart -->
+    <div class="glass-card chart-card">
+      <div class="card-header">
+        <span class="card-title">Net Worth Over Time</span>
+        <div class="range-tabs">
+          <button
+            v-for="r in ranges"
+            :key="r.value"
+            class="range-tab"
+            :class="{ active: store.chartRange === r.value }"
+            @click="store.setChartRange(r.value)"
+          >{{ r.label }}</button>
         </div>
       </div>
-    </template>
+      <NetworthChart :history="store.filteredHistory" />
+    </div>
+
+    <!-- Lower grid -->
+    <div class="lower-grid">
+
+      <!-- Account Breakdown -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-title">Accounts</span>
+          <div class="tab-pills">
+            <button
+              class="tab-pill"
+              :class="{ active: store.activeTab === 'accounts' }"
+              @click="store.setActiveTab('accounts')"
+            >By Account</button>
+            <button
+              class="tab-pill"
+              :class="{ active: store.activeTab === 'categories' }"
+              @click="store.setActiveTab('categories')"
+            >By Type</button>
+          </div>
+        </div>
+        <AccountList
+          v-if="store.activeTab === 'accounts'"
+          :groups="store.accountsByType"
+        />
+        <AllocationBreakdown
+          v-else
+          :allocation="store.assetAllocation"
+          :total="store.totalAssets"
+        />
+      </div>
+
+      <!-- Asset Allocation Donut -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-title">Asset Allocation</span>
+        </div>
+        <AllocationDonut :allocation="store.assetAllocation" />
+      </div>
+
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { usePortfolioStore } from '@/stores/portfolio'
-import { formatCurrency } from '@/utils/formatters'
-import Header from '@/components/layout/Header.vue'
-import NetWorthChart from '@/components/networth/NetWorthChart.vue'
-import AssetGroup from '@/components/networth/AssetGroup.vue'
-import LiabilityGroup from '@/components/networth/LiabilityGroup.vue'
+import { useNetworthStore } from '../stores/networth.js'
+import NetworthChart       from '../components/networth/NetworthChart.vue'
+import AccountList         from '../components/networth/AccountList.vue'
+import AllocationBreakdown from '../components/networth/AllocationBreakdown.vue'
+import AllocationDonut     from '../components/networth/AllocationDonut.vue'
 
-const router = useRouter()
-const portfolioStore = usePortfolioStore()
+const store = useNetworthStore()
 
-const categoryIcons = {
-  'Cash': '💵',
-  'Stocks': '📈',
-  'Crypto': '₿',
-  'ETFs': '💎',
-  'Real Estate': '🏠',
-  'Bonds': '🏦',
-  'Other': '🎯'
+const ranges = [
+  { label: '3M',  value: '3m' },
+  { label: '6M',  value: '6m' },
+  { label: '1Y',  value: '1y' },
+  { label: 'All', value: 'all' },
+]
+
+function formatCurrency(v) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v)
 }
-
-const liabilityIcons = {
-  'Mortgage': '🏠',
-  'Auto Loans': '🚗',
-  'Student Loans': '🎓',
-  'Credit Cards': '💳'
-}
-
-const latestNetWorth = computed(() => {
-  const h = portfolioStore.netWorthHistory
-  if (!h || h.length === 0) return 0
-  return h[h.length - 1].value || 0
-})
-
-const totalAssets = computed(() => (portfolioStore.totalValue || 0) + (portfolioStore.totalPropertyValue || 0))
-
-onMounted(() => {
-  if (portfolioStore.holdings.length === 0) {
-    portfolioStore.loadHoldings()
-  } else if (portfolioStore.netWorthHistory.length === 0) {
-    portfolioStore.loadNetWorthData()
-  }
-})
 </script>
 
 <style scoped>
-.net-worth {
-  max-width: 1200px;
+.networth-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   animation: viewFadeIn 0.3s ease-out;
 }
 
@@ -144,164 +140,109 @@ onMounted(() => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.loading {
-  text-align: center;
-  padding: 60px 0;
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-}
+.view-header { margin-bottom: 0.25rem; }
+.view-title   { font-size: 1.75rem; font-weight: 700; color: var(--text-primary, #f1f5f9); margin: 0; }
+.view-subtitle { font-size: 0.875rem; color: var(--text-muted, #64748b); margin: 0.25rem 0 0; }
 
-.stats-row {
+.hero-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: stretch;
 }
+@media (max-width: 700px) { .hero-strip { grid-template-columns: 1fr; } }
 
-.stat-card {
+.hero-main {
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 20px 24px;
-  background: var(--bg-card);
-  background-image: var(--gradient-card);
-  border: 1px solid var(--border-glass);
-  border-radius: 16px;
-  box-shadow: var(--shadow-glass);
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  gap: 0.5rem;
 }
+.hero-label  { font-size: 0.75rem; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: 0.07em; }
+.hero-value  { font-size: 2.5rem; font-weight: 800; color: var(--text-primary, #f1f5f9); line-height: 1; letter-spacing: -0.02em; }
+.hero-sub    { margin-top: 0.25rem; }
+.hero-breakdown { font-size: 0.85rem; }
+.asset-tag   { color: #34d399; }
+.liab-tag    { color: #f87171; }
+.separator   { color: #334155; }
 
-.stat-card:hover {
-  border-color: var(--border-focus);
-  transform: translateY(-1px);
-}
-
-.stat-card.hero {
-  border-color: rgba(59, 130, 246, 0.25);
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.stat-value.negative {
-  color: #ef4444;
-}
-
-.stat-value.assets {
-  color: var(--accent-blue);
-}
-
-.stat-value.liabilities {
-  color: #ef4444;
-}
-
-.chart-section {
-  margin-bottom: 32px;
-}
-
-.section {
-  margin-bottom: 32px;
-}
-
-.section-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 14px;
-  letter-spacing: -0.01em;
-}
-
-.group-list {
+.hero-side {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1rem;
+  min-width: 180px;
 }
 
-.property-list {
+.kpi-tile {
+  padding: 1.1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.2rem;
+  flex: 1;
 }
+.kpi-label { font-size: 0.72rem; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: 0.06em; }
+.kpi-val   { font-size: 1.3rem; font-weight: 700; line-height: 1.1; }
+.kpi-pct   { font-size: 0.78rem; font-weight: 600; }
+.pos { color: #34d399; }
+.neg { color: #f87171; }
 
-.property-card {
-  padding: 18px 22px;
-  background: var(--bg-card);
-  background-image: var(--gradient-card);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-glass);
-}
+.chart-card { padding: 1.5rem; }
 
-.property-card.clickable {
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, transform 0.2s;
-}
-
-.property-card.clickable:hover {
-  border-color: var(--border-focus);
-  background: var(--bg-subtle);
-  transform: translateY(-1px);
-}
-
-.property-info {
+.card-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.card-title { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary, #cbd5e1); }
+
+.range-tabs {
+  display: flex;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 3px;
   gap: 2px;
-  margin-bottom: 14px;
 }
-
-.property-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.property-address {
+.range-tab {
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
   font-size: 0.78rem;
-  color: var(--text-tertiary);
-}
-
-.property-values {
-  display: flex;
-  gap: 28px;
-  flex-wrap: wrap;
-}
-
-.property-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.property-stat-label {
-  font-size: 0.68rem;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.property-stat-value {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.property-stat-value.muted {
-  color: var(--text-secondary);
   font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
 }
+.range-tab.active { background: rgba(59,130,246,0.25); color: #60a5fa; }
 
-.property-stat-value.gain {
-  color: var(--electric-teal);
+.tab-pills { display: flex; gap: 0.35rem; }
+.tab-pill {
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-pill.active { border-color: rgba(59,130,246,0.4); color: #60a5fa; background: rgba(59,130,246,0.1); }
+
+.lower-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 750px) { .lower-grid { grid-template-columns: 1fr; } }
+
+.glass-card {
+  background: var(--bg-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-glass, rgba(255,255,255,0.08));
+  border-radius: var(--radius-xl, 16px);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-glass, none);
 }
 </style>

@@ -1,337 +1,139 @@
 <template>
-  <Card title="Net Worth Over Time">
-    <template #actions>
-      <div class="chart-controls">
-        <!-- Time period -->
-        <div class="period-toggle">
-          <button
-            v-for="p in periods"
-            :key="p.key"
-            class="period-btn"
-            :class="{ active: activePeriod === p.key }"
-            @click="activePeriod = p.key"
-          >{{ p.label }}</button>
-        </div>
-
-        <!-- Benchmark comparison -->
-        <div class="benchmark-toggle">
-          <span class="compare-label">vs</span>
-          <button
-            v-for="b in benchmarks"
-            :key="b.key"
-            class="benchmark-btn"
-            :class="{ active: activeBenchmarks.includes(b.key) }"
-            @click="toggleBenchmark(b.key)"
-          >{{ b.label }}</button>
-        </div>
+  <div class="chart-wrapper">
+    <canvas ref="canvas"></canvas>
+    <div v-if="tooltip.visible" class="chart-tooltip" :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }">
+      <div class="tt-date">{{ tooltip.date }}</div>
+      <div class="tt-value">{{ formatCurrency(tooltip.value) }}</div>
+      <div class="tt-row">
+        <span class="tt-asset">↑ {{ formatCurrency(tooltip.assets) }}</span>
+        <span class="tt-sep"> · </span>
+        <span class="tt-liab">↓ {{ formatCurrency(tooltip.liabilities) }}</span>
       </div>
-    </template>
-
-    <div class="chart-container">
-      <Line :key="chartKey" :data="chartData" :options="chartOptions" />
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
-import { Line } from 'vue-chartjs'
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js'
-import { usePortfolioStore } from '@/stores/portfolio'
-import { formatCurrency } from '@/utils/formatters'
-import Card from '@/components/common/Card.vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { Chart, registerables } from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
+Chart.register(...registerables)
 
-const portfolioStore = usePortfolioStore()
-
-// --- Controls ---
-const periods = [
-  { key: '1D', label: '1D', days: 1 },
-  { key: '1W', label: '1W', days: 7 },
-  { key: '1M', label: '1M', days: 30 },
-  { key: '1Y', label: '1Y', days: 365 },
-  { key: 'ALL', label: 'All', days: Infinity },
-]
-const benchmarks = [
-  { key: 'sp500', label: 'S&P 500', color: '#3B82F6' },
-  { key: 'inflation', label: 'US Inflation', color: '#38BDF8' },
-  { key: 'bitcoin', label: 'Bitcoin', color: '#06B6D4' },
-]
-
-const activePeriod = ref('1Y')
-const activeBenchmarks = ref([])
-
-function toggleBenchmark(key) {
-  const idx = activeBenchmarks.value.indexOf(key)
-  if (idx >= 0) {
-    activeBenchmarks.value.splice(idx, 1)
-  } else {
-    activeBenchmarks.value.push(key)
-  }
-}
-
-// Force re-mount the canvas when toggles change (chart.js reactivity quirk)
-const chartKey = computed(() => `${activePeriod.value}-${activeBenchmarks.value.join(',')}`)
-
-// --- Theme colors ---
-function getCSSVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
-
-const textColor = ref(getCSSVar('--text-secondary'))
-const borderColor = ref(getCSSVar('--border-glass'))
-
-function updateColors() {
-  textColor.value = getCSSVar('--text-secondary')
-  borderColor.value = getCSSVar('--border-glass')
-}
-
-onMounted(updateColors)
-
-// --- Sliced data for active period ---
-const periodDays = computed(() => periods.find(p => p.key === activePeriod.value)?.days ?? 365)
-
-const slicedNW = computed(() => {
-  const h = portfolioStore.netWorthHistory
-  if (!h.length) return []
-  if (periodDays.value === Infinity) return h
-  return h.slice(-Math.min(periodDays.value + 1, h.length))
+const props = defineProps({
+  history: { type: Array, required: true }
 })
 
-const slicedBenchmark = computed(() => {
-  const b = portfolioStore.benchmarkHistory
-  if (!b.length) return []
-  if (periodDays.value === Infinity) return b
-  return b.slice(-Math.min(periodDays.value + 1, b.length))
-})
+const canvas   = ref(null)
+let chartInst  = null
+const tooltip  = ref({ visible: false, x: 0, y: 0, date: '', value: 0, assets: 0, liabilities: 0 })
 
-const showingReturn = computed(() => activeBenchmarks.value.length > 0)
+function buildChart() {
+  if (chartInst) { chartInst.destroy(); chartInst = null }
+  if (!canvas.value || !props.history.length) return
 
-// --- Label helpers ---
-function formatDateLabel(dateStr, period) {
-  const d = new Date(dateStr + 'T00:00:00')
-  if (period === '1D' || period === '1W') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  if (period === '1M') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-}
+  const ctx    = canvas.value.getContext('2d')
+  const labels = props.history.map(d => formatLabel(d.date))
+  const values = props.history.map(d => d.value)
+  const data   = props.history
 
-// Downsample to keep the chart readable
-function downsample(arr, maxPoints) {
-  if (arr.length <= maxPoints) return arr
-  const step = (arr.length - 1) / (maxPoints - 1)
-  const result = []
-  for (let i = 0; i < maxPoints; i++) {
-    result.push(arr[Math.round(i * step)])
-  }
-  return result
-}
+  const grad = ctx.createLinearGradient(0, 0, 0, 280)
+  grad.addColorStop(0, 'rgba(59,130,246,0.28)')
+  grad.addColorStop(1, 'rgba(59,130,246,0.0)')
 
-const MAX_POINTS = 60
-
-// --- Chart data ---
-const chartData = computed(() => {
-  const nw = downsample(slicedNW.value, MAX_POINTS)
-  const bench = downsample(slicedBenchmark.value, MAX_POINTS)
-  if (!nw.length) return { labels: [], datasets: [] }
-
-  const labels = nw.map(p => formatDateLabel(p.date, activePeriod.value))
-  const datasets = []
-
-  if (showingReturn.value) {
-    // % return mode — normalise net worth to % change from period start
-    const base = nw[0].value
-    datasets.push({
-      label: 'Net Worth',
-      data: nw.map(p => ((p.value - base) / Math.abs(base)) * 100),
-      borderColor: '#14b8a6',
-      backgroundColor: 'rgba(59, 130, 246, 0.12)',
-      fill: true,
-      tension: 0.35,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      borderWidth: 2.5,
-    })
-
-    for (const b of activeBenchmarks.value) {
-      const meta = benchmarks.find(x => x.key === b)
-      if (!meta || !bench.length) continue
-      const bBase = bench[0][b]
-      datasets.push({
-        label: meta.label,
-        data: bench.map(p => ((p[b] - bBase) / bBase) * 100),
-        borderColor: meta.color,
-        backgroundColor: 'transparent',
-        fill: false,
-        tension: 0.35,
-        pointRadius: 0,
-        pointHoverRadius: 4,
+  chartInst = new Chart(canvas.value, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#3b82f6',
         borderWidth: 2,
-        borderDash: [6, 3],
-      })
-    }
-  } else {
-    // Absolute $ mode
-    datasets.push({
-      label: 'Net Worth',
-      data: nw.map(p => p.value),
-      borderColor: '#14b8a6',
-      backgroundColor: 'rgba(59, 130, 246, 0.12)',
-      fill: true,
-      tension: 0.35,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      borderWidth: 2.5,
-    })
-  }
-
-  return { labels, datasets }
-})
-
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: { mode: 'index', intersect: false },
-  plugins: {
-    legend: {
-      display: showingReturn.value,
-      position: 'top',
-      labels: {
-        color: textColor.value,
-        usePointStyle: true,
-        pointStyle: 'circle',
-        padding: 20,
-        font: { size: 12, weight: '600' }
-      }
+        backgroundColor: grad,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#3b82f6',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+      }]
     },
-    tooltip: {
-      backgroundColor: '#1E293B',
-      borderColor: 'rgba(56, 189, 248, 0.08)',
-      borderWidth: 1,
-      titleColor: '#F1F5F9',
-      bodyColor: '#F1F5F9',
-      padding: 12,
-      cornerRadius: 8,
-      callbacks: {
-        label: (ctx) => {
-          if (showingReturn.value) {
-            const sign = ctx.raw >= 0 ? '+' : ''
-            return `${ctx.dataset.label}: ${sign}${ctx.raw.toFixed(2)}%`
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 3.2,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: false,
+          external: ({ chart, tooltip: tt }) => {
+            if (tt.opacity === 0) { tooltip.value.visible = false; return }
+            const idx = tt.dataPoints[0].dataIndex
+            const d   = data[idx]
+            tooltip.value = {
+              visible: true,
+              x: Math.min(tt.caretX + 12, chart.width - 180),
+              y: Math.max(tt.caretY - 60, 0),
+              date: formatFullDate(d.date),
+              value: d.value,
+              assets: d.assets,
+              liabilities: d.liabilities,
+            }
           }
-          return `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#475569', maxTicksLimit: 6, font: { size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: '#475569',
+            font: { size: 11 },
+            callback: v => '$' + (v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v)
+          }
         }
       }
     }
-  },
-  scales: {
-    x: {
-      grid: { color: 'rgba(148, 163, 184, 0.08)' },
-      ticks: {
-        color: textColor.value,
-        font: { size: 11 },
-        maxTicksLimit: 10,
-      }
-    },
-    y: {
-      grid: { color: 'rgba(148, 163, 184, 0.08)' },
-      ticks: {
-        color: textColor.value,
-        font: { size: 11 },
-        callback: (v) => showingReturn.value ? `${v >= 0 ? '+' : ''}${v.toFixed(1)}%` : formatCurrency(v)
-      }
-    }
-  },
-  animation: { duration: 800 },
-}))
+  })
+}
+
+function formatLabel(str) {
+  return new Date(str + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+}
+function formatFullDate(str) {
+  return new Date(str + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+function formatCurrency(v) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v)
+}
+
+onMounted(buildChart)
+watch(() => props.history, buildChart, { deep: true })
+onBeforeUnmount(() => { if (chartInst) chartInst.destroy() })
 </script>
 
 <style scoped>
-.chart-container {
-  height: 300px;
-  position: relative;
-}
+.chart-wrapper { position: relative; width: 100%; }
 
-.chart-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.chart-tooltip {
+  position: absolute;
+  background: rgba(15,23,42,0.96);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 0.75rem;
+  min-width: 170px;
+  pointer-events: none;
+  z-index: 10;
+  backdrop-filter: blur(12px);
 }
-
-.period-toggle {
-  display: flex;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  padding: 2px;
-  gap: 1px;
-}
-
-.period-btn {
-  padding: 4px 10px;
-  border: none;
-  border-radius: calc(var(--radius-md) - 2px);
-  background: transparent;
-  color: var(--text-tertiary);
-  font-size: 0.7rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  letter-spacing: 0.02em;
-}
-
-.period-btn:hover {
-  color: var(--text-primary);
-}
-
-.period-btn.active {
-  background: var(--accent-blue);
-  color: #fff;
-}
-
-.benchmark-toggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.compare-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  padding: 0 4px;
-}
-
-.benchmark-btn {
-  padding: 4px 10px;
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-tertiary);
-  font-size: 0.68rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.benchmark-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--text-secondary);
-}
-
-.benchmark-btn.active {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: var(--text-primary);
-}
-
-@media (max-width: 640px) {
-  .chart-controls {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-}
+.tt-date  { font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+.tt-value { font-size: 1.15rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.4rem; }
+.tt-row   { font-size: 0.78rem; }
+.tt-asset { color: #34d399; }
+.tt-liab  { color: #f87171; }
+.tt-sep   { color: #334155; }
 </style>

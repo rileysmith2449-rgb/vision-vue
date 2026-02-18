@@ -96,6 +96,12 @@ const router = createRouter({
       meta: { title: 'Cash Flow' }
     },
     {
+      path: '/goals',
+      name: 'goals',
+      component: () => import('@/views/GoalsView.vue'),
+      meta: { title: 'Goals' }
+    },
+    {
       path: '/insights',
       name: 'insights',
       component: () => import('@/views/InsightsView.vue'),
