@@ -18,7 +18,7 @@
       </Card>
 
       <!-- Data Source -->
-      <Card title="Data Source" subtitle="Choose between demo data or real bank data via Plaid">
+      <Card title="Data Source" subtitle="Choose between demo data, bank data via Plaid, or CSV upload">
         <div class="mode-toggle">
           <button
             class="mode-btn"
@@ -36,10 +36,43 @@
             <Landmark :size="14" stroke-width="2" />
             Plaid (Sandbox)
           </button>
+          <button
+            class="mode-btn"
+            :class="{ active: settingsStore.dataSource === 'csv' }"
+            @click="switchDataSource('csv')"
+          >
+            <Upload :size="14" stroke-width="2" />
+            CSV Upload
+          </button>
         </div>
 
         <div v-if="settingsStore.dataSource === 'plaid'" class="data-source-detail">
           <PlaidLink />
+        </div>
+        <div v-else-if="settingsStore.dataSource === 'csv'" class="data-source-detail">
+          <div class="csv-upload-area">
+            <label class="csv-file-label">
+              <Upload :size="18" stroke-width="2" />
+              <span>{{ csvFileName || 'Choose a CSV file' }}</span>
+              <input
+                type="file"
+                accept=".csv"
+                class="csv-file-input"
+                @change="handleCSVUpload"
+              />
+            </label>
+            <p class="csv-format-hint">
+              Expected columns: <code>date,merchant,amount,category,card</code><br />
+              Optional: <code>subcategory</code> &mdash; Date format: YYYY-MM-DD
+            </p>
+          </div>
+          <div v-if="csvErrors.length" class="csv-errors">
+            <p v-for="(err, i) in csvErrors" :key="i">{{ err }}</p>
+          </div>
+          <div v-if="csvSummary" class="csv-summary">
+            <span class="csv-summary-text">{{ csvSummary }}</span>
+            <button class="csv-clear-btn" @click="clearCSVData">Clear Data</button>
+          </div>
         </div>
         <p v-else class="data-source-hint">
           Using generated demo data for budget, investments, and liabilities.
@@ -252,10 +285,11 @@ import { useBudgetStore } from '@/stores/budget'
 import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import { usePortfolioStore } from '@/stores/portfolio'
-import { User, Users, Briefcase, LogOut, Database, Landmark, ChevronDown } from 'lucide-vue-next'
+import { User, Users, Briefcase, LogOut, Database, Landmark, Upload, ChevronDown } from 'lucide-vue-next'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import PlaidLink from '@/components/banking/PlaidLink.vue'
+import { parseCSV } from '@/utils/csvParser'
 
 const budgetStore = useBudgetStore()
 const authStore = useAuthStore()
@@ -268,6 +302,54 @@ async function switchDataSource(source) {
     budgetStore.loadExpenses(),
     portfolioStore.loadHoldings(),
   ])
+  if (source === 'csv') refreshCSVSummary()
+}
+
+// CSV upload state
+const csvFileName = ref('')
+const csvErrors = ref([])
+const csvSummary = ref('')
+
+function refreshCSVSummary() {
+  try {
+    const raw = localStorage.getItem('vision-csv-transactions')
+    if (!raw) { csvSummary.value = ''; return }
+    const txns = JSON.parse(raw)
+    if (!txns.length) { csvSummary.value = ''; return }
+    const dates = txns.map(t => t.date).sort()
+    csvSummary.value = `${txns.length} transactions loaded (${dates[0]} to ${dates[dates.length - 1]})`
+  } catch { csvSummary.value = '' }
+}
+
+// Initialize summary on load if CSV mode
+if (settingsStore.dataSource === 'csv') refreshCSVSummary()
+
+function handleCSVUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  csvFileName.value = file.name
+  csvErrors.value = []
+
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    const { transactions, errors } = parseCSV(e.target.result)
+    if (errors.length) csvErrors.value = errors
+    if (!transactions.length) return
+
+    localStorage.setItem('vision-csv-transactions', JSON.stringify(transactions))
+    refreshCSVSummary()
+    await budgetStore.loadExpenses()
+    budgetStore.loadHistoricalData()
+  }
+  reader.readAsText(file)
+}
+
+async function clearCSVData() {
+  localStorage.removeItem('vision-csv-transactions')
+  csvSummary.value = ''
+  csvFileName.value = ''
+  csvErrors.value = []
+  await budgetStore.loadExpenses()
 }
 
 const activeMember = computed(() => budgetStore.familyMembers[budgetStore.personalMember])
@@ -768,6 +850,99 @@ function updateTaxMember(field, value) {
   margin-top: 12px;
   font-size: 0.78rem;
   color: var(--text-tertiary);
+}
+
+/* CSV Upload */
+.csv-upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.csv-file-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1.5px dashed var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.csv-file-label:hover {
+  border-color: var(--accent-blue);
+  color: var(--text-primary);
+}
+
+.csv-file-input {
+  display: none;
+}
+
+.csv-format-hint {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.csv-format-hint code {
+  background: var(--bg-subtle);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+}
+
+.csv-errors {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+.csv-errors p {
+  font-size: 0.78rem;
+  color: var(--negative);
+  margin: 2px 0;
+}
+
+.csv-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+.csv-summary-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--positive, #10b981);
+}
+
+.csv-clear-btn {
+  padding: 5px 12px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--negative);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.csv-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Tax Bracket Picker */

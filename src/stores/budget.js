@@ -407,11 +407,27 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
+  function loadFromCSV() {
+    try {
+      const raw = localStorage.getItem('vision-csv-transactions')
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  }
+
   // Actions
   function loadExpenses() {
     const settingsStore = useSettingsStore()
     if (settingsStore.dataSource === 'plaid') {
       return loadFromPlaid()
+    }
+    if (settingsStore.dataSource === 'csv') {
+      const allTxns = loadFromCSV()
+      const now = new Date()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const yearMonth = `${now.getFullYear()}-${month}`
+      const currentMonth = allTxns.filter(t => t.date.startsWith(yearMonth))
+      personalExpenses.value = buildExpenseStructure(currentMonth)
+      return
     }
     personalExpenses.value = generateExpenseData()
     businessExpenses.value = generateBusinessExpenseData()
@@ -422,6 +438,11 @@ export const useBudgetStore = defineStore('budget', () => {
     const settingsStore = useSettingsStore()
     if (settingsStore.dataSource === 'plaid') {
       return loadHistoricalFromPlaid()
+    }
+    if (settingsStore.dataSource === 'csv') {
+      const allTxns = loadFromCSV()
+      historicalTransactions.value = allTxns.sort((a, b) => new Date(b.date) - new Date(a.date))
+      return
     }
     if (historicalTransactions.value.length === 0) {
       historicalTransactions.value = generateHistoricalTransactions()
