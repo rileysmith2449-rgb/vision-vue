@@ -43,6 +43,7 @@ import {
   LayoutDashboard,
   Scale,
   PieChart,
+  Banknote,
   Lightbulb,
   Settings,
   LogOut
@@ -55,6 +56,7 @@ const navLinks = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/net-worth', icon: Scale, label: 'Net Worth' },
   { to: '/budget', icon: PieChart, label: 'Budget' },
+  { to: '/cashflow', icon: Banknote, label: 'Cash Flow' },
   { to: '/insights', icon: Lightbulb, label: 'Insights' },
   { to: '/settings', icon: Settings, label: 'Settings' }
 ]

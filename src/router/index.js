@@ -90,6 +90,12 @@ const router = createRouter({
       meta: { title: 'Liability Detail' }
     },
     {
+      path: '/cashflow',
+      name: 'cashflow',
+      component: () => import('@/views/CashflowView.vue'),
+      meta: { title: 'Cash Flow' }
+    },
+    {
       path: '/insights',
       name: 'insights',
       component: () => import('@/views/InsightsView.vue'),
