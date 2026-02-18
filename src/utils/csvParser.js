@@ -130,7 +130,7 @@ const CARD_NAME_MAP = {
   'chase ink business cash': 'Ink Business Cash',
   'american express gold': 'Amex Gold',
   'amex gold': 'Amex Gold',
-  'american express hilton aspire': 'Amex Gold', // map Hilton Aspire → closest personal Amex
+  'american express hilton aspire': 'Hilton Amex',
   'american express business gold': 'Amex Business Gold',
   'citi double cash': 'Citi Double',
   'apple card': 'Apple Card',

@@ -47,6 +47,11 @@
             @click="selectedPeriod = p.key"
           >{{ p.label }}</button>
         </div>
+        <div class="card-filter-toggle">
+          <button :class="['filter-btn', { active: cardFilter === 'all' }]" @click="cardFilter = 'all'">All</button>
+          <button :class="['filter-btn', { active: cardFilter === 'personal' }]" @click="cardFilter = 'personal'">Personal</button>
+          <button :class="['filter-btn', { active: cardFilter === 'business' }]" @click="cardFilter = 'business'">Business</button>
+        </div>
         <button class="manage-btn" @click="showCardManager = true">
           <Settings :size="16" stroke-width="2" />
           Manage Cards
@@ -94,7 +99,8 @@
           <div
             v-for="(rec, i) in recommendations"
             :key="i"
-            :class="['rec-card', `rec-${rec.type}`, `priority-${rec.priority}`]"
+            :class="['rec-card', `rec-${rec.type}`, `priority-${rec.priority}`, { 'rec-expanded': expandedRec === i }]"
+            @click="expandedRec = expandedRec === i ? null : i"
           >
             <div class="rec-header">
               <div :class="['rec-type-icon', `rec-icon-${rec.type}`]">
@@ -105,11 +111,68 @@
             </div>
             <h4 class="rec-title">{{ rec.title }}</h4>
             <p class="rec-message">{{ rec.message }}</p>
+
+            <!-- Summary stats -->
+            <div class="rec-stats">
+              <div v-if="rec.category" class="rec-stat">
+                <span class="rec-stat-label">Category Spend</span>
+                <span class="rec-stat-value">{{ formatCurrency(getRecDetail(rec)?.totalSpend || 0) }}</span>
+              </div>
+              <div v-if="rec.category" class="rec-stat">
+                <span class="rec-stat-label">Transactions</span>
+                <span class="rec-stat-value">{{ getRecDetail(rec)?.transactionCount || 0 }}</span>
+              </div>
+              <div v-if="rec.cardKey" class="rec-stat">
+                <span class="rec-stat-label">Card</span>
+                <span class="rec-stat-value rec-stat-card">{{ getCardName(rec.cardKey) }}</span>
+              </div>
+              <div v-if="rec.remainingSpend" class="rec-stat">
+                <span class="rec-stat-label">Remaining</span>
+                <span class="rec-stat-value">{{ formatCurrency(rec.remainingSpend) }}</span>
+              </div>
+            </div>
+
             <div class="rec-footer">
               <span v-if="rec.impact" class="rec-impact">
                 {{ rec.type === 'signup' ? '' : '+' }}{{ rec.type === 'signup' ? rec.impact.toLocaleString() + ' pts' : formatCurrencyCents(rec.impact) }}
               </span>
               <span v-if="rec.daysLeft" class="rec-deadline">{{ rec.daysLeft }} days left</span>
+              <ChevronDown :size="14" stroke-width="2" :class="['rec-chevron', { rotated: expandedRec === i }]" />
+            </div>
+
+            <!-- Expanded detail -->
+            <div v-if="expandedRec === i && getRecDetail(rec)" class="rec-detail" @click.stop>
+              <!-- Optimize: show suboptimal transactions -->
+              <template v-if="rec.type === 'optimize' && getRecDetail(rec).topMissed.length > 0">
+                <div class="rec-detail-title">Transactions Using Wrong Card</div>
+                <div class="rec-detail-txn-header">
+                  <span class="rec-detail-cell rec-detail-merchant">Merchant</span>
+                  <span class="rec-detail-cell">Paid With</span>
+                  <span class="rec-detail-cell">Missed</span>
+                  <span class="rec-detail-cell rec-detail-right">Amount</span>
+                </div>
+                <div v-for="txn in getRecDetail(rec).topMissed" :key="txn.transaction_id" class="rec-detail-txn-row">
+                  <span class="rec-detail-cell rec-detail-merchant">{{ txn.merchant_name }}</span>
+                  <span class="rec-detail-cell rec-detail-wrong">{{ getCardName(txn.actualCard) }}</span>
+                  <span class="rec-detail-cell rec-detail-missed">-{{ formatCurrencyCents(txn.missedRewards) }}</span>
+                  <span class="rec-detail-cell rec-detail-right">{{ formatCurrency(txn.amount) }}</span>
+                </div>
+              </template>
+
+              <!-- Gap: show top merchants -->
+              <template v-if="rec.type === 'gap' && getRecDetail(rec).topMerchants.length > 0">
+                <div class="rec-detail-title">Top Merchants (Base Rate Only)</div>
+                <div class="rec-detail-txn-header">
+                  <span class="rec-detail-cell rec-detail-merchant">Merchant</span>
+                  <span class="rec-detail-cell">Txns</span>
+                  <span class="rec-detail-cell rec-detail-right">Spend</span>
+                </div>
+                <div v-for="m in getRecDetail(rec).topMerchants" :key="m.name" class="rec-detail-txn-row">
+                  <span class="rec-detail-cell rec-detail-merchant">{{ m.name }}</span>
+                  <span class="rec-detail-cell">{{ m.count }}</span>
+                  <span class="rec-detail-cell rec-detail-right">{{ formatCurrency(m.spend) }}</span>
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -536,6 +599,7 @@ import {
 } from 'lucide-vue-next'
 import { useCreditCardStore } from '@/stores/creditCardStore'
 import { useBudgetStore } from '@/stores/budget'
+import { useSettingsStore } from '@/stores/settings'
 import { useCardOptimizer } from '@/composables/useCardOptimizer'
 import { formatCurrency } from '@/utils/formatters'
 import { creditCards, getBestCardForCategory, marketCards } from '@/utils/creditCardData'
@@ -543,6 +607,7 @@ import CardManager from '@/components/CardManager.vue'
 
 const cardStore = useCreditCardStore()
 const budgetStore = useBudgetStore()
+const settingsStore = useSettingsStore()
 
 // Period toggle
 const periods = [
@@ -552,6 +617,7 @@ const periods = [
   { key: '1y', label: '1Y', months: 12 },
 ]
 const selectedPeriod = ref('3m')
+const cardFilter = ref('all')
 
 const periodLabel = computed(() => {
   const p = periods.find(p => p.key === selectedPeriod.value)
@@ -570,12 +636,13 @@ const {
   topCategories,
   filteredTransactions,
   runAnalysis,
-} = useCardOptimizer(selectedPeriod)
+} = useCardOptimizer(selectedPeriod, cardFilter)
 
 const showCardManager = ref(false)
 const activeView = ref('recommendations')
 const expandedCat = ref(null)
 const expandedCard = ref(null)
+const expandedRec = ref(null)
 
 const views = [
   { key: 'recommendations', label: 'Recommendations', icon: Zap },
@@ -851,6 +918,39 @@ function categoryIcon(cat) {
   return CATEGORY_ICONS[cat] || '📋'
 }
 
+function getRecDetail(rec) {
+  if (rec.type === 'optimize' && rec.category && report.value?.byCategory?.[rec.category]) {
+    const catData = report.value.byCategory[rec.category]
+    const suboptimal = catData.transactions
+      .filter(t => !t.isOptimal && t.actualCard && t.missedRewards > 0)
+      .sort((a, b) => b.missedRewards - a.missedRewards)
+      .slice(0, 8)
+    return {
+      totalSpend: catData.spend,
+      transactionCount: catData.transactions.length,
+      suboptimalCount: suboptimal.length,
+      topMissed: suboptimal,
+    }
+  }
+  if (rec.type === 'gap' && rec.category && report.value?.byCategory?.[rec.category]) {
+    const catData = report.value.byCategory[rec.category]
+    // Group by merchant to show top merchants
+    const merchants = {}
+    for (const t of catData.transactions) {
+      const m = t.merchant_name || 'Unknown'
+      if (!merchants[m]) merchants[m] = { name: m, spend: 0, count: 0 }
+      merchants[m].spend += t.amount
+      merchants[m].count++
+    }
+    return {
+      totalSpend: catData.spend,
+      transactionCount: catData.transactions.length,
+      topMerchants: Object.values(merchants).sort((a, b) => b.spend - a.spend).slice(0, 5),
+    }
+  }
+  return null
+}
+
 function recIcon(type) {
   const map = { optimize: TrendingUp, benefit: Gift, signup: Zap, gap: AlertTriangle }
   return map[type] || Zap
@@ -868,6 +968,11 @@ function onCardManagerClose() {
 
 onMounted(async () => {
   await cardStore.initialize()
+
+  // If CSV mode, sync portfolio to only CSV cards
+  if (settingsStore.dataSource === 'csv') {
+    cardStore.syncPortfolioWithCSV()
+  }
 
   if (Object.keys(budgetStore.expenses).length === 0) {
     await budgetStore.loadExpenses()
@@ -1010,6 +1115,37 @@ onMounted(async () => {
 
 .period-btn.active {
   background: var(--accent-blue);
+  color: #fff;
+}
+
+.card-filter-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+
+.filter-btn {
+  padding: 5px 12px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  color: var(--text-primary);
+}
+
+.filter-btn.active {
+  background: var(--accent-teal);
   color: #fff;
 }
 
@@ -1190,10 +1326,15 @@ onMounted(async () => {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
 }
 
 .rec-card:hover {
   box-shadow: var(--shadow-hover);
+}
+
+.rec-expanded {
+  border-color: var(--accent-blue);
 }
 
 .rec-card.priority-high { border-left: 3px solid var(--accent-teal); }
@@ -1273,6 +1414,121 @@ onMounted(async () => {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-tertiary);
+}
+
+.rec-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+}
+
+.rec-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rec-stat-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.rec-stat-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rec-stat-card {
+  color: var(--accent-blue);
+}
+
+.rec-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+.rec-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.rec-detail {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.rec-detail-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.rec-detail-txn-header {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rec-detail-txn-header .rec-detail-cell {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.rec-detail-txn-row {
+  display: flex;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.rec-detail-txn-row:last-child {
+  border-bottom: none;
+}
+
+.rec-detail-cell {
+  flex: 1;
+  font-size: 0.76rem;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rec-detail-merchant {
+  flex: 1.5;
+  font-weight: 600;
+}
+
+.rec-detail-right {
+  text-align: right;
+}
+
+.rec-detail-wrong {
+  color: var(--negative);
+  font-weight: 600;
+}
+
+.rec-detail-missed {
+  color: var(--negative);
+  font-weight: 700;
 }
 
 /* ── Combo / Cards to Consider ── */
@@ -2098,13 +2354,16 @@ onMounted(async () => {
 
   .banner-right {
     width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .banner-right > * {
+    width: 100%;
   }
 
   .manage-btn {
-    flex: 1;
     justify-content: center;
   }
 

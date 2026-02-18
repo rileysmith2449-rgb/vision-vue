@@ -48,7 +48,7 @@ function toCardKey(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
 }
 
-export function useCardOptimizer(periodRef) {
+export function useCardOptimizer(periodRef, cardFilterRef) {
   const cardStore = useCreditCardStore()
   const budgetStore = useBudgetStore()
   const settingsStore = useSettingsStore()
@@ -141,8 +141,18 @@ export function useCardOptimizer(periodRef) {
     return all.filter(t => new Date(t.date) >= cutoff)
   })
 
+  const filteredActiveCards = computed(() => {
+    const filter = cardFilterRef?.value || 'all'
+    if (filter === 'all') return cardStore.activeCards
+    const type = filter === 'personal' ? 'Personal' : 'Business'
+    return cardStore.activeCards.filter(c => {
+      const detail = cardStore.cardDetails[c.cardKey]
+      return detail?.cardType === type
+    })
+  })
+
   function runAnalysis() {
-    const active = cardStore.activeCards
+    const active = filteredActiveCards.value
     if (active.length === 0) {
       report.value = null
       recommendations.value = []
@@ -166,7 +176,7 @@ export function useCardOptimizer(periodRef) {
 
   // Re-analyze when transactions, active cards, or period change
   watch(
-    () => [budgetStore.allTransactions.length, budgetStore.historicalTransactions.length, cardStore.activeCards.length, periodRef?.value],
+    () => [budgetStore.allTransactions.length, budgetStore.historicalTransactions.length, cardStore.activeCards.length, periodRef?.value, cardFilterRef?.value],
     () => { runAnalysis() },
     { immediate: false }
   )

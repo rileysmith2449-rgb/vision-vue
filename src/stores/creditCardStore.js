@@ -31,6 +31,7 @@ const CATEGORY_TO_PLAID = {
   'Office & Software': ['GENERAL_SERVICES_OTHER_GENERAL_SERVICES'],
   'Internet & Phone': ['RENT_AND_UTILITIES_TELECOMMUNICATION_SERVICES'],
   'Meals & Entertainment': ['FOOD_AND_DRINK_RESTAURANT'],
+  'Business': ['GENERAL_SERVICES_OTHER_GENERAL_SERVICES'],
 }
 
 function toCardKey(name) {
@@ -379,6 +380,68 @@ export const useCreditCardStore = defineStore('creditCard', () => {
     return plaidMappings.value[cardKey] || null
   }
 
+  function syncPortfolioWithCSV() {
+    try {
+      const raw = localStorage.getItem('vision-csv-transactions')
+      if (!raw) return
+      const transactions = JSON.parse(raw)
+      const uniqueCards = [...new Set(transactions.map(t => t.card).filter(Boolean))]
+
+      const newPortfolio = []
+      for (const cardName of uniqueCards) {
+        const key = toCardKey(cardName)
+        // Load card data if we have a local definition
+        const local = localCards.find(c => toCardKey(c.name) === key)
+        if (local) {
+          cardDetails.value[key] = buildLocalCardDetail(local)
+          plaidMappings.value[key] = buildLocalPlaidMapping(local)
+        } else {
+          // Create a basic card detail for unknown cards
+          cardDetails.value[key] = {
+            cardKey: key,
+            cardIssuer: cardName.split(' ')[0],
+            cardName: cardName,
+            cardType: 'Personal',
+            annualFee: 0,
+            baseSpendAmount: 1,
+            baseSpendEarnType: 'Cash Back',
+            baseSpendEarnCategory: 'Cash back',
+            baseSpendEarnCurrency: 'cashback',
+            baseSpendEarnValuation: 1,
+            baseSpendEarnIsCash: 1,
+            baseSpendEarnCashValue: 0.01,
+            isSignupBonus: 0,
+            benefit: [],
+            spendBonusCategory: [],
+          }
+          plaidMappings.value[key] = {
+            cardKey: key,
+            cardName: cardName,
+            cardIssuer: cardName.split(' ')[0],
+            baseSpendAmount: 1,
+            baseSpendEarnType: 'Cash Back',
+            baseSpendEarnCategory: 'Cash back',
+            baseSpendEarnCurrency: 'cashback',
+            baseSpendEarnValuation: 1,
+            baseSpendEarnIsCash: 1,
+            baseSpendEarnCashValue: 0.01,
+            plaidDetailed: [],
+          }
+        }
+        newPortfolio.push({
+          cardKey: key,
+          active: true,
+          addedDate: new Date().toISOString().split('T')[0],
+        })
+      }
+
+      userPortfolio.value = newPortfolio
+      savePortfolio(newPortfolio)
+    } catch (e) {
+      console.error('Failed to sync portfolio with CSV:', e)
+    }
+  }
+
   function getCardImageUrl(cardKey) {
     const img = cardImages.value[cardKey]
     if (!img) return null
@@ -413,5 +476,6 @@ export const useCreditCardStore = defineStore('creditCard', () => {
     getCardDetail,
     getPlaidMapping,
     getCardImageUrl,
+    syncPortfolioWithCSV,
   }
 })

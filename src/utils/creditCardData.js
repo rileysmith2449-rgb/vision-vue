@@ -80,6 +80,21 @@ export const creditCards = [
     statementCredits: []
   },
   {
+    name: 'Hilton Amex',
+    type: 'personal',
+    annualFee: 450,
+    color: '#1A1A2E',
+    cashbackRates: {
+      'Travel': 0.07,
+      'Dining & Food': 0.035,
+      default: 0.015
+    },
+    statementCredits: [
+      { name: 'Hilton Resort Credit', amount: 200, used: false },
+      { name: 'Airline Credit', amount: 250, used: false }
+    ]
+  },
+  {
     name: 'Ink Business Cash',
     type: 'business',
     annualFee: 0,

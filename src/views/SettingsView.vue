@@ -290,11 +290,13 @@ import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import PlaidLink from '@/components/banking/PlaidLink.vue'
 import { parseCSV } from '@/utils/csvParser'
+import { useCreditCardStore } from '@/stores/creditCardStore'
 
 const budgetStore = useBudgetStore()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const portfolioStore = usePortfolioStore()
+const cardStore = useCreditCardStore()
 
 async function switchDataSource(source) {
   settingsStore.setDataSource(source)
@@ -304,6 +306,7 @@ async function switchDataSource(source) {
   ])
   if (source === 'csv') {
     refreshCSVSummary()
+    cardStore.syncPortfolioWithCSV()
     budgetStore.loadHistoricalData()
   }
 }
@@ -341,6 +344,8 @@ function handleCSVUpload(event) {
 
     localStorage.setItem('vision-csv-transactions', JSON.stringify(transactions))
     refreshCSVSummary()
+    await cardStore.initialize()
+    cardStore.syncPortfolioWithCSV()
     await budgetStore.loadExpenses()
     budgetStore.loadHistoricalData()
   }
