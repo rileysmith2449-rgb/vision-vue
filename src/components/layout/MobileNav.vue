@@ -15,7 +15,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { LayoutDashboard, Scale, PieChart, Lightbulb, Settings } from 'lucide-vue-next'
+import { LayoutDashboard, Scale, PieChart, CreditCard, Lightbulb, Settings } from 'lucide-vue-next'
 
 const route = useRoute()
 
@@ -23,7 +23,7 @@ const navLinks = [
   { to: '/', icon: LayoutDashboard, label: 'Home' },
   { to: '/net-worth', icon: Scale, label: 'Net Worth' },
   { to: '/budget', icon: PieChart, label: 'Budget' },
-  { to: '/insights', icon: Lightbulb, label: 'Insights' },
+  { to: '/cards', icon: CreditCard, label: 'Cards' },
   { to: '/settings', icon: Settings, label: 'Settings' }
 ]
 

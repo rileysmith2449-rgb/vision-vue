@@ -45,6 +45,7 @@ import {
   PieChart,
   Banknote,
   Target,
+  CreditCard,
   Lightbulb,
   Settings,
   LogOut
@@ -59,6 +60,7 @@ const navLinks = [
   { to: '/budget', icon: PieChart, label: 'Budget' },
   { to: '/cashflow', icon: Banknote, label: 'Cash Flow' },
   { to: '/goals', icon: Target, label: 'Goals' },
+  { to: '/cards', icon: CreditCard, label: 'Cards' },
   { to: '/insights', icon: Lightbulb, label: 'Insights' },
   { to: '/settings', icon: Settings, label: 'Settings' }
 ]

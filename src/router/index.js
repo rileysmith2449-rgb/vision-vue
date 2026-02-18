@@ -102,6 +102,12 @@ const router = createRouter({
       meta: { title: 'Goals' }
     },
     {
+      path: '/cards',
+      name: 'cards',
+      component: () => import('@/views/CardsView.vue'),
+      meta: { title: 'Card Optimizer' }
+    },
+    {
       path: '/insights',
       name: 'insights',
       component: () => import('@/views/InsightsView.vue'),
