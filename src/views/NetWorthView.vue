@@ -16,15 +16,15 @@
         <div class="hero-value">{{ formatCurrency(store.netWorth) }}</div>
         <div class="hero-sub">
           <span class="hero-breakdown">
-            <span class="asset-tag">↑ {{ formatCurrency(store.totalAssets) }} assets</span>
+            <span class="asset-tag clickable" @click="scrollToAccounts('assets')">↑ {{ formatCurrency(store.totalAssets) }} assets</span>
             <span class="separator"> · </span>
-            <span class="liab-tag">↓ {{ formatCurrency(store.totalLiabilities) }} liabilities</span>
+            <span class="liab-tag clickable" @click="scrollToAccounts('liabilities')">↓ {{ formatCurrency(store.totalLiabilities) }} liabilities</span>
           </span>
         </div>
       </div>
 
       <div class="hero-side">
-        <div class="glass-card kpi-tile">
+        <div class="glass-card kpi-tile clickable-tile" @click="toggleChangeDetail('monthly')">
           <div class="kpi-label">30-Day Change</div>
           <div class="kpi-val" :class="store.monthlyChange.amount >= 0 ? 'pos' : 'neg'">
             {{ store.monthlyChange.amount >= 0 ? '+' : '' }}{{ formatCurrency(store.monthlyChange.amount) }}
@@ -32,14 +32,34 @@
           <div class="kpi-pct" :class="store.monthlyChange.amount >= 0 ? 'pos' : 'neg'">
             {{ store.monthlyChange.percent >= 0 ? '▲' : '▼' }} {{ Math.abs(store.monthlyChange.percent).toFixed(1) }}%
           </div>
+          <div v-if="changeDetail === 'monthly'" class="change-detail">
+            <div class="change-row">
+              <span>Assets change</span>
+              <span class="pos">{{ formatCurrency(estimateAssetChange(31)) }}</span>
+            </div>
+            <div class="change-row">
+              <span>Liability change</span>
+              <span class="neg">{{ formatCurrency(estimateLiabChange(31)) }}</span>
+            </div>
+          </div>
         </div>
-        <div class="glass-card kpi-tile">
+        <div class="glass-card kpi-tile clickable-tile" @click="toggleChangeDetail('yearly')">
           <div class="kpi-label">1-Year Change</div>
           <div class="kpi-val" :class="store.yearlyChange.amount >= 0 ? 'pos' : 'neg'">
             {{ store.yearlyChange.amount >= 0 ? '+' : '' }}{{ formatCurrency(store.yearlyChange.amount) }}
           </div>
           <div class="kpi-pct" :class="store.yearlyChange.amount >= 0 ? 'pos' : 'neg'">
             {{ store.yearlyChange.percent >= 0 ? '▲' : '▼' }} {{ Math.abs(store.yearlyChange.percent).toFixed(1) }}%
+          </div>
+          <div v-if="changeDetail === 'yearly'" class="change-detail">
+            <div class="change-row">
+              <span>Assets change</span>
+              <span class="pos">{{ formatCurrency(estimateAssetChange(366)) }}</span>
+            </div>
+            <div class="change-row">
+              <span>Liability change</span>
+              <span class="neg">{{ formatCurrency(estimateLiabChange(366)) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -63,7 +83,7 @@
     </div>
 
     <!-- Lower grid -->
-    <div class="lower-grid">
+    <div class="lower-grid" ref="accountsSection">
 
       <!-- Account Breakdown -->
       <div class="glass-card">
@@ -98,7 +118,11 @@
         <div class="card-header">
           <span class="card-title">Asset Allocation</span>
         </div>
-        <AllocationDonut :allocation="store.assetAllocation" />
+        <AllocationDonut
+          :allocation="store.assetAllocation"
+          :highlighted-category="highlightedCategory"
+          @select-category="onSelectCategory"
+        />
       </div>
 
     </div>
@@ -107,13 +131,19 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useNetworthStore } from '../stores/networth.js'
 import NetworthChart       from '../components/networth/NetworthChart.vue'
 import AccountList         from '../components/networth/AccountList.vue'
 import AllocationBreakdown from '../components/networth/AllocationBreakdown.vue'
 import AllocationDonut     from '../components/networth/AllocationDonut.vue'
+import { formatCurrency }  from '@/utils/formatters'
 
 const store = useNetworthStore()
+
+const accountsSection = ref(null)
+const changeDetail = ref(null)
+const highlightedCategory = ref(null)
 
 const ranges = [
   { label: '3M',  value: '3m' },
@@ -122,8 +152,37 @@ const ranges = [
   { label: 'All', value: 'all' },
 ]
 
-function formatCurrency(v) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v)
+function scrollToAccounts(filter) {
+  // Switch to accounts tab and scroll to section
+  store.setActiveTab('accounts')
+  accountsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function toggleChangeDetail(type) {
+  changeDetail.value = changeDetail.value === type ? null : type
+}
+
+function estimateAssetChange(daysBack) {
+  const hist = store.history
+  if (hist.length < 2) return 0
+  const latest = hist[hist.length - 1]
+  const past = hist[Math.max(0, hist.length - daysBack)]
+  return (latest.assets || 0) - (past.assets || 0)
+}
+
+function estimateLiabChange(daysBack) {
+  const hist = store.history
+  if (hist.length < 2) return 0
+  const latest = hist[hist.length - 1]
+  const past = hist[Math.max(0, hist.length - daysBack)]
+  return (latest.liabilities || 0) - (past.liabilities || 0)
+}
+
+function onSelectCategory(label) {
+  highlightedCategory.value = highlightedCategory.value === label ? null : label
+  // Switch to "By Type" tab so user sees the breakdown
+  store.setActiveTab('categories')
+  accountsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 </script>
 
@@ -166,11 +225,19 @@ function formatCurrency(v) {
 .liab-tag    { color: #f87171; }
 .separator   { color: #334155; }
 
+.clickable {
+  cursor: pointer;
+  border-bottom: 1px dashed currentColor;
+  padding-bottom: 1px;
+  transition: opacity 0.15s;
+}
+.clickable:hover { opacity: 0.8; }
+
 .hero-side {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-width: 180px;
+  min-width: 200px;
 }
 
 .kpi-tile {
@@ -180,11 +247,40 @@ function formatCurrency(v) {
   gap: 0.2rem;
   flex: 1;
 }
+.clickable-tile {
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+.clickable-tile:hover {
+  border-color: rgba(255,255,255,0.14);
+  transform: translateY(-1px);
+}
 .kpi-label { font-size: 0.72rem; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: 0.06em; }
 .kpi-val   { font-size: 1.3rem; font-weight: 700; line-height: 1.1; }
 .kpi-pct   { font-size: 0.78rem; font-weight: 600; }
 .pos { color: #34d399; }
 .neg { color: #f87171; }
+
+.change-detail {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  animation: slideDown 0.15s ease-out;
+}
+.change-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .chart-card { padding: 1.5rem; }
 

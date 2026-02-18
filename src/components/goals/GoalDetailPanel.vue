@@ -12,7 +12,7 @@
     <div class="stats-row">
       <div class="stat">
         <div class="stat-label">Saved</div>
-        <div class="stat-val">{{ formatCurrency(goal.currentAmount) }}</div>
+        <div class="stat-val pos">{{ formatCurrency(goal.currentAmount) }}</div>
       </div>
       <div class="stat">
         <div class="stat-label">Target</div>
@@ -23,9 +23,22 @@
         <div class="stat-val warn">{{ formatCurrency(Math.max(0, goal.targetAmount - goal.currentAmount)) }}</div>
       </div>
       <div class="stat">
+        <div class="stat-label">Monthly Needed</div>
+        <div class="stat-val" :class="neededPerMonth > 0 ? 'warn' : ''">{{ neededPerMonth > 0 ? formatCurrency(neededPerMonth) : 'Done' }}</div>
+      </div>
+      <div class="stat">
         <div class="stat-label">Days Left</div>
         <div class="stat-val" :class="daysLeft <= 30 ? 'warn' : ''">{{ daysLeft }}</div>
       </div>
+    </div>
+
+    <!-- Linked account info -->
+    <div v-if="linkedAccount" class="linked-account">
+      <span class="linked-icon">🔗</span>
+      <span class="linked-text">
+        Linked to <strong>{{ linkedAccount.name }}</strong>
+        <span class="linked-balance">({{ formatCurrency(Math.abs(linkedAccount.balance)) }})</span>
+      </span>
     </div>
 
     <!-- Projection insight -->
@@ -69,12 +82,14 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import { daysUntil, monthlyNeeded as calcMonthlyNeeded, projectedCompletion } from '../../stores/goals.js'
+import { useNetworthStore } from '../../stores/networth.js'
 
 Chart.register(...registerables)
 
 const props = defineProps({ goal: { type: Object, required: true } })
 const emit  = defineEmits(['close', 'contribute'])
 
+const networthStore = useNetworthStore()
 const canvas = ref(null)
 const amount = ref(null)
 let chartInst = null
@@ -85,6 +100,11 @@ const neededPerMonth = computed(() => calcMonthlyNeeded(props.goal))
 const isOnTrack     = computed(() => {
   if (!projection.value) return false
   return projection.value <= props.goal.targetDate
+})
+
+const linkedAccount = computed(() => {
+  if (!props.goal.linkedAccountId) return null
+  return networthStore.accounts.find(a => a.id === props.goal.linkedAccountId) || null
 })
 
 function formatCurrency(v) {
@@ -189,16 +209,33 @@ onBeforeUnmount(() => { if (chartInst) chartInst.destroy() })
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
 @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
 .stat { display: flex; flex-direction: column; gap: 0.25rem; }
 .stat-label { font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; }
-.stat-val   { font-size: 1.1rem; font-weight: 700; color: #f1f5f9; }
+.stat-val   { font-size: 1rem; font-weight: 700; color: #f1f5f9; }
 .stat-val.warn { color: #fbbf24; }
+.stat-val.pos { color: #34d399; }
+
+.linked-account {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(59,130,246,0.06);
+  border: 1px solid rgba(59,130,246,0.15);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+.linked-icon { font-size: 0.9rem; }
+.linked-text strong { color: #cbd5e1; }
+.linked-balance { color: #60a5fa; }
 
 .projection-row {
   display: flex;

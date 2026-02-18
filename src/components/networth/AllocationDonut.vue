@@ -7,9 +7,16 @@
       <div class="donut-sublabel">categories</div>
     </div>
     <div class="donut-legend">
-      <div v-for="item in allocation" :key="item.label" class="legend-row">
+      <div
+        v-for="item in allocation"
+        :key="item.label"
+        class="legend-row"
+        :class="{ highlighted: highlightedCategory === item.label }"
+        @click="$emit('select-category', item.label)"
+      >
         <span class="legend-dot" :style="{ background: colorFor(item.label) }"></span>
         <span class="legend-name">{{ item.label }}</span>
+        <span class="legend-val">{{ formatCurrency(item.value) }}</span>
         <span class="legend-pct">{{ item.percent }}%</span>
       </div>
     </div>
@@ -19,10 +26,15 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import { formatCurrency } from '@/utils/formatters'
 
 Chart.register(...registerables)
 
-const props = defineProps({ allocation: { type: Array, default: () => [] } })
+const props = defineProps({
+  allocation: { type: Array, default: () => [] },
+  highlightedCategory: { type: String, default: null }
+})
+const emit = defineEmits(['select-category'])
 const canvas = ref(null)
 let chartInst = null
 
@@ -48,12 +60,19 @@ function buildChart() {
         backgroundColor: props.allocation.map(a => colorFor(a.label)),
         borderColor: 'rgba(255,255,255,0.06)',
         borderWidth: 2,
-        hoverOffset: 4,
+        hoverOffset: 6,
       }]
     },
     options: {
       responsive: false,
       cutout: '72%',
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const idx = elements[0].index
+          const label = props.allocation[idx]?.label
+          if (label) emit('select-category', label)
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -102,15 +121,22 @@ onBeforeUnmount(() => { if (chartInst) chartInst.destroy() })
 .donut-legend {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
   width: 100%;
 }
 .legend-row {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
 }
+.legend-row:hover { background: rgba(255,255,255,0.04); }
+.legend-row.highlighted { background: rgba(59,130,246,0.1); }
 .legend-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .legend-name { flex: 1; font-size: 0.82rem; color: #94a3b8; }
-.legend-pct  { font-size: 0.82rem; font-weight: 600; color: #f1f5f9; }
+.legend-val  { font-size: 0.78rem; color: #cbd5e1; font-weight: 500; }
+.legend-pct  { font-size: 0.78rem; font-weight: 600; color: #f1f5f9; min-width: 36px; text-align: right; }
 </style>
