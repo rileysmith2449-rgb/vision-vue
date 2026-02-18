@@ -21,6 +21,7 @@ const CATEGORY_MAP = {
   'Office & Software': { primary: 'GENERAL_SERVICES', detailed: 'GENERAL_SERVICES_OTHER_GENERAL_SERVICES' },
   'Meals & Entertainment': { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_RESTAURANT' },
   'Internet & Phone': { primary: 'RENT_AND_UTILITIES', detailed: 'RENT_AND_UTILITIES_TELECOMMUNICATION_SERVICES' },
+  'Business': { primary: 'GENERAL_SERVICES', detailed: 'GENERAL_SERVICES_OTHER_GENERAL_SERVICES' },
 }
 
 // Sub-category to more specific Plaid detailed codes

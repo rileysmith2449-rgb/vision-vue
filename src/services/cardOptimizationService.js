@@ -127,6 +127,7 @@ export function analyzeTransaction(transaction, plaidMappings, activeCards, card
     actualRewards,
     missedRewards,
     isOptimal: !actualCard || actualCard === best.recommended,
+    date: transaction.date,
   }
 }
 

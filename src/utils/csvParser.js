@@ -74,10 +74,10 @@ const CATEGORY_MAP = {
   'bills & utilities': { category: 'Bills & Utilities' },
   'communications-cable & internet comm': { category: 'Bills & Utilities', subcategory: 'Internet & Phone' },
   'communications-mobile telecom': { category: 'Bills & Utilities', subcategory: 'Internet & Phone' },
-  'business services-insurance services': { category: 'Bills & Utilities', subcategory: 'Insurance' },
-  'business services-banking services': { category: 'Bills & Utilities', subcategory: 'Banking' },
-  'business services-health care services': { category: 'Bills & Utilities', subcategory: 'Healthcare' },
-  'professional services': { category: 'Bills & Utilities', subcategory: 'Services' },
+  'business services-insurance services': { category: 'Business', subcategory: 'Insurance' },
+  'business services-banking services': { category: 'Business', subcategory: 'Banking' },
+  'business services-health care services': { category: 'Business', subcategory: 'Healthcare' },
+  'professional services': { category: 'Business', subcategory: 'Services' },
 
   // Housing & Rent
   'home': { category: 'Housing & Rent' },
@@ -102,9 +102,9 @@ const CATEGORY_MAP = {
   'miscellaneous': { category: 'Shopping' },
   'other-miscellaneous': { category: 'Shopping' },
   'other-government services': { category: 'Bills & Utilities', subcategory: 'Government' },
-  'business services-other services': { category: 'Shopping', subcategory: 'Services' },
-  'business services-conferences & training': { category: 'Shopping', subcategory: 'Education' },
-  'business services-contracting services': { category: 'Shopping', subcategory: 'Services' },
+  'business services-other services': { category: 'Business', subcategory: 'Services' },
+  'business services-conferences & training': { category: 'Business', subcategory: 'Education' },
+  'business services-contracting services': { category: 'Business', subcategory: 'Services' },
 }
 
 function mapCategory(rawCategory) {

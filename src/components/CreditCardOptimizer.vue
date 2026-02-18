@@ -210,22 +210,32 @@
 
               <div class="cat-txn-header">
                 <span class="cat-txn-cell cat-txn-merchant">Merchant</span>
-                <span class="cat-txn-cell">Card</span>
-                <span class="cat-txn-cell">Date</span>
+                <span class="cat-txn-cell">Paid With</span>
+                <span class="cat-txn-cell">Best Card</span>
+                <span class="cat-txn-cell">Rate</span>
+                <span class="cat-txn-cell cat-txn-date">Date</span>
+                <span class="cat-txn-cell cat-txn-right">Rewards</span>
                 <span class="cat-txn-cell cat-txn-right">Amount</span>
               </div>
               <div
                 v-for="(txn, i) in getCategoryTransactions(cat.category)"
                 :key="i"
-                class="cat-txn-row"
+                :class="['cat-txn-row', { 'cat-txn-suboptimal': !txn.isOptimal && txn.actualCard }]"
               >
-                <span class="cat-txn-cell cat-txn-merchant">{{ txn.merchant_name || txn.name }}</span>
-                <span class="cat-txn-cell">{{ txn._budgetCard || 'N/A' }}</span>
+                <span class="cat-txn-cell cat-txn-merchant">{{ txn.merchant_name }}</span>
+                <span :class="['cat-txn-cell', { 'cat-txn-wrong-card': !txn.isOptimal && txn.actualCard }]">{{ txn.actualCard ? getCardName(txn.actualCard) : '—' }}</span>
+                <span class="cat-txn-cell cat-card-name">{{ getCardName(txn.recommendedCard) }}</span>
+                <span class="cat-txn-cell"><span class="rate-badge">{{ txn.recommendedRate?.earnMultiplier || 1 }}x</span></span>
                 <span class="cat-txn-cell cat-txn-date">{{ txn.date }}</span>
+                <span class="cat-txn-cell cat-txn-right">
+                  {{ formatCurrencyCents(txn.optimalRewards) }}
+                  <span v-if="txn.missedRewards > 0.01" class="missed-tag">-{{ formatCurrencyCents(txn.missedRewards) }}</span>
+                </span>
                 <span class="cat-txn-cell cat-txn-right">{{ formatCurrency(txn.amount) }}</span>
               </div>
               <div class="cat-txn-footer">
                 <span>{{ getCategoryTransactions(cat.category).length }} transactions</span>
+                <span v-if="cat.missedRewards > 0" class="cat-txn-footer-missed">{{ formatCurrencyCents(cat.missedRewards) }} left on table</span>
               </div>
             </div>
           </template>
@@ -242,9 +252,9 @@
           <div
             v-for="card in personalCards"
             :key="card.cardKey"
-            :class="['stack-card', card.action ? card.action : '']"
+            :class="['stack-card', card.action ? card.action : '', { 'stack-card-expanded': expandedCard === card.cardKey }]"
           >
-            <div class="stack-card-header">
+            <div class="stack-card-header" @click="expandedCard = expandedCard === card.cardKey ? null : card.cardKey">
               <img
                 v-if="cardStore.getCardImageUrl(card.cardKey)"
                 :src="cardStore.getCardImageUrl(card.cardKey)"
@@ -265,6 +275,7 @@
                 <span class="stack-rewards">{{ formatCurrencyCents(card.rewards) }}</span>
                 <span class="stack-spend">on {{ formatCurrency(card.spend) }}</span>
               </div>
+              <ChevronDown :size="14" stroke-width="2" :class="['card-chevron', { rotated: expandedCard === card.cardKey }]" />
             </div>
             <div v-if="card.action === 'evaluate'" class="combo-warning">
               Fee exceeds rewards — consider if perks justify the cost
@@ -285,6 +296,49 @@
               >
                 {{ categoryIcon(cat) }} {{ formatCatName(cat) }}
               </span>
+            </div>
+
+            <!-- Card Drilldown -->
+            <div v-if="expandedCard === card.cardKey" class="card-drilldown">
+              <div class="card-drill-section">
+                <div class="card-drill-title">Category Breakdown</div>
+                <div class="card-drill-cat-row card-drill-cat-head">
+                  <span class="card-drill-cat-cell card-drill-cat-name">Category</span>
+                  <span class="card-drill-cat-cell">Txns</span>
+                  <span class="card-drill-cat-cell">Spend</span>
+                  <span class="card-drill-cat-cell card-drill-right">Rewards</span>
+                </div>
+                <div v-for="breakdown in getCardCategoryBreakdown(card.cardKey)" :key="breakdown.category" class="card-drill-cat-row">
+                  <span class="card-drill-cat-cell card-drill-cat-name">{{ categoryIcon(breakdown.category) }} {{ formatCatName(breakdown.category) }}</span>
+                  <span class="card-drill-cat-cell">{{ breakdown.count }}</span>
+                  <span class="card-drill-cat-cell">{{ formatCurrency(breakdown.spend) }}</span>
+                  <span class="card-drill-cat-cell card-drill-right">{{ formatCurrencyCents(breakdown.rewards) }}</span>
+                </div>
+              </div>
+
+              <div class="card-drill-section">
+                <div class="card-drill-title">Transactions ({{ getCardTransactions(card.cardKey).length }})</div>
+                <div class="card-drill-txn-header">
+                  <span class="card-drill-txn-cell card-drill-txn-merchant">Merchant</span>
+                  <span class="card-drill-txn-cell">Category</span>
+                  <span class="card-drill-txn-cell">Paid With</span>
+                  <span class="card-drill-txn-cell">Rate</span>
+                  <span class="card-drill-txn-cell card-drill-txn-date">Date</span>
+                  <span class="card-drill-txn-cell card-drill-right">Amount</span>
+                </div>
+                <div
+                  v-for="txn in getCardTransactions(card.cardKey)"
+                  :key="txn.transaction_id"
+                  :class="['card-drill-txn-row', { 'card-drill-suboptimal': !txn.isOptimal && txn.actualCard }]"
+                >
+                  <span class="card-drill-txn-cell card-drill-txn-merchant">{{ txn.merchant_name }}</span>
+                  <span class="card-drill-txn-cell card-drill-txn-cat">{{ formatCatName(txn.plaidPrimary) }}</span>
+                  <span :class="['card-drill-txn-cell', { 'card-drill-wrong-card': !txn.isOptimal && txn.actualCard }]">{{ txn.actualCard ? getCardName(txn.actualCard) : '—' }}</span>
+                  <span class="card-drill-txn-cell"><span class="rate-badge">{{ txn.recommendedRate?.earnMultiplier || 1 }}x</span></span>
+                  <span class="card-drill-txn-cell card-drill-txn-date">{{ txn.date }}</span>
+                  <span class="card-drill-txn-cell card-drill-right">{{ formatCurrency(txn.amount) }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -292,9 +346,9 @@
           <div
             v-for="card in businessCards"
             :key="card.cardKey"
-            :class="['stack-card', card.action ? card.action : '']"
+            :class="['stack-card', card.action ? card.action : '', { 'stack-card-expanded': expandedCard === card.cardKey }]"
           >
-            <div class="stack-card-header">
+            <div class="stack-card-header" @click="expandedCard = expandedCard === card.cardKey ? null : card.cardKey">
               <img
                 v-if="cardStore.getCardImageUrl(card.cardKey)"
                 :src="cardStore.getCardImageUrl(card.cardKey)"
@@ -315,6 +369,7 @@
                 <span class="stack-rewards">{{ formatCurrencyCents(card.rewards) }}</span>
                 <span class="stack-spend">on {{ formatCurrency(card.spend) }}</span>
               </div>
+              <ChevronDown :size="14" stroke-width="2" :class="['card-chevron', { rotated: expandedCard === card.cardKey }]" />
             </div>
             <div v-if="card.action === 'evaluate'" class="combo-warning">
               Fee exceeds rewards — consider if perks justify the cost
@@ -335,6 +390,49 @@
               >
                 {{ categoryIcon(cat) }} {{ formatCatName(cat) }}
               </span>
+            </div>
+
+            <!-- Card Drilldown -->
+            <div v-if="expandedCard === card.cardKey" class="card-drilldown">
+              <div class="card-drill-section">
+                <div class="card-drill-title">Category Breakdown</div>
+                <div class="card-drill-cat-row card-drill-cat-head">
+                  <span class="card-drill-cat-cell card-drill-cat-name">Category</span>
+                  <span class="card-drill-cat-cell">Txns</span>
+                  <span class="card-drill-cat-cell">Spend</span>
+                  <span class="card-drill-cat-cell card-drill-right">Rewards</span>
+                </div>
+                <div v-for="breakdown in getCardCategoryBreakdown(card.cardKey)" :key="breakdown.category" class="card-drill-cat-row">
+                  <span class="card-drill-cat-cell card-drill-cat-name">{{ categoryIcon(breakdown.category) }} {{ formatCatName(breakdown.category) }}</span>
+                  <span class="card-drill-cat-cell">{{ breakdown.count }}</span>
+                  <span class="card-drill-cat-cell">{{ formatCurrency(breakdown.spend) }}</span>
+                  <span class="card-drill-cat-cell card-drill-right">{{ formatCurrencyCents(breakdown.rewards) }}</span>
+                </div>
+              </div>
+
+              <div class="card-drill-section">
+                <div class="card-drill-title">Transactions ({{ getCardTransactions(card.cardKey).length }})</div>
+                <div class="card-drill-txn-header">
+                  <span class="card-drill-txn-cell card-drill-txn-merchant">Merchant</span>
+                  <span class="card-drill-txn-cell">Category</span>
+                  <span class="card-drill-txn-cell">Paid With</span>
+                  <span class="card-drill-txn-cell">Rate</span>
+                  <span class="card-drill-txn-cell card-drill-txn-date">Date</span>
+                  <span class="card-drill-txn-cell card-drill-right">Amount</span>
+                </div>
+                <div
+                  v-for="txn in getCardTransactions(card.cardKey)"
+                  :key="txn.transaction_id"
+                  :class="['card-drill-txn-row', { 'card-drill-suboptimal': !txn.isOptimal && txn.actualCard }]"
+                >
+                  <span class="card-drill-txn-cell card-drill-txn-merchant">{{ txn.merchant_name }}</span>
+                  <span class="card-drill-txn-cell card-drill-txn-cat">{{ formatCatName(txn.plaidPrimary) }}</span>
+                  <span :class="['card-drill-txn-cell', { 'card-drill-wrong-card': !txn.isOptimal && txn.actualCard }]">{{ txn.actualCard ? getCardName(txn.actualCard) : '—' }}</span>
+                  <span class="card-drill-txn-cell"><span class="rate-badge">{{ txn.recommendedRate?.earnMultiplier || 1 }}x</span></span>
+                  <span class="card-drill-txn-cell card-drill-txn-date">{{ txn.date }}</span>
+                  <span class="card-drill-txn-cell card-drill-right">{{ formatCurrency(txn.amount) }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -477,6 +575,7 @@ const {
 const showCardManager = ref(false)
 const activeView = ref('recommendations')
 const expandedCat = ref(null)
+const expandedCard = ref(null)
 
 const views = [
   { key: 'recommendations', label: 'Recommendations', icon: Zap },
@@ -678,7 +777,7 @@ const PLAID_TO_BUDGET = {
   'ENTERTAINMENT': 'Entertainment',
   'GENERAL_MERCHANDISE': 'Shopping',
   'RENT_AND_UTILITIES': 'Housing & Rent',
-  'GENERAL_SERVICES': 'Office & Software',
+  'GENERAL_SERVICES': 'Business',
 }
 
 function getCategoryBudget(plaidCategory) {
@@ -690,10 +789,30 @@ function getCategoryBudget(plaidCategory) {
 }
 
 function getCategoryTransactions(plaidCategory) {
-  return filteredTransactions.value
-    .filter(t => t.personal_finance_category?.primary === plaidCategory)
+  if (!report.value?.byCategory?.[plaidCategory]) return []
+  return report.value.byCategory[plaidCategory].transactions
+    .slice()
     .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 20)
+}
+
+function getCardTransactions(cardKey) {
+  if (!report.value?.analyses) return []
+  return report.value.analyses
+    .filter(a => a.recommendedCard === cardKey)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+}
+
+function getCardCategoryBreakdown(cardKey) {
+  const txns = getCardTransactions(cardKey)
+  const groups = {}
+  for (const t of txns) {
+    const cat = t.plaidPrimary || 'OTHER'
+    if (!groups[cat]) groups[cat] = { category: cat, count: 0, spend: 0, rewards: 0 }
+    groups[cat].count++
+    groups[cat].spend += t.amount
+    groups[cat].rewards += t.optimalRewards
+  }
+  return Object.values(groups).sort((a, b) => b.spend - a.spend)
 }
 
 function formatCurrencyCents(val) {
@@ -722,6 +841,7 @@ const CATEGORY_ICONS = {
   GENERAL_MERCHANDISE: '🛍️',
   RENT_AND_UTILITIES: '🏠',
   GENERAL_SERVICES: '💼',
+  BUSINESS: '💼',
   PERSONAL_CARE: '💆',
   MEDICAL: '🏥',
   OTHER: '📋',
@@ -1479,6 +1599,10 @@ onMounted(async () => {
   gap: 10px;
 }
 
+.stack-card-expanded {
+  border-color: var(--accent-blue) !important;
+}
+
 .stack-card {
   padding: 18px 20px;
   background: var(--bg-card);
@@ -1497,6 +1621,17 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 14px;
+  cursor: pointer;
+}
+
+.card-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.card-chevron.rotated {
+  transform: rotate(180deg);
 }
 
 .stack-card-img {
@@ -1574,6 +1709,141 @@ onMounted(async () => {
   font-weight: 600;
   background: rgba(59, 130, 246, 0.06);
   color: var(--text-secondary);
+}
+
+/* ── Card Drilldown ── */
+.card-drilldown {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.card-drill-section {
+  margin-bottom: 16px;
+}
+
+.card-drill-section:last-child {
+  margin-bottom: 0;
+}
+
+.card-drill-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.card-drill-cat-row {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.card-drill-cat-row:last-child {
+  border-bottom: none;
+}
+
+.card-drill-cat-head {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.card-drill-cat-head .card-drill-cat-cell {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-drill-cat-cell {
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+
+.card-drill-cat-name {
+  flex: 2;
+  font-weight: 600;
+}
+
+.card-drill-right {
+  text-align: right;
+}
+
+.card-drill-txn-header {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.card-drill-txn-header .card-drill-txn-cell {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-drill-txn-row {
+  display: flex;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.card-drill-txn-row:last-child {
+  border-bottom: none;
+}
+
+.card-drill-suboptimal {
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.card-drill-txn-cell {
+  flex: 1;
+  font-size: 0.76rem;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-drill-txn-merchant {
+  flex: 1.3;
+  font-weight: 600;
+}
+
+.card-drill-txn-cat {
+  color: var(--text-secondary);
+}
+
+.card-drill-txn-date {
+  color: var(--text-tertiary);
+}
+
+.card-drill-wrong-card {
+  color: var(--negative);
+  font-weight: 600;
+}
+
+/* ── Category Drilldown Enhancements ── */
+.cat-txn-suboptimal {
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.cat-txn-wrong-card {
+  color: var(--negative);
+  font-weight: 600;
+}
+
+.cat-txn-footer-missed {
+  color: var(--negative);
+  font-weight: 600;
 }
 
 /* ── Points & Credits ── */
