@@ -43,6 +43,10 @@ const SUB_MAP = {
   'Renters Insurance': 'RENT_AND_UTILITIES_OTHER_UTILITIES',
 }
 
+function toCardKey(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
+}
+
 export function useCardOptimizer(periodRef) {
   const cardStore = useCreditCardStore()
   const budgetStore = useBudgetStore()
@@ -55,6 +59,39 @@ export function useCardOptimizer(periodRef) {
 
   const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 }
 
+  /** Resolve a card name to a portfolio cardKey */
+  function resolveCardKey(cardName) {
+    if (!cardName) return null
+    const key = toCardKey(cardName)
+    // Direct match
+    if (cardStore.cardDetails[key]) return key
+    // Fuzzy match — find by cardName in details
+    for (const [k, detail] of Object.entries(cardStore.cardDetails)) {
+      if (detail.cardName === cardName) return k
+    }
+    return key // return computed key even if not in portfolio
+  }
+
+  /** Convert a flat transaction to Plaid-like format */
+  function toPlaidTransaction(t, id, catName) {
+    const mapping = CATEGORY_MAP[catName] || { primary: 'OTHER', detailed: 'OTHER' }
+    const detailed = (t.subcategory && SUB_MAP[t.subcategory]) || mapping.detailed
+    return {
+      transaction_id: id,
+      amount: t.amount,
+      merchant_name: t.merchant,
+      name: t.merchant,
+      personal_finance_category: {
+        primary: mapping.primary,
+        detailed,
+      },
+      _cardKey: resolveCardKey(t.card),
+      _budgetCard: t.card,
+      _budgetCategory: catName,
+      date: t.date,
+    }
+  }
+
   /** Convert budget store expenses (structured) to Plaid-like format */
   function toBudgetPlaidTransactions() {
     const txns = []
@@ -63,24 +100,9 @@ export function useCardOptimizer(periodRef) {
 
     let idCounter = 0
     for (const [catName, catData] of Object.entries(expenses)) {
-      const mapping = CATEGORY_MAP[catName] || { primary: 'OTHER', detailed: 'OTHER' }
-      for (const [subName, transactions] of Object.entries(catData.subcategories)) {
-        const detailed = SUB_MAP[subName] || mapping.detailed
+      for (const [, transactions] of Object.entries(catData.subcategories)) {
         for (const t of transactions) {
-          txns.push({
-            transaction_id: `budget_${idCounter++}`,
-            amount: t.amount,
-            merchant_name: t.merchant,
-            name: t.merchant,
-            personal_finance_category: {
-              primary: mapping.primary,
-              detailed,
-            },
-            _cardKey: null,
-            _budgetCard: t.card,
-            _budgetCategory: catName,
-            date: t.date,
-          })
+          txns.push(toPlaidTransaction(t, `budget_${idCounter++}`, catName))
         }
       }
     }
@@ -89,42 +111,30 @@ export function useCardOptimizer(periodRef) {
 
   /** Convert flat historical transactions (from CSV) to Plaid-like format */
   function toHistoricalPlaidTransactions() {
-    const txns = []
     const historical = budgetStore.historicalTransactions
-    if (!historical || historical.length === 0) return txns
-
-    for (let i = 0; i < historical.length; i++) {
-      const t = historical[i]
-      const catName = t.category || 'Shopping'
-      const mapping = CATEGORY_MAP[catName] || { primary: 'OTHER', detailed: 'OTHER' }
-      const detailed = (t.subcategory && SUB_MAP[t.subcategory]) || mapping.detailed
-      txns.push({
-        transaction_id: `csv_${i}`,
-        amount: t.amount,
-        merchant_name: t.merchant,
-        name: t.merchant,
-        personal_finance_category: {
-          primary: mapping.primary,
-          detailed,
-        },
-        _cardKey: null,
-        _budgetCard: t.card,
-        _budgetCategory: catName,
-        date: t.date,
-      })
-    }
-    return txns
+    if (!historical || historical.length === 0) return []
+    return historical.map((t, i) =>
+      toPlaidTransaction(t, `csv_${i}`, t.category || 'Shopping')
+    )
   }
 
   /** Filter transactions by selected period */
   const filteredTransactions = computed(() => {
-    // For CSV, use historical transactions (all uploaded data) since
-    // expenses only holds current month which may be empty
-    const all = settingsStore.dataSource === 'csv'
-      ? toHistoricalPlaidTransactions()
-      : toBudgetPlaidTransactions()
-    if (!periodRef) return all
+    const isCSV = settingsStore.dataSource === 'csv'
+    const all = isCSV ? toHistoricalPlaidTransactions() : toBudgetPlaidTransactions()
+    if (!periodRef || all.length === 0) return all
+
     const months = PERIOD_MONTHS[periodRef.value] || 3
+
+    if (isCSV) {
+      // For CSV, use the date range relative to the newest transaction
+      // so uploaded data always shows regardless of how old it is
+      const dates = all.map(t => new Date(t.date))
+      const maxDate = new Date(Math.max(...dates))
+      const cutoff = new Date(maxDate.getFullYear(), maxDate.getMonth() - months + 1, 1)
+      return all.filter(t => new Date(t.date) >= cutoff)
+    }
+
     const now = new Date()
     const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate())
     return all.filter(t => new Date(t.date) >= cutoff)
