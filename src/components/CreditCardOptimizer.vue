@@ -499,6 +499,45 @@
             </div>
           </div>
         </template>
+
+        <!-- Cards to Consider (in By Card view) -->
+        <div v-if="marketCardSuggestions.length > 0" class="section-block" style="margin-top: 16px;">
+          <h4 class="block-title">
+            <PlusCircle :size="16" stroke-width="2" />
+            Cards to Consider
+          </h4>
+          <p class="block-subtitle">Based on your {{ cardFilter === 'business' ? 'business' : cardFilter === 'personal' ? 'personal' : '' }} spending, these cards could boost rewards</p>
+          <div class="combo-grid">
+            <div
+              v-for="card in marketCardSuggestions"
+              :key="card.name"
+              class="combo-card suggest"
+            >
+              <div class="combo-card-header">
+                <span class="combo-card-name">{{ card.name }}</span>
+                <span class="combo-badge suggest">{{ card.type === 'business' ? 'Business' : 'Consider' }}</span>
+              </div>
+              <p class="suggest-highlight">{{ card.highlight }}</p>
+              <div class="combo-stats">
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Projected Rewards</span>
+                  <span class="combo-stat-value gain">{{ formatCurrency(card.projectedRewards) }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Annual Fee</span>
+                  <span class="combo-stat-value">{{ card.annualFee > 0 ? formatCurrency(card.annualFee) : 'Free' }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Net Value</span>
+                  <span class="combo-stat-value gain">+{{ formatCurrency(card.netValue) }}</span>
+                </div>
+              </div>
+              <div v-if="card.bestCategories.length" class="combo-categories">
+                <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Points & Credits View -->
@@ -615,12 +654,14 @@ const periods = [
   { key: '3m', label: '3M', months: 3 },
   { key: '6m', label: '6M', months: 6 },
   { key: '1y', label: '1Y', months: 12 },
+  { key: 'all', label: 'All', months: 0 },
 ]
 const selectedPeriod = ref('3m')
 const cardFilter = ref('all')
 
 const periodLabel = computed(() => {
   const p = periods.find(p => p.key === selectedPeriod.value)
+  if (p.key === 'all') return 'All-Time'
   return p.months === 1 ? '1-Month' : p.months === 12 ? '12-Month' : `${p.months}-Month`
 })
 
@@ -659,7 +700,7 @@ const ringOffset = computed(() => {
 })
 
 // ── By Card: sorted with keep/add/drop/evaluate actions ──
-const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 }
+const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12, 'all': 12 }
 
 const sortedCards = computed(() => {
   if (!report.value?.byCard) return []
@@ -805,18 +846,25 @@ const totalCreditsValue = computed(() => creditsSummary.value.reduce((s, c) => s
 // ── Cards to Consider (market cards) ──
 const marketCardSuggestions = computed(() => {
   const mode = budgetStore.budgetMode
-  const months = PERIOD_MONTHS[selectedPeriod.value] || 3
+  const months = selectedPeriod.value === 'all' ? 12 : (PERIOD_MONTHS[selectedPeriod.value] || 3)
   const proratedFactor = months / 12
   const cats = topCategories.value
+  const filterType = cardFilter.value
 
-  return marketCards.map(card => {
+  // Filter market cards to match current card type filter
+  const eligibleMarket = filterType === 'all'
+    ? marketCards
+    : marketCards.filter(c => (c.type || 'personal') === filterType)
+
+  return eligibleMarket.map(card => {
     let projectedRewards = 0
     const bestCategories = []
     for (const cat of cats) {
       const catName = formatCatName(cat.category)
       const rate = card.cashbackRates[catName] || card.cashbackRates.default || 0
-      const currentBest = getBestCardForCategory(catName, mode, budgetStore.businessEnabled)
-      if (rate > currentBest.rate) {
+      // Compare against current best from the report (actual optimization data)
+      const currentBestRate = cat.bestRate?.effectiveValue || 0
+      if (rate > currentBestRate) {
         projectedRewards += cat.spend * rate
         bestCategories.push(catName)
       }
@@ -825,6 +873,7 @@ const marketCardSuggestions = computed(() => {
     const netValue = projectedRewards - proratedFee
     return {
       name: card.name,
+      type: card.type || 'personal',
       annualFee: card.annualFee,
       projectedRewards,
       netValue,

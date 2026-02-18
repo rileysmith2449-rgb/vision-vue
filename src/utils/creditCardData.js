@@ -151,8 +151,10 @@ export function getUpgradeRecommendation(card, annualSpendOnBonusCategories) {
 }
 
 export const marketCards = [
+  // Personal
   {
     name: 'Wells Fargo Active Cash',
+    type: 'personal',
     annualFee: 0,
     cashbackRates: {
       default: 0.02
@@ -161,6 +163,7 @@ export const marketCards = [
   },
   {
     name: 'Amex Blue Cash Preferred',
+    type: 'personal',
     annualFee: 95,
     cashbackRates: {
       'Dining & Food': 0.06,
@@ -172,6 +175,7 @@ export const marketCards = [
   },
   {
     name: 'Citi Custom Cash',
+    type: 'personal',
     annualFee: 0,
     cashbackRates: {
       'Dining & Food': 0.05,
@@ -186,6 +190,7 @@ export const marketCards = [
   },
   {
     name: 'Chase Freedom Unlimited',
+    type: 'personal',
     annualFee: 0,
     cashbackRates: {
       'Dining & Food': 0.03,
@@ -196,6 +201,7 @@ export const marketCards = [
   },
   {
     name: 'US Bank Altitude Go',
+    type: 'personal',
     annualFee: 0,
     cashbackRates: {
       'Dining & Food': 0.04,
@@ -204,5 +210,37 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '4% dining, 2% groceries/gas/streaming, no fee'
-  }
+  },
+  // Business
+  {
+    name: 'Chase Ink Business Preferred',
+    type: 'business',
+    annualFee: 95,
+    cashbackRates: {
+      'Travel': 0.03,
+      'Internet & Phone': 0.03,
+      'Office & Software': 0.03,
+      'Business': 0.03,
+      default: 0.01
+    },
+    highlight: '3x on travel, shipping, internet, phone & advertising'
+  },
+  {
+    name: 'Amex Blue Business Plus',
+    type: 'business',
+    annualFee: 0,
+    cashbackRates: {
+      default: 0.02
+    },
+    highlight: '2x on all purchases up to $50K/yr with no annual fee'
+  },
+  {
+    name: 'Capital One Spark Cash Plus',
+    type: 'business',
+    annualFee: 150,
+    cashbackRates: {
+      default: 0.02
+    },
+    highlight: 'Unlimited 2% cash back on every business purchase'
+  },
 ]

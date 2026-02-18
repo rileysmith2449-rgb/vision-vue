@@ -119,26 +119,42 @@ export function useCardOptimizer(periodRef, cardFilterRef) {
     )
   }
 
-  /** Filter transactions by selected period */
+  /** Filter transactions by card type and selected period */
   const filteredTransactions = computed(() => {
     const isCSV = settingsStore.dataSource === 'csv'
-    const all = isCSV ? toHistoricalPlaidTransactions() : toBudgetPlaidTransactions()
-    if (!periodRef || all.length === 0) return all
+    let txns = isCSV ? toHistoricalPlaidTransactions() : toBudgetPlaidTransactions()
+    if (txns.length === 0) return txns
+
+    // Filter by card type — only show transactions actually made on matching cards
+    const filter = cardFilterRef?.value || 'all'
+    if (filter !== 'all') {
+      const type = filter === 'personal' ? 'Personal' : 'Business'
+      txns = txns.filter(t => {
+        if (!t._cardKey) return false
+        const detail = cardStore.cardDetails[t._cardKey]
+        return detail?.cardType === type
+      })
+    }
+
+    if (!periodRef || txns.length === 0) return txns
+
+    // "all" period = no date filter
+    if (periodRef.value === 'all') return txns
 
     const months = PERIOD_MONTHS[periodRef.value] || 3
 
     if (isCSV) {
       // For CSV, use the date range relative to the newest transaction
       // so uploaded data always shows regardless of how old it is
-      const dates = all.map(t => new Date(t.date))
+      const dates = txns.map(t => new Date(t.date))
       const maxDate = new Date(Math.max(...dates))
       const cutoff = new Date(maxDate.getFullYear(), maxDate.getMonth() - months + 1, 1)
-      return all.filter(t => new Date(t.date) >= cutoff)
+      return txns.filter(t => new Date(t.date) >= cutoff)
     }
 
     const now = new Date()
     const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate())
-    return all.filter(t => new Date(t.date) >= cutoff)
+    return txns.filter(t => new Date(t.date) >= cutoff)
   })
 
   const filteredActiveCards = computed(() => {
