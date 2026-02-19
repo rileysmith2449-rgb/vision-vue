@@ -286,6 +286,7 @@ export function useCardOptimizer(periodRef, cardFilterRef, showFutureRef) {
 
   const totalOptimalRewards = computed(() => activeReport.value?.totals?.optimalRewards || 0)
   const totalSpend = computed(() => activeReport.value?.totals?.spend || 0)
+  const signupBonusValue = computed(() => activeReport.value?.totals?.signupBonusValue || 0)
 
   // Improvement from current → future
   const futureRewardsGain = computed(() => {
@@ -317,6 +318,7 @@ export function useCardOptimizer(periodRef, cardFilterRef, showFutureRef) {
     globalOptimizationScore,
     totalOptimalRewards,
     totalSpend,
+    signupBonusValue,
     futureRewardsGain,
     topCategories,
     filteredTransactions,

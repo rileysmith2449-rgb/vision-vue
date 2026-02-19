@@ -52,7 +52,12 @@ function buildLocalCardDetail(card) {
     baseSpendEarnValuation: (card.cashbackRates.default || 0.01) * 100,
     baseSpendEarnIsCash: 1,
     baseSpendEarnCashValue: card.cashbackRates.default || 0.01,
-    isSignupBonus: 0,
+    isSignupBonus: card.signupBonus ? 1 : 0,
+    signupBonusAmount: card.signupBonus?.amount || 0,
+    signupBonusSpend: card.signupBonus?.spendRequired || 0,
+    signupBonusLength: card.signupBonus?.months || 0,
+    signUpBonusItem: card.signupBonus?.type || '',
+    signupBonusDollarValue: card.signupBonus?.dollarValue || 0,
     benefit: (card.statementCredits || []).map(sc => ({
       benefitTitle: sc.name,
       benefitDesc: `$${sc.amount} annual credit${sc.used ? ' (used)' : ''}`,

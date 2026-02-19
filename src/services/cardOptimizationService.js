@@ -46,6 +46,38 @@ export function getRewardRate(plaidMapping, plaidDetailed) {
   }
 }
 
+/**
+ * Compute signup bonus overrides for cards with active bonuses.
+ * Cards that already have CSV transaction data are ineligible (already owned).
+ */
+export function computeSignupBonusOverrides(activeCards, cardDetails, transactions) {
+  const overrides = {}
+
+  // Cards with transaction data are already owned — no signup bonus
+  const cardsWithData = new Set(
+    transactions.map(t => t._cardKey).filter(Boolean)
+  )
+
+  for (const card of activeCards) {
+    if (cardsWithData.has(card.cardKey)) continue
+
+    const detail = cardDetails[card.cardKey]
+    if (!detail?.isSignupBonus || !detail.signupBonusSpend) continue
+
+    const dollarValue = detail.signupBonusDollarValue || 0
+    const spendRequired = detail.signupBonusSpend
+    if (!dollarValue || !spendRequired) continue
+
+    overrides[card.cardKey] = {
+      effectiveBoost: dollarValue / spendRequired,
+      dollarValue,
+      spendRequired,
+    }
+  }
+
+  return overrides
+}
+
 /** Check if a date-limited category has expired */
 function isDateExpired(mapping) {
   if (!mapping.isDateLimit) return false
@@ -62,9 +94,10 @@ function isDateExpired(mapping) {
  * @param {object} [cardDetails] - Object keyed by cardKey → card detail (for type filtering)
  * @returns {{ recommended: string|null, rate: object }}
  */
-export function findBestCard(plaidDetailed, plaidMappings, activeCards, preferType, cardDetails) {
+export function findBestCard(plaidDetailed, plaidMappings, activeCards, preferType, cardDetails, signupBonusOverrides) {
   let bestCard = null
   let bestRate = null
+  let bestEffective = -1
 
   for (const card of activeCards) {
     // Filter by card type if requested
@@ -76,7 +109,12 @@ export function findBestCard(plaidDetailed, plaidMappings, activeCards, preferTy
     const mapping = plaidMappings[card.cardKey]
     const rate = getRewardRate(mapping, plaidDetailed)
 
-    if (!bestRate || rate.effectiveValue > bestRate.effectiveValue) {
+    // Add signup bonus boost for routing comparison only
+    const boost = signupBonusOverrides?.[card.cardKey]?.effectiveBoost || 0
+    const effective = rate.effectiveValue + boost
+
+    if (effective > bestEffective) {
+      bestEffective = effective
       bestRate = rate
       bestCard = card.cardKey
     }
@@ -93,7 +131,7 @@ export function findBestCard(plaidDetailed, plaidMappings, activeCards, preferTy
  * @param {object} cardDetails - Card detail data
  * @returns {object} Analysis result
  */
-export function analyzeTransaction(transaction, plaidMappings, activeCards, cardDetails) {
+export function analyzeTransaction(transaction, plaidMappings, activeCards, cardDetails, signupBonusOverrides) {
   const plaidDetailed = transaction.personal_finance_category?.detailed || ''
   const amount = Math.abs(transaction.amount || 0)
 
@@ -102,7 +140,7 @@ export function analyzeTransaction(transaction, plaidMappings, activeCards, card
   const actualType = actualCard && cardDetails[actualCard]?.cardType
   const preferType = actualType === 'Business' ? 'Business' : null
 
-  const best = findBestCard(plaidDetailed, plaidMappings, activeCards, preferType, cardDetails)
+  const best = findBestCard(plaidDetailed, plaidMappings, activeCards, preferType, cardDetails, signupBonusOverrides)
 
   let actualRate = null
   if (actualCard && plaidMappings[actualCard]) {
@@ -136,16 +174,19 @@ export function analyzeTransaction(transaction, plaidMappings, activeCards, card
  */
 export function analyzeTransactions(transactions, plaidMappings, activeCards, cardDetails) {
   if (!transactions?.length || !activeCards?.length) {
-    return { analyses: [], byCategory: {}, byCard: {}, totals: { spend: 0, optimalRewards: 0, actualRewards: 0, missedRewards: 0 } }
+    return { analyses: [], byCategory: {}, byCard: {}, totals: { spend: 0, optimalRewards: 0, actualRewards: 0, missedRewards: 0, signupBonusValue: 0 }, signupBonuses: [] }
   }
+
+  // Compute signup bonus overrides — cards with CSV data are ineligible
+  const signupBonusOverrides = computeSignupBonusOverrides(activeCards, cardDetails, transactions)
 
   const analyses = []
   const byCategory = {}
   const byCard = {}
-  const totals = { spend: 0, optimalRewards: 0, actualRewards: 0, missedRewards: 0 }
+  const totals = { spend: 0, optimalRewards: 0, actualRewards: 0, missedRewards: 0, signupBonusValue: 0 }
 
   for (const txn of transactions) {
-    const a = analyzeTransaction(txn, plaidMappings, activeCards, cardDetails)
+    const a = analyzeTransaction(txn, plaidMappings, activeCards, cardDetails, signupBonusOverrides)
     analyses.push(a)
 
     // Aggregate totals
@@ -185,7 +226,24 @@ export function analyzeTransactions(transactions, plaidMappings, activeCards, ca
     card.categories = [...card.categories]
   }
 
-  return { analyses, byCategory, byCard, totals }
+  // Check signup bonus completion for each card with an active bonus
+  const signupBonuses = []
+  for (const [cardKey, override] of Object.entries(signupBonusOverrides)) {
+    const routedSpend = byCard[cardKey]?.spend || 0
+    const met = routedSpend >= override.spendRequired
+    signupBonuses.push({
+      cardKey,
+      dollarValue: override.dollarValue,
+      spendRequired: override.spendRequired,
+      routedSpend,
+      met,
+    })
+    if (met) {
+      totals.signupBonusValue += override.dollarValue
+    }
+  }
+
+  return { analyses, byCategory, byCard, totals, signupBonuses }
 }
 
 /**
@@ -231,30 +289,20 @@ export function generateRecommendations(report, cardDetails, plaidMappings, acti
     }
   }
 
-  // 3. Signup bonus tracking
-  for (const card of activeCards) {
-    const detail = cardDetails[card.cardKey]
-    if (!detail?.isSignupBonus || !detail.signupBonusSpend) continue
-    const addedDate = card.addedDate ? new Date(card.addedDate) : null
-    if (!addedDate) continue
-    const lengthMonths = detail.signupBonusLength || 3
-    const deadline = new Date(addedDate)
-    deadline.setMonth(deadline.getMonth() + lengthMonths)
-    const daysLeft = Math.max(0, Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24)))
-    if (daysLeft <= 0) continue
-
-    // Estimate spend from report
-    const cardSpend = report.byCard[card.cardKey]?.spend || 0
-    const remainingSpend = Math.max(0, detail.signupBonusSpend - cardSpend)
+  // 3. Signup bonus tracking (from cards without CSV data)
+  for (const bonus of (report.signupBonuses || [])) {
+    if (bonus.met) continue
+    const detail = cardDetails[bonus.cardKey]
+    if (!detail) continue
+    const remainingSpend = Math.max(0, bonus.spendRequired - bonus.routedSpend)
 
     recommendations.push({
       type: 'signup',
-      priority: daysLeft < 30 ? 'high' : 'medium',
+      priority: 'high',
       title: `${detail.cardName} Signup Bonus`,
-      message: `Spend $${remainingSpend.toLocaleString()} more in ${daysLeft} days to earn ${detail.signupBonusAmount} ${detail.signUpBonusItem}`,
-      impact: parseFloat(detail.signupBonusAmount) || 0,
-      cardKey: card.cardKey,
-      daysLeft,
+      message: `Spend $${remainingSpend.toLocaleString()} more to earn ${detail.signupBonusAmount} ${detail.signUpBonusItem} (worth $${bonus.dollarValue.toLocaleString()})`,
+      impact: bonus.dollarValue,
+      cardKey: bonus.cardKey,
       remainingSpend,
     })
   }

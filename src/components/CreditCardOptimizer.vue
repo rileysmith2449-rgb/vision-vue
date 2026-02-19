@@ -44,6 +44,10 @@
           <span class="stat-label">Global Score</span>
           <span class="stat-value" :class="globalOptimizationScore >= 80 ? 'stat-teal' : globalOptimizationScore >= 50 ? '' : 'stat-negative'">{{ globalOptimizationScore }}%</span>
         </div>
+        <div class="score-stat" v-if="signupBonusValue > 0">
+          <span class="stat-label">Signup Bonuses</span>
+          <span class="stat-value stat-teal">{{ formatCurrency(signupBonusValue) }}</span>
+        </div>
       </div>
 
       <div class="banner-right">
@@ -757,6 +761,7 @@ const {
   globalOptimizationScore,
   totalOptimalRewards,
   totalSpend,
+  signupBonusValue,
   futureRewardsGain,
   topCategories,
   filteredTransactions,

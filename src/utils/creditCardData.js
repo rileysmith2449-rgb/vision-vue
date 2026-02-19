@@ -28,7 +28,8 @@ export const creditCards = [
       { name: 'Dining Credit', amount: 120, used: true },
       { name: 'Uber Credit', amount: 120, used: true },
       { name: 'Dunkin Credit', amount: 84, used: false }
-    ]
+    ],
+    signupBonus: { amount: 60000, type: 'points', dollarValue: 1200, spendRequired: 6000, months: 6 }
   },
   {
     name: 'Chase Sapphire',
@@ -44,7 +45,8 @@ export const creditCards = [
     statementCredits: [
       { name: 'Travel Credit', amount: 300, used: true },
       { name: 'DashPass Credit', amount: 60, used: false }
-    ]
+    ],
+    signupBonus: { amount: 60000, type: 'points', dollarValue: 900, spendRequired: 4000, months: 3 }
   },
   {
     name: 'Citi Double',
@@ -54,7 +56,8 @@ export const creditCards = [
     cashbackRates: {
       default: 0.02
     },
-    statementCredits: []
+    statementCredits: [],
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1500, months: 3 }
   },
   {
     name: 'Apple Card',
@@ -64,7 +67,8 @@ export const creditCards = [
     cashbackRates: {
       default: 0.02
     },
-    statementCredits: []
+    statementCredits: [],
+    signupBonus: null
   },
   {
     name: 'Capital One Savor',
@@ -77,7 +81,8 @@ export const creditCards = [
       'Shopping': 0.03,
       default: 0.01
     },
-    statementCredits: []
+    statementCredits: [],
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 3000, months: 3 }
   },
   {
     name: 'Hilton Amex',
@@ -92,7 +97,8 @@ export const creditCards = [
     statementCredits: [
       { name: 'Hilton Resort Credit', amount: 200, used: false },
       { name: 'Airline Credit', amount: 250, used: false }
-    ]
+    ],
+    signupBonus: { amount: 175000, type: 'points', dollarValue: 875, spendRequired: 6000, months: 6 }
   },
   {
     name: 'Ink Business Cash',
@@ -106,7 +112,8 @@ export const creditCards = [
       default: 0.01
     },
     statementCredits: [],
-    upgradeTo: 'Chase Ink Business'
+    upgradeTo: 'Chase Ink Business',
+    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 }
   },
   {
     name: 'Amex Business Gold',
@@ -121,7 +128,8 @@ export const creditCards = [
     },
     statementCredits: [
       { name: 'Dell Credit', amount: 200, used: false }
-    ]
+    ],
+    signupBonus: { amount: 70000, type: 'points', dollarValue: 1400, spendRequired: 10000, months: 3 }
   },
   {
     name: 'Chase Ink Business',
@@ -133,7 +141,8 @@ export const creditCards = [
       'Internet & Phone': 0.05,
       default: 0.01
     },
-    statementCredits: []
+    statementCredits: [],
+    signupBonus: { amount: 120000, type: 'points', dollarValue: 1500, spendRequired: 8000, months: 3 }
   }
 ]
 
