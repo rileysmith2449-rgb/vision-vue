@@ -109,95 +109,52 @@
     </div>
 
     <template v-else>
-      <!-- Recommendations View -->
-      <div v-if="activeView === 'recommendations'" class="recommendations-view">
-        <div v-if="recommendations.length === 0 && marketCardSuggestions.length === 0" class="empty-section">
-          Your card usage is already optimized. Nice work!
+      <!-- Alerts View -->
+      <div v-if="activeView === 'alerts'" class="alerts-view">
+        <!-- Summary Banner -->
+        <div v-if="wrongCardCount > 0" class="alerts-banner alerts-banner-warn">
+          <div class="alerts-banner-icon">
+            <AlertTriangle :size="20" stroke-width="2" />
+          </div>
+          <div class="alerts-banner-text">
+            <span class="alerts-banner-title">{{ wrongCardCount }} transaction{{ wrongCardCount === 1 ? '' : 's' }} used the wrong card</span>
+            <span class="alerts-banner-subtitle">~{{ formatCurrency(annualizedMissedRewards) }}/yr in missed rewards</span>
+          </div>
         </div>
-        <div v-if="recommendations.length > 0" class="recommendations-grid">
+        <div v-else class="alerts-banner alerts-banner-ok">
+          <div class="alerts-banner-icon alerts-icon-ok">
+            <CheckCircle :size="20" stroke-width="2" />
+          </div>
+          <div class="alerts-banner-text">
+            <span class="alerts-banner-title">You're using the right cards</span>
+            <span class="alerts-banner-subtitle">No missed rewards detected in this period</span>
+          </div>
+        </div>
+
+        <!-- Wrong Card Transaction List -->
+        <div v-if="wrongCardTransactions.length > 0" class="alerts-list">
           <div
-            v-for="(rec, i) in recommendations"
-            :key="i"
-            :class="['rec-card', `rec-${rec.type}`, `priority-${rec.priority}`, { 'rec-expanded': expandedRec === i }]"
-            @click="expandedRec = expandedRec === i ? null : i"
+            v-for="txn in wrongCardTransactions"
+            :key="txn.transaction_id"
+            class="alerts-txn-row"
           >
-            <div class="rec-header">
-              <div :class="['rec-type-icon', `rec-icon-${rec.type}`]">
-                <component :is="recIcon(rec.type)" :size="16" stroke-width="2" />
-              </div>
-              <span class="rec-type-label">{{ recTypeLabel(rec.type) }}</span>
-              <span :class="['rec-priority', `priority-${rec.priority}`]">{{ rec.priority }}</span>
+            <div class="alerts-txn-top">
+              <span class="alerts-txn-merchant">{{ txn.merchant_name }}</span>
+              <span class="alerts-txn-amount">{{ formatCurrency(txn.amount) }}</span>
             </div>
-            <h4 class="rec-title">{{ rec.title }}</h4>
-            <p class="rec-message">{{ rec.message }}</p>
-
-            <!-- Summary stats -->
-            <div class="rec-stats">
-              <div v-if="rec.category" class="rec-stat">
-                <span class="rec-stat-label">Category Spend</span>
-                <span class="rec-stat-value">{{ formatCurrency(getRecDetail(rec)?.totalSpend || 0) }}</span>
-              </div>
-              <div v-if="rec.category" class="rec-stat">
-                <span class="rec-stat-label">Transactions</span>
-                <span class="rec-stat-value">{{ getRecDetail(rec)?.transactionCount || 0 }}</span>
-              </div>
-              <div v-if="rec.cardKey" class="rec-stat">
-                <span class="rec-stat-label">Card</span>
-                <span class="rec-stat-value rec-stat-card">{{ getCardName(rec.cardKey) }}</span>
-              </div>
-              <div v-if="rec.remainingSpend" class="rec-stat">
-                <span class="rec-stat-label">Remaining</span>
-                <span class="rec-stat-value">{{ formatCurrency(rec.remainingSpend) }}</span>
-              </div>
-            </div>
-
-            <div class="rec-footer">
-              <span v-if="rec.impact" class="rec-impact">
-                {{ rec.type === 'signup' ? '' : '+' }}{{ rec.type === 'signup' ? rec.impact.toLocaleString() + ' pts' : formatCurrencyCents(rec.impact) }}
+            <div class="alerts-txn-bottom">
+              <span class="alerts-txn-cards">
+                <span class="alerts-wrong-card">{{ getCardName(txn.actualCard) }}</span>
+                <ArrowRight :size="12" stroke-width="2" class="alerts-arrow" />
+                <span class="alerts-right-card">{{ getCardName(txn.recommendedCard) }}</span>
               </span>
-              <span v-if="rec.daysLeft" class="rec-deadline">{{ rec.daysLeft }} days left</span>
-              <ChevronDown :size="14" stroke-width="2" :class="['rec-chevron', { rotated: expandedRec === i }]" />
-            </div>
-
-            <!-- Expanded detail -->
-            <div v-if="expandedRec === i && getRecDetail(rec)" class="rec-detail" @click.stop>
-              <!-- Optimize: show suboptimal transactions -->
-              <template v-if="rec.type === 'optimize' && getRecDetail(rec).topMissed.length > 0">
-                <div class="rec-detail-title">Transactions Using Wrong Card</div>
-                <div class="rec-detail-txn-header">
-                  <span class="rec-detail-cell rec-detail-merchant">Merchant</span>
-                  <span class="rec-detail-cell">Paid With</span>
-                  <span class="rec-detail-cell">Missed</span>
-                  <span class="rec-detail-cell rec-detail-right">Amount</span>
-                </div>
-                <div v-for="txn in getRecDetail(rec).topMissed" :key="txn.transaction_id" class="rec-detail-txn-row">
-                  <span class="rec-detail-cell rec-detail-merchant">{{ txn.merchant_name }}</span>
-                  <span class="rec-detail-cell rec-detail-wrong">{{ getCardName(txn.actualCard) }}</span>
-                  <span class="rec-detail-cell rec-detail-missed">-{{ formatCurrencyCents(txn.missedRewards) }}</span>
-                  <span class="rec-detail-cell rec-detail-right">{{ formatCurrency(txn.amount) }}</span>
-                </div>
-              </template>
-
-              <!-- Gap: show top merchants -->
-              <template v-if="rec.type === 'gap' && getRecDetail(rec).topMerchants.length > 0">
-                <div class="rec-detail-title">Top Merchants (Base Rate Only)</div>
-                <div class="rec-detail-txn-header">
-                  <span class="rec-detail-cell rec-detail-merchant">Merchant</span>
-                  <span class="rec-detail-cell">Txns</span>
-                  <span class="rec-detail-cell rec-detail-right">Spend</span>
-                </div>
-                <div v-for="m in getRecDetail(rec).topMerchants" :key="m.name" class="rec-detail-txn-row">
-                  <span class="rec-detail-cell rec-detail-merchant">{{ m.name }}</span>
-                  <span class="rec-detail-cell">{{ m.count }}</span>
-                  <span class="rec-detail-cell rec-detail-right">{{ formatCurrency(m.spend) }}</span>
-                </div>
-              </template>
+              <span class="alerts-txn-missed">-{{ formatCurrencyCents(txn.missedRewards) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Cards to Consider -->
-        <div v-if="marketCardSuggestions.length > 0" class="section-block">
+        <div v-if="marketCardSuggestions.length > 0" class="section-block" style="margin-top: 16px;">
           <h4 class="block-title">
             <PlusCircle :size="16" stroke-width="2" />
             Cards to Consider
@@ -681,28 +638,127 @@
         </div>
       </div>
 
-      <!-- Cheat Sheet View -->
-      <div v-if="activeView === 'cheatsheet'" class="cheatsheet-wrap">
+      <!-- Spend Map View -->
+      <div v-if="activeView === 'spendmap'" class="spendmap-wrap">
         <div v-if="cheatSheet.length === 0" class="empty-section">
-          Add cards to see your personalized cheat sheet.
+          Add cards to see your personalized spend map.
         </div>
-        <div v-else class="cheatsheet-grid">
-          <div
-            v-for="item in cheatSheet"
-            :key="item.plaidCategory"
-            class="cheat-row"
-          >
-            <span class="cheat-category">{{ item.displayName }}</span>
-            <span class="cheat-arrow">
-              <ArrowRight :size="14" stroke-width="2" />
-            </span>
-            <span class="cheat-card">{{ item.cardName }}</span>
-            <span class="cheat-rate">
-              <span class="rate-badge">{{ item.earnMultiplier }}x</span>
-              {{ item.currency }}
-            </span>
+        <template v-else>
+          <!-- Personal Section -->
+          <div v-if="spendMapGrouped.personal.length > 0" class="spendmap-section">
+            <div class="spendmap-section-header">
+              <span class="spendmap-dot spendmap-dot-personal"></span>
+              <span class="spendmap-section-title">Personal</span>
+            </div>
+            <div class="spendmap-rows">
+              <div
+                v-for="item in spendMapGrouped.personal"
+                :key="'p-' + item.plaidCategory"
+                class="spendmap-row"
+              >
+                <span class="spendmap-icon">{{ item.icon }}</span>
+                <span class="spendmap-category">{{ item.displayName }}</span>
+                <span class="spendmap-rate-badge" :style="{ borderColor: item.color, color: item.color }">{{ item.earnMultiplier }}x</span>
+                <span class="spendmap-card">{{ item.cardName }}</span>
+              </div>
+            </div>
           </div>
+
+          <!-- Business Section -->
+          <div v-if="spendMapGrouped.business.length > 0" class="spendmap-section">
+            <div class="spendmap-section-header">
+              <span class="spendmap-dot spendmap-dot-business"></span>
+              <span class="spendmap-section-title">Business</span>
+            </div>
+            <div class="spendmap-rows">
+              <div
+                v-for="item in spendMapGrouped.business"
+                :key="'b-' + item.plaidCategory"
+                class="spendmap-row"
+              >
+                <span class="spendmap-icon">{{ item.icon }}</span>
+                <span class="spendmap-category">{{ item.displayName }}</span>
+                <span class="spendmap-rate-badge" :style="{ borderColor: item.color, color: item.color }">{{ item.earnMultiplier }}x</span>
+                <span class="spendmap-card">{{ item.cardName }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- SUB Tracker View -->
+      <div v-if="activeView === 'subtracker'" class="sub-wrap">
+        <div v-if="signupBonusTracker.length === 0" class="empty-section">
+          No cards with signup bonuses in your portfolio.
         </div>
+        <template v-else>
+          <div class="sub-cards">
+            <div
+              v-for="tracker in signupBonusTracker"
+              :key="tracker.cardKey"
+              :class="['sub-card', `sub-status-${tracker.status}`]"
+            >
+              <div class="sub-card-header">
+                <div class="sub-card-info">
+                  <span class="sub-card-name">{{ tracker.cardName }}</span>
+                  <span class="sub-card-issuer">{{ tracker.cardIssuer }}</span>
+                </div>
+                <span class="sub-bonus-badge">
+                  {{ tracker.bonusAmount.toLocaleString() }} {{ tracker.bonusType }}
+                </span>
+              </div>
+
+              <div class="sub-progress-wrap">
+                <div class="sub-progress-bar">
+                  <div
+                    class="sub-progress-fill"
+                    :class="`sub-fill-${tracker.status}`"
+                    :style="{ width: tracker.pct + '%' }"
+                  ></div>
+                </div>
+                <div class="sub-progress-labels">
+                  <span>{{ formatCurrency(tracker.spent) }} of {{ formatCurrency(tracker.spendRequired) }}</span>
+                  <span class="sub-pct">{{ tracker.pct }}%</span>
+                </div>
+              </div>
+
+              <div class="sub-status-line">
+                <template v-if="tracker.status === 'complete'">
+                  <CheckCircle :size="14" stroke-width="2" class="sub-status-icon sub-icon-complete" />
+                  <span class="sub-status-text sub-text-complete">Bonus earned — {{ formatCurrency(tracker.dollarValue) }} value</span>
+                </template>
+                <template v-else-if="tracker.status === 'active'">
+                  <Clock :size="14" stroke-width="2" class="sub-status-icon sub-icon-active" />
+                  <span class="sub-status-text sub-text-active">{{ tracker.daysLeft }} days left — spend {{ formatCurrency(tracker.dailyNeeded) }}/day</span>
+                </template>
+                <template v-else-if="tracker.status === 'expired'">
+                  <AlertTriangle :size="14" stroke-width="2" class="sub-status-icon sub-icon-expired" />
+                  <span class="sub-status-text sub-text-expired">Deadline passed — bonus missed</span>
+                </template>
+                <template v-else>
+                  <Circle :size="14" stroke-width="2" class="sub-status-icon sub-icon-notstarted" />
+                  <span class="sub-status-text sub-text-notstarted">Not started — {{ formatCurrency(tracker.spendRequired) }} to spend in {{ tracker.daysLeft }} days</span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Bar -->
+          <div class="sub-summary">
+            <div class="sub-summary-stat">
+              <span class="sub-summary-label">Total Bonus Value</span>
+              <span class="sub-summary-value">{{ formatCurrency(totalSubValue) }}</span>
+            </div>
+            <div class="sub-summary-stat">
+              <span class="sub-summary-label">Earned So Far</span>
+              <span class="sub-summary-value sub-summary-earned">{{ formatCurrency(earnedSubValue) }}</span>
+            </div>
+            <div class="sub-summary-stat">
+              <span class="sub-summary-label">Remaining</span>
+              <span class="sub-summary-value">{{ formatCurrency(totalSubValue - earnedSubValue) }}</span>
+            </div>
+          </div>
+        </template>
       </div>
     </template>
 
@@ -716,8 +772,9 @@ import { ref, computed, onMounted } from 'vue'
 import {
   CreditCard, Settings, Plus, ArrowRight, Loader2,
   LayoutList, BarChart3, Wallet, BookOpen,
-  TrendingUp, Gift, Zap, AlertTriangle,
+  TrendingUp, Gift, Zap, AlertTriangle, Clock,
   ChevronDown, PlusCircle, CheckCircle, Circle, Layers,
+  Map, Bell, Target,
 } from 'lucide-vue-next'
 import { useCreditCardStore } from '@/stores/creditCardStore'
 import { useBudgetStore } from '@/stores/budget'
@@ -765,23 +822,86 @@ const {
   futureRewardsGain,
   topCategories,
   filteredTransactions,
+  wrongCardTransactions,
+  wrongCardCount,
+  annualizedMissedRewards,
+  signupBonusTracker,
+  totalSubValue,
+  earnedSubValue,
   runAnalysis,
 } = useCardOptimizer(selectedPeriod, cardFilter, showFutureState)
 
 const showCardManager = ref(false)
-const activeView = ref('recommendations')
+const activeView = ref('alerts')
 const expandedCat = ref(null)
 const expandedCard = ref(null)
 const expandedRec = ref(null)
 const expandedEco = ref(null)
 
 const views = [
-  { key: 'recommendations', label: 'Recommendations', icon: Zap },
+  { key: 'alerts', label: 'Alerts', icon: Bell },
   { key: 'categories', label: 'By Category', icon: BarChart3 },
   { key: 'cards', label: 'By Card', icon: Wallet },
   { key: 'points', label: 'Points & Credits', icon: Gift },
-  { key: 'cheatsheet', label: 'Cheat Sheet', icon: BookOpen },
+  { key: 'spendmap', label: 'Spend Map', icon: Map },
+  { key: 'subtracker', label: 'SUB Tracker', icon: Target },
 ]
+
+const SPENDMAP_ICONS = {
+  'FOOD_AND_DRINK': '🍽️',
+  'TRANSPORTATION': '🚗',
+  'TRAVEL': '✈️',
+  'ENTERTAINMENT': '🎬',
+  'GENERAL_MERCHANDISE': '🛍️',
+  'RENT_AND_UTILITIES': '🏠',
+  'GENERAL_SERVICES': '💼',
+  'PERSONAL_CARE': '💆',
+  'MEDICAL': '🏥',
+  'OTHER': '📋',
+}
+
+// Card colors for rate badges in Spend Map
+const CARD_COLORS = {
+  'chase-freedom-unlimited': '#1A3C6E',
+  'chase-sapphire-preferred': '#1A3C6E',
+  'chase-business-unlimited': '#0A2540',
+  'amex-hilton-aspire': '#1A1A2E',
+}
+
+const spendMapGrouped = computed(() => {
+  const items = cheatSheet.value
+  if (!items || items.length === 0) return { personal: [], business: [] }
+
+  const personal = []
+  const business = []
+
+  for (const item of items) {
+    const cardKey = item.cardKey
+    const detail = cardStore.cardDetails[cardKey]
+    const cardType = detail?.cardType || 'Personal'
+    const plaidPrimary = item.plaidCategory?.split('_').slice(0, -1).join('_') || item.plaidCategory || ''
+    // Try to find primary from the detailed code
+    let primaryKey = 'OTHER'
+    for (const key of Object.keys(SPENDMAP_ICONS)) {
+      if (item.plaidCategory?.startsWith(key)) {
+        primaryKey = key
+        break
+      }
+    }
+    const icon = SPENDMAP_ICONS[primaryKey] || '📋'
+    const color = CARD_COLORS[cardKey] || detail?._color || 'var(--accent-teal)'
+
+    const entry = { ...item, icon, color, cardType: cardType }
+
+    if (cardType === 'Business') {
+      business.push(entry)
+    } else {
+      personal.push(entry)
+    }
+  }
+
+  return { personal, business }
+})
 
 const circumference = 2 * Math.PI * 52
 const ringOffset = computed(() => {
@@ -2752,19 +2872,190 @@ onMounted(async () => {
   font-style: italic;
 }
 
-/* ── Cheat Sheet ── */
-.cheatsheet-wrap {
+/* ── Alerts ── */
+.alerts-view {
+  animation: viewFadeIn 0.2s ease-out;
+}
+
+.alerts-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+
+.alerts-banner-warn {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+}
+
+.alerts-banner-ok {
+  background: rgba(20, 184, 166, 0.06);
+  border: 1px solid rgba(20, 184, 166, 0.18);
+}
+
+.alerts-banner-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--negative);
+  flex-shrink: 0;
+}
+
+.alerts-icon-ok {
+  background: rgba(20, 184, 166, 0.1);
+  color: var(--accent-teal);
+}
+
+.alerts-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alerts-banner-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.alerts-banner-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.alerts-list {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
 
-.cheatsheet-grid {
-  max-height: 500px;
-  overflow-y: auto;
+.alerts-txn-row {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-glass);
+  transition: background 0.15s ease;
 }
 
-.cheat-row {
+.alerts-txn-row:last-child {
+  border-bottom: none;
+}
+
+.alerts-txn-row:hover {
+  background: var(--bg-subtle);
+}
+
+.alerts-txn-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.alerts-txn-merchant {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.alerts-txn-amount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.alerts-txn-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alerts-txn-cards {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+.alerts-wrong-card {
+  color: var(--negative);
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+.alerts-arrow {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.alerts-right-card {
+  color: var(--accent-teal);
+  font-weight: 600;
+}
+
+.alerts-txn-missed {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--negative);
+}
+
+/* ── Spend Map ── */
+.spendmap-wrap {
+  animation: viewFadeIn 0.2s ease-out;
+}
+
+.spendmap-section {
+  margin-bottom: 20px;
+}
+
+.spendmap-section:last-child {
+  margin-bottom: 0;
+}
+
+.spendmap-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.spendmap-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.spendmap-dot-personal {
+  background: #3B82F6;
+}
+
+.spendmap-dot-business {
+  background: #EAB308;
+}
+
+.spendmap-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.spendmap-rows {
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.spendmap-row {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2773,10 +3064,20 @@ onMounted(async () => {
   transition: background 0.15s ease;
 }
 
-.cheat-row:last-child { border-bottom: none; }
-.cheat-row:hover { background: var(--bg-subtle); }
+.spendmap-row:last-child {
+  border-bottom: none;
+}
 
-.cheat-category {
+.spendmap-row:hover {
+  background: var(--bg-subtle);
+}
+
+.spendmap-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.spendmap-category {
   flex: 1.5;
   font-size: 0.82rem;
   font-weight: 600;
@@ -2787,12 +3088,18 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
-.cheat-arrow {
-  color: var(--text-tertiary);
+.spendmap-rate-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 0.72rem;
+  font-weight: 700;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.cheat-card {
+.spendmap-card {
   flex: 1.2;
   font-size: 0.82rem;
   font-weight: 600;
@@ -2801,15 +3108,186 @@ onMounted(async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: right;
 }
 
-.cheat-rate {
+/* ── SUB Tracker ── */
+.sub-wrap {
+  animation: viewFadeIn 0.2s ease-out;
+}
+
+.sub-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sub-card {
+  padding: 18px 20px;
+  background: var(--bg-card);
+  background-image: var(--gradient-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glass);
+}
+
+.sub-status-active {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.sub-status-complete {
+  border-color: rgba(20, 184, 166, 0.25);
+}
+
+.sub-status-expired {
+  border-color: rgba(239, 68, 68, 0.2);
+  opacity: 0.7;
+}
+
+.sub-status-not-started {
+  border-color: var(--border-glass);
+}
+
+.sub-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.sub-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sub-card-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sub-card-issuer {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+.sub-bonus-badge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(234, 179, 8, 0.1);
+  color: #EAB308;
   flex-shrink: 0;
+}
+
+.sub-progress-wrap {
+  margin-bottom: 10px;
+}
+
+.sub-progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.sub-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.sub-fill-active {
+  background: var(--accent-blue);
+}
+
+.sub-fill-complete {
+  background: var(--accent-teal);
+}
+
+.sub-fill-expired {
+  background: var(--negative);
+}
+
+.sub-fill-not-started {
+  background: var(--text-tertiary);
+}
+
+.sub-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.sub-pct {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sub-status-line {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.sub-status-icon {
+  flex-shrink: 0;
+}
+
+.sub-icon-complete { color: var(--accent-teal); }
+.sub-icon-active { color: var(--accent-blue); }
+.sub-icon-expired { color: var(--negative); }
+.sub-icon-notstarted { color: var(--text-tertiary); }
+
+.sub-status-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.sub-text-complete { color: var(--accent-teal); }
+.sub-text-active { color: var(--accent-blue); }
+.sub-text-expired { color: var(--negative); }
+.sub-text-notstarted { color: var(--text-tertiary); }
+
+.sub-summary {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  background-image: var(--gradient-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+}
+
+.sub-summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sub-summary-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-tertiary);
+}
+
+.sub-summary-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.sub-summary-earned {
+  color: var(--accent-teal);
 }
 
 /* ── Responsive ── */
@@ -2877,6 +3355,21 @@ onMounted(async () => {
 
   .eco-grid {
     grid-template-columns: 1fr;
+  }
+
+  .alerts-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .alerts-txn-cards {
+    font-size: 0.72rem;
+  }
+
+  .sub-summary {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 </style>

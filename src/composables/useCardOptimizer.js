@@ -301,6 +301,100 @@ export function useCardOptimizer(periodRef, cardFilterRef, showFutureRef) {
       .slice(0, 10)
   })
 
+  // ── Wrong Card Transactions (Alerts) ──
+  const wrongCardTransactions = computed(() => {
+    if (!activeReport.value?.analyses) return []
+    return activeReport.value.analyses
+      .filter(a => !a.isOptimal && a.actualCard && a.missedRewards > 0)
+      .sort((a, b) => b.missedRewards - a.missedRewards)
+  })
+
+  const wrongCardCount = computed(() => wrongCardTransactions.value.length)
+
+  const annualizedMissedRewards = computed(() => {
+    const missed = activeReport.value?.totals?.missedRewards || 0
+    const months = PERIOD_MONTHS[periodRef?.value] || 3
+    return (missed / months) * 12
+  })
+
+  // ── Signup Bonus Tracker ──
+  const signupBonusTracker = computed(() => {
+    const cards = cardStore.activeCards
+    const now = new Date()
+    const trackers = []
+
+    for (const card of cards) {
+      const detail = cardStore.cardDetails[card.cardKey]
+      if (!detail || !detail.isSignupBonus) continue
+
+      const spendRequired = detail.signupBonusSpend || 0
+      const bonusMonths = detail.signupBonusLength || 3
+      const bonusAmount = detail.signupBonusAmount || 0
+      const bonusType = detail.signUpBonusItem || ''
+      const dollarValue = detail.signupBonusDollarValue || 0
+
+      const spent = activeReport.value?.byCard?.[card.cardKey]?.spend || 0
+      const remaining = Math.max(0, spendRequired - spent)
+      const pct = spendRequired > 0 ? Math.min(100, Math.round((spent / spendRequired) * 100)) : 0
+
+      const addedDate = card.addedDate ? new Date(card.addedDate) : null
+      let daysLeft = 0
+      let deadlineDate = null
+      if (addedDate) {
+        deadlineDate = new Date(addedDate)
+        deadlineDate.setMonth(deadlineDate.getMonth() + bonusMonths)
+        daysLeft = Math.max(0, Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)))
+      }
+
+      const dailyNeeded = daysLeft > 0 ? remaining / daysLeft : 0
+
+      let status = 'not-started'
+      if (pct >= 100) {
+        status = 'complete'
+      } else if (addedDate && deadlineDate && now > deadlineDate) {
+        status = 'expired'
+      } else if (spent > 0) {
+        status = 'active'
+      }
+
+      trackers.push({
+        cardKey: card.cardKey,
+        cardName: detail.cardName,
+        cardIssuer: detail.cardIssuer,
+        bonusAmount,
+        bonusType,
+        dollarValue,
+        spendRequired,
+        spent,
+        remaining,
+        pct,
+        daysLeft,
+        dailyNeeded,
+        status,
+      })
+    }
+
+    // Sort: active first (by daysLeft asc), then not-started, complete, expired
+    const order = { active: 0, 'not-started': 1, complete: 2, expired: 3 }
+    return trackers.sort((a, b) => {
+      const oa = order[a.status] ?? 9
+      const ob = order[b.status] ?? 9
+      if (oa !== ob) return oa - ob
+      if (a.status === 'active' && b.status === 'active') return a.daysLeft - b.daysLeft
+      return 0
+    })
+  })
+
+  const totalSubValue = computed(() =>
+    signupBonusTracker.value.reduce((s, t) => s + t.dollarValue, 0)
+  )
+
+  const earnedSubValue = computed(() =>
+    signupBonusTracker.value
+      .filter(t => t.status === 'complete')
+      .reduce((s, t) => s + t.dollarValue, 0)
+  )
+
   function getBestCardFor(plaidCategory) {
     return findBestCard(plaidCategory, cardStore.plaidMappings, cardStore.activeCards, null, cardStore.cardDetails)
   }
@@ -322,6 +416,12 @@ export function useCardOptimizer(periodRef, cardFilterRef, showFutureRef) {
     futureRewardsGain,
     topCategories,
     filteredTransactions,
+    wrongCardTransactions,
+    wrongCardCount,
+    annualizedMissedRewards,
+    signupBonusTracker,
+    totalSubValue,
+    earnedSubValue,
     runAnalysis,
     getBestCardFor,
   }
