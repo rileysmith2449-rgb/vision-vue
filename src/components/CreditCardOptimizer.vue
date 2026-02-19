@@ -153,102 +153,6 @@
           </div>
         </div>
 
-        <!-- Cards to Consider -->
-        <div v-if="marketCardSuggestions.length > 0" class="section-block" style="margin-top: 16px;">
-          <h4 class="block-title">
-            <PlusCircle :size="16" stroke-width="2" />
-            Cards to Consider
-          </h4>
-          <p class="block-subtitle">Popular cards that could boost your rewards based on your spending</p>
-          <div class="combo-grid">
-            <div
-              v-for="card in marketCardSuggestions"
-              :key="card.name"
-              class="combo-card suggest"
-            >
-              <div class="combo-card-header">
-                <span class="combo-card-name">{{ card.name }}</span>
-                <span class="combo-badge suggest">Consider</span>
-              </div>
-              <p class="suggest-highlight">{{ card.highlight }}</p>
-              <div class="combo-stats">
-                <div class="combo-stat">
-                  <span class="combo-stat-label">Projected Rewards</span>
-                  <span class="combo-stat-value gain">{{ formatCurrency(card.projectedRewards) }}</span>
-                </div>
-                <div class="combo-stat">
-                  <span class="combo-stat-label">Annual Fee</span>
-                  <span class="combo-stat-value">{{ card.annualFee > 0 ? formatCurrency(card.annualFee) : 'Free' }}</span>
-                </div>
-                <div class="combo-stat">
-                  <span class="combo-stat-label">Net Value</span>
-                  <span class="combo-stat-value gain">+{{ formatCurrency(card.netValue) }}</span>
-                </div>
-              </div>
-              <div v-if="card.bestCategories.length" class="combo-categories">
-                <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card Ecosystem Combos -->
-        <div v-if="filteredEcosystems.length > 0" class="section-block" style="margin-top: 16px;">
-          <h4 class="block-title">
-            <Layers :size="16" stroke-width="2" />
-            Recommended Card Combos
-          </h4>
-          <p class="block-subtitle">Complete card ecosystems that maximize rewards for your spending pattern</p>
-
-          <div class="eco-grid">
-            <div
-              v-for="eco in filteredEcosystems"
-              :key="eco.name"
-              :class="['eco-card', { 'eco-expanded': expandedEco === eco.name }]"
-              @click="expandedEco = expandedEco === eco.name ? null : eco.name"
-            >
-              <div class="eco-header">
-                <div class="eco-title-row">
-                  <span class="eco-name">{{ eco.name }}</span>
-                  <span :class="['eco-scope-badge', `eco-scope-${eco.scope}`]">{{ eco.scope === 'combined' ? 'Both' : eco.scope }}</span>
-                </div>
-                <p class="eco-desc">{{ eco.description }}</p>
-              </div>
-              <div class="eco-stats">
-                <div class="combo-stat">
-                  <span class="combo-stat-label">Projected Rewards</span>
-                  <span class="combo-stat-value gain">{{ formatCurrency(eco.projectedRewards) }}</span>
-                </div>
-                <div class="combo-stat">
-                  <span class="combo-stat-label">Total Fees</span>
-                  <span class="combo-stat-value">{{ eco.totalAnnualFee > 0 ? formatCurrency(eco.totalAnnualFee) : 'Free' }}</span>
-                </div>
-                <div class="combo-stat">
-                  <span class="combo-stat-label">Net Value</span>
-                  <span class="combo-stat-value" :class="eco.netValue >= 0 ? 'gain' : 'loss'">{{ eco.netValue >= 0 ? '+' : '' }}{{ formatCurrency(eco.netValue) }}</span>
-                </div>
-                <div v-if="eco.pooledValue > 0" class="combo-stat">
-                  <span class="combo-stat-label">Pooled Value</span>
-                  <span class="combo-stat-value gain">{{ formatCurrency(eco.pooledValue) }}</span>
-                </div>
-              </div>
-              <p class="eco-highlight">{{ eco.highlight }}</p>
-              <ChevronDown :size="14" stroke-width="2" :class="['eco-chevron', { rotated: expandedEco === eco.name }]" />
-
-              <!-- Expanded detail -->
-              <div v-if="expandedEco === eco.name" class="eco-detail" @click.stop>
-                <div v-for="c in eco.cards" :key="c.name" class="eco-card-row">
-                  <span :class="['eco-card-required', { optional: !c.required }]">{{ c.required ? '●' : '○' }}</span>
-                  <span class="eco-card-name">{{ c.name }}</span>
-                  <span class="eco-card-role">{{ c.role }}</span>
-                </div>
-                <div v-if="eco.poolNote" class="eco-pool-note">
-                  {{ eco.poolNote }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Category Table View -->
@@ -572,6 +476,46 @@
             </div>
           </div>
         </div>
+
+        <!-- Merchant-Specific Cards -->
+        <div v-if="merchantCardSuggestions.length > 0" class="section-block" style="margin-top: 16px;">
+          <h4 class="block-title">
+            <PlusCircle :size="16" stroke-width="2" />
+            Merchant-Specific Cards
+          </h4>
+          <p class="block-subtitle">Cards optimized for merchants you frequently shop at</p>
+          <div class="combo-grid">
+            <div
+              v-for="card in merchantCardSuggestions"
+              :key="card.cardName + '-' + card.merchant"
+              class="combo-card suggest"
+            >
+              <div class="combo-card-header">
+                <span class="combo-card-name">{{ card.cardName }}</span>
+                <span class="combo-badge suggest">{{ card.type === 'business' ? 'Business' : 'Consider' }}</span>
+              </div>
+              <p class="suggest-highlight">{{ card.highlight }}</p>
+              <div class="combo-stats">
+                <div class="combo-stat">
+                  <span class="combo-stat-label">{{ card.merchant }} Spend</span>
+                  <span class="combo-stat-value">{{ formatCurrency(card.merchantSpend) }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Projected Rewards</span>
+                  <span class="combo-stat-value gain">{{ formatCurrency(card.projectedRewards) }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Annual Fee</span>
+                  <span class="combo-stat-value">{{ card.annualFee > 0 ? formatCurrency(card.annualFee) : 'Free' }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Net Value</span>
+                  <span class="combo-stat-value gain">+{{ formatCurrency(card.netValue) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Points & Credits View -->
@@ -683,6 +627,64 @@
               </div>
             </div>
           </div>
+
+          <!-- Recommended Card Combos -->
+          <div v-if="filteredEcosystems.length > 0" class="section-block" style="margin-top: 16px;">
+            <h4 class="block-title">
+              <Layers :size="16" stroke-width="2" />
+              Recommended Card Combos
+            </h4>
+            <p class="block-subtitle">Complete card ecosystems that maximize rewards for your spending pattern</p>
+
+            <div class="eco-grid">
+              <div
+                v-for="eco in filteredEcosystems"
+                :key="eco.name"
+                :class="['eco-card', { 'eco-expanded': expandedEco === eco.name }]"
+                @click="expandedEco = expandedEco === eco.name ? null : eco.name"
+              >
+                <div class="eco-header">
+                  <div class="eco-title-row">
+                    <span class="eco-name">{{ eco.name }}</span>
+                    <span :class="['eco-scope-badge', `eco-scope-${eco.scope}`]">{{ eco.scope === 'combined' ? 'Both' : eco.scope }}</span>
+                  </div>
+                  <p class="eco-desc">{{ eco.description }}</p>
+                </div>
+                <div class="eco-stats">
+                  <div class="combo-stat">
+                    <span class="combo-stat-label">Projected Rewards</span>
+                    <span class="combo-stat-value gain">{{ formatCurrency(eco.projectedRewards) }}</span>
+                  </div>
+                  <div class="combo-stat">
+                    <span class="combo-stat-label">Total Fees</span>
+                    <span class="combo-stat-value">{{ eco.totalAnnualFee > 0 ? formatCurrency(eco.totalAnnualFee) : 'Free' }}</span>
+                  </div>
+                  <div class="combo-stat">
+                    <span class="combo-stat-label">Net Value</span>
+                    <span class="combo-stat-value" :class="eco.netValue >= 0 ? 'gain' : 'loss'">{{ eco.netValue >= 0 ? '+' : '' }}{{ formatCurrency(eco.netValue) }}</span>
+                  </div>
+                  <div v-if="eco.pooledValue > 0" class="combo-stat">
+                    <span class="combo-stat-label">Pooled Value</span>
+                    <span class="combo-stat-value gain">{{ formatCurrency(eco.pooledValue) }}</span>
+                  </div>
+                </div>
+                <p class="eco-highlight">{{ eco.highlight }}</p>
+                <ChevronDown :size="14" stroke-width="2" :class="['eco-chevron', { rotated: expandedEco === eco.name }]" />
+
+                <!-- Expanded detail -->
+                <div v-if="expandedEco === eco.name" class="eco-detail" @click.stop>
+                  <div v-for="c in eco.cards" :key="c.name" class="eco-card-row">
+                    <span :class="['eco-card-required', { optional: !c.required }]">{{ c.required ? '●' : '○' }}</span>
+                    <span class="eco-card-name">{{ c.name }}</span>
+                    <span class="eco-card-role">{{ c.role }}</span>
+                  </div>
+                  <div v-if="eco.poolNote" class="eco-pool-note">
+                    {{ eco.poolNote }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </template>
       </div>
 
@@ -781,7 +783,7 @@ import { useBudgetStore } from '@/stores/budget'
 import { useSettingsStore } from '@/stores/settings'
 import { useCardOptimizer } from '@/composables/useCardOptimizer'
 import { formatCurrency } from '@/utils/formatters'
-import { creditCards, getBestCardForCategory, marketCards, cardEcosystems, pointsEcosystems } from '@/utils/creditCardData'
+import { creditCards, getBestCardForCategory, marketCards, cardEcosystems, pointsEcosystems, merchantCardMap } from '@/utils/creditCardData'
 import CardManager from '@/components/CardManager.vue'
 
 const cardStore = useCreditCardStore()
@@ -828,22 +830,23 @@ const {
   signupBonusTracker,
   totalSubValue,
   earnedSubValue,
+  topMerchants,
   runAnalysis,
 } = useCardOptimizer(selectedPeriod, cardFilter, showFutureState)
 
 const showCardManager = ref(false)
-const activeView = ref('alerts')
+const activeView = ref('spendmap')
 const expandedCat = ref(null)
 const expandedCard = ref(null)
 const expandedRec = ref(null)
 const expandedEco = ref(null)
 
 const views = [
-  { key: 'alerts', label: 'Alerts', icon: Bell },
+  { key: 'spendmap', label: 'Spend Map', icon: Map },
   { key: 'categories', label: 'By Category', icon: BarChart3 },
   { key: 'cards', label: 'By Card', icon: Wallet },
+  { key: 'alerts', label: 'Alerts', icon: Bell },
   { key: 'points', label: 'Points & Credits', icon: Gift },
-  { key: 'spendmap', label: 'Spend Map', icon: Map },
   { key: 'subtracker', label: 'SUB Tracker', icon: Target },
 ]
 
@@ -1203,10 +1206,11 @@ const marketCardSuggestions = computed(() => {
   const cats = topCategories.value
   const filterType = cardFilter.value
 
-  // Filter market cards to match current card type filter
-  const eligibleMarket = filterType === 'all'
+  // Filter market cards to match current card type filter, exclude merchant-specific cards
+  const eligibleMarket = (filterType === 'all'
     ? marketCards
     : marketCards.filter(c => (c.type || 'personal') === filterType)
+  ).filter(c => !c.merchantCard)
 
   return eligibleMarket.map(card => {
     let projectedRewards = 0
@@ -1234,6 +1238,60 @@ const marketCardSuggestions = computed(() => {
     }
   }).filter(c => c.bestCategories.length > 0 && c.netValue > 0)
     .sort((a, b) => b.netValue - a.netValue)
+})
+
+// ── Merchant-Specific Card Suggestions ──
+const merchantCardSuggestions = computed(() => {
+  const merchants = topMerchants.value
+  const filterType = cardFilter.value
+  const months = selectedPeriod.value === 'all' ? 12 : (PERIOD_MONTHS[selectedPeriod.value] || 3)
+  const proratedFactor = months / 12
+
+  // Get owned card names
+  const ownedNames = new Set()
+  for (const card of cardStore.activeCards) {
+    const detail = cardStore.cardDetails[card.cardKey]
+    if (detail?.cardName) ownedNames.add(detail.cardName)
+  }
+
+  const suggestions = []
+  for (const m of merchants) {
+    const key = m.merchant.toLowerCase()
+    // Check each merchantCardMap entry for a match
+    for (const [pattern, cards] of Object.entries(merchantCardMap)) {
+      if (!key.includes(pattern)) continue
+
+      const types = filterType === 'all' ? ['personal', 'business'] : [filterType]
+      for (const type of types) {
+        const cardName = cards[type]
+        if (!cardName) continue
+        if (ownedNames.has(cardName)) continue
+        // Avoid duplicates
+        if (suggestions.some(s => s.cardName === cardName && s.merchant === m.merchant)) continue
+
+        const cardData = marketCards.find(c => c.name === cardName)
+        if (!cardData) continue
+
+        const shoppingRate = cardData.cashbackRates['Shopping'] || cardData.cashbackRates.default || 0
+        const projectedRewards = m.spend * shoppingRate
+        const proratedFee = cardData.annualFee * proratedFactor
+        const netValue = projectedRewards - proratedFee
+        if (netValue <= 0) continue
+
+        suggestions.push({
+          cardName,
+          merchant: m.merchant,
+          merchantSpend: m.spend,
+          projectedRewards,
+          annualFee: cardData.annualFee,
+          netValue,
+          type: cardData.type,
+          highlight: cardData.highlight,
+        })
+      }
+    }
+  }
+  return suggestions.sort((a, b) => b.netValue - a.netValue)
 })
 
 // ── Category drilldowns ──

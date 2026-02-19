@@ -395,6 +395,22 @@ export function useCardOptimizer(periodRef, cardFilterRef, showFutureRef) {
       .reduce((s, t) => s + t.dollarValue, 0)
   )
 
+  // ── Top Merchants by spend ──
+  const topMerchants = computed(() => {
+    const txns = filteredTransactions.value
+    const map = {}
+    for (const t of txns) {
+      const name = (t.merchant_name || '').trim()
+      if (!name) continue
+      if (!map[name]) map[name] = { merchant: name, spend: 0, count: 0 }
+      map[name].spend += t.amount
+      map[name].count++
+    }
+    return Object.values(map)
+      .sort((a, b) => b.spend - a.spend)
+      .slice(0, 20)
+  })
+
   function getBestCardFor(plaidCategory) {
     return findBestCard(plaidCategory, cardStore.plaidMappings, cardStore.activeCards, null, cardStore.cardDetails)
   }
@@ -422,6 +438,7 @@ export function useCardOptimizer(periodRef, cardFilterRef, showFutureRef) {
     signupBonusTracker,
     totalSubValue,
     earnedSubValue,
+    topMerchants,
     runAnalysis,
     getBestCardFor,
   }

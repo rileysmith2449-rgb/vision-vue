@@ -212,7 +212,40 @@ export const marketCards = [
     },
     highlight: 'Unlimited 2% cash back on every business purchase'
   },
+  // Merchant-specific
+  {
+    name: 'Amazon Prime Rewards Visa',
+    type: 'personal',
+    annualFee: 0,
+    cashbackRates: {
+      'Shopping': 0.05,
+      'Dining & Food': 0.02,
+      'Transportation': 0.02,
+      default: 0.01
+    },
+    highlight: '5% back at Amazon & Whole Foods, 2% dining/gas/transit',
+    merchantCard: true,
+    merchants: ['amazon'],
+  },
+  {
+    name: 'Amazon Business Prime Card',
+    type: 'business',
+    annualFee: 0,
+    cashbackRates: {
+      'Shopping': 0.05,
+      'Office & Software': 0.02,
+      default: 0.01
+    },
+    highlight: '5% back at Amazon Business, 2% on office supplies',
+    merchantCard: true,
+    merchants: ['amazon'],
+  },
 ]
+
+export const merchantCardMap = {
+  'amazon': { personal: 'Amazon Prime Rewards Visa', business: 'Amazon Business Prime Card' },
+  'whole foods': { personal: 'Amazon Prime Rewards Visa' },
+}
 
 // ── Points Ecosystems ──
 // Cards that share a transferable points program and can pool points together.
