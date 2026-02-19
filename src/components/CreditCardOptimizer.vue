@@ -914,35 +914,55 @@ const pointsPrograms = computed(() => {
 })
 
 // Pooled points programs — aggregate cards in the same ecosystem
+// Switches between actual spend (current) and optimized allocation (future)
 const pooledPointsPrograms = computed(() => {
-  const txns = filteredTransactions.value
-  const cardSpendMap = {}
-  for (const t of txns) {
-    const cardName = t._budgetCard
-    if (!cardName) continue
-    if (!cardSpendMap[cardName]) cardSpendMap[cardName] = {}
-    const cat = t._budgetCategory || 'Other'
-    cardSpendMap[cardName][cat] = (cardSpendMap[cardName][cat] || 0) + t.amount
+  // Build a cardKey → cardName lookup
+  const keyToName = {}
+  for (const [key, detail] of Object.entries(cardStore.cardDetails)) {
+    keyToName[key] = detail.cardName
+  }
+
+  // In optimized mode, use the report's byCard rewards (optimal allocation)
+  // In current mode, use actual transaction spend per card
+  const cardRewardsMap = {} // cardName → total cashback rewards
+
+  if (showFutureState.value && activeReport.value?.byCard) {
+    for (const [cardKey, data] of Object.entries(activeReport.value.byCard)) {
+      const name = keyToName[cardKey] || cardKey
+      cardRewardsMap[name] = (cardRewardsMap[name] || 0) + data.rewards
+    }
+  } else {
+    // Current mode: compute from actual transaction card assignments
+    const txns = filteredTransactions.value
+    const cardSpendMap = {}
+    for (const t of txns) {
+      const cardName = t._budgetCard
+      if (!cardName) continue
+      if (!cardSpendMap[cardName]) cardSpendMap[cardName] = {}
+      const cat = t._budgetCategory || 'Other'
+      cardSpendMap[cardName][cat] = (cardSpendMap[cardName][cat] || 0) + t.amount
+    }
+    for (const [cardName, spend] of Object.entries(cardSpendMap)) {
+      const cardData = creditCards.find(c => c.name === cardName) || marketCards.find(c => c.name === cardName)
+      if (!cardData) continue
+      let cashback = 0
+      for (const [category, amount] of Object.entries(spend)) {
+        const rate = cardData.cashbackRates[category] || cardData.cashbackRates.default || 0
+        cashback += amount * rate
+      }
+      if (cashback > 0) cardRewardsMap[cardName] = cashback
+    }
   }
 
   const programs = []
-  for (const [ecoName, eco] of Object.entries(pointsEcosystems)) {
+  for (const [, eco] of Object.entries(pointsEcosystems)) {
     let totalCashback = 0
     const contributingCards = []
 
     for (const cardName of eco.cards) {
-      const cardData = creditCards.find(c => c.name === cardName) || marketCards.find(c => c.name === cardName)
-      if (!cardData) continue
-      const spend = cardSpendMap[cardName]
-      if (!spend) continue
-
-      let cardCashback = 0
-      for (const [category, amount] of Object.entries(spend)) {
-        const rate = cardData.cashbackRates[category] || cardData.cashbackRates.default || 0
-        cardCashback += amount * rate
-      }
-      if (cardCashback > 0) {
-        totalCashback += cardCashback
+      const rewards = cardRewardsMap[cardName]
+      if (rewards && rewards > 0) {
+        totalCashback += rewards
         contributingCards.push(cardName)
       }
     }
