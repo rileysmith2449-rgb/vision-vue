@@ -7,7 +7,7 @@ import {
   fetchCardImage,
   searchCardsByName,
 } from '@/services/rewardsCCApi'
-import { creditCards as localCards } from '@/utils/creditCardData'
+import { creditCards as localCards, marketCards as marketCardList } from '@/utils/creditCardData'
 
 const CACHE_PREFIX = 'vision_card_cache_'
 const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
@@ -184,6 +184,11 @@ export const useCreditCardStore = defineStore('creditCard', () => {
     })
   )
 
+  // All card keys that have loaded data (portfolio + market cards)
+  const allKnownCardKeys = computed(() =>
+    Object.keys(cardDetails.value)
+  )
+
   // ── Local-only initialization ──
   function initializeLocal() {
     // Build catalog from hardcoded cards
@@ -199,6 +204,15 @@ export const useCreditCardStore = defineStore('creditCard', () => {
       const key = toCardKey(card.name)
       cardDetails.value[key] = buildLocalCardDetail(card)
       plaidMappings.value[key] = buildLocalPlaidMapping(card)
+    }
+
+    // Also populate data for all market cards so future-state analysis can use them
+    for (const card of marketCardList) {
+      const key = toCardKey(card.name)
+      if (!cardDetails.value[key]) {
+        cardDetails.value[key] = buildLocalCardDetail(card)
+        plaidMappings.value[key] = buildLocalPlaidMapping(card)
+      }
     }
 
     // Auto-populate portfolio on first use (if empty)
@@ -390,14 +404,15 @@ export const useCreditCardStore = defineStore('creditCard', () => {
       const newPortfolio = []
       for (const cardName of uniqueCards) {
         const key = toCardKey(cardName)
-        // Load card data if we have a local definition
-        const local = localCards.find(c => toCardKey(c.name) === key)
-        if (local) {
-          cardDetails.value[key] = buildLocalCardDetail(local)
-          plaidMappings.value[key] = buildLocalPlaidMapping(local)
-        } else {
-          // Create a basic card detail for unknown cards
-          cardDetails.value[key] = {
+        // Only populate card data if not already loaded (from local/market cards)
+        if (!cardDetails.value[key]) {
+          const local = localCards.find(c => toCardKey(c.name) === key)
+          if (local) {
+            cardDetails.value[key] = buildLocalCardDetail(local)
+            plaidMappings.value[key] = buildLocalPlaidMapping(local)
+          } else {
+            // Create a basic card detail for unknown cards
+            cardDetails.value[key] = {
             cardKey: key,
             cardIssuer: cardName.split(' ')[0],
             cardName: cardName,
@@ -426,6 +441,7 @@ export const useCreditCardStore = defineStore('creditCard', () => {
             baseSpendEarnIsCash: 1,
             baseSpendEarnCashValue: 0.01,
             plaidDetailed: [],
+          }
           }
         }
         newPortfolio.push({
@@ -464,6 +480,7 @@ export const useCreditCardStore = defineStore('creditCard', () => {
     // Computed
     activeCards,
     portfolioCardKeys,
+    allKnownCardKeys,
     totalAnnualFees,
     personalCards,
     businessCards,

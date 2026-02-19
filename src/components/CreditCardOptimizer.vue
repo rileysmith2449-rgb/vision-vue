@@ -29,12 +29,20 @@
           <span class="stat-value">{{ formatCurrency(totalSpend) }}</span>
         </div>
         <div class="score-stat">
-          <span class="stat-label">Optimal Rewards</span>
+          <span class="stat-label">{{ showFutureState ? 'Optimized Rewards' : 'Optimal Rewards' }}</span>
           <span class="stat-value stat-teal">{{ formatCurrencyCents(totalOptimalRewards) }}</span>
         </div>
-        <div class="score-stat" v-if="totalMissedRewards > 0">
+        <div class="score-stat" v-if="totalMissedRewards > 0 && !showFutureState">
           <span class="stat-label">Left on Table</span>
           <span class="stat-value stat-negative">{{ formatCurrencyCents(totalMissedRewards) }}</span>
+        </div>
+        <div class="score-stat" v-if="showFutureState && futureRewardsGain > 0">
+          <span class="stat-label">Additional Gain</span>
+          <span class="stat-value stat-teal">+{{ formatCurrencyCents(futureRewardsGain) }}</span>
+        </div>
+        <div class="score-stat">
+          <span class="stat-label">Global Score</span>
+          <span class="stat-value" :class="globalOptimizationScore >= 80 ? 'stat-teal' : globalOptimizationScore >= 50 ? '' : 'stat-negative'">{{ globalOptimizationScore }}%</span>
         </div>
       </div>
 
@@ -51,6 +59,13 @@
           <button :class="['filter-btn', { active: cardFilter === 'all' }]" @click="cardFilter = 'all'">All</button>
           <button :class="['filter-btn', { active: cardFilter === 'personal' }]" @click="cardFilter = 'personal'">Personal</button>
           <button :class="['filter-btn', { active: cardFilter === 'business' }]" @click="cardFilter = 'business'">Business</button>
+        </div>
+        <div class="future-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" v-model="showFutureState" />
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="future-label">{{ showFutureState ? 'Optimized' : 'Current' }}</span>
         </div>
         <button class="manage-btn" @click="showCardManager = true">
           <Settings :size="16" stroke-width="2" />
@@ -215,6 +230,64 @@
             </div>
           </div>
         </div>
+
+        <!-- Card Ecosystem Combos -->
+        <div v-if="filteredEcosystems.length > 0" class="section-block" style="margin-top: 16px;">
+          <h4 class="block-title">
+            <Layers :size="16" stroke-width="2" />
+            Recommended Card Combos
+          </h4>
+          <p class="block-subtitle">Complete card ecosystems that maximize rewards for your spending pattern</p>
+
+          <div class="eco-grid">
+            <div
+              v-for="eco in filteredEcosystems"
+              :key="eco.name"
+              :class="['eco-card', { 'eco-expanded': expandedEco === eco.name }]"
+              @click="expandedEco = expandedEco === eco.name ? null : eco.name"
+            >
+              <div class="eco-header">
+                <div class="eco-title-row">
+                  <span class="eco-name">{{ eco.name }}</span>
+                  <span :class="['eco-scope-badge', `eco-scope-${eco.scope}`]">{{ eco.scope === 'combined' ? 'Both' : eco.scope }}</span>
+                </div>
+                <p class="eco-desc">{{ eco.description }}</p>
+              </div>
+              <div class="eco-stats">
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Projected Rewards</span>
+                  <span class="combo-stat-value gain">{{ formatCurrency(eco.projectedRewards) }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Total Fees</span>
+                  <span class="combo-stat-value">{{ eco.totalAnnualFee > 0 ? formatCurrency(eco.totalAnnualFee) : 'Free' }}</span>
+                </div>
+                <div class="combo-stat">
+                  <span class="combo-stat-label">Net Value</span>
+                  <span class="combo-stat-value" :class="eco.netValue >= 0 ? 'gain' : 'loss'">{{ eco.netValue >= 0 ? '+' : '' }}{{ formatCurrency(eco.netValue) }}</span>
+                </div>
+                <div v-if="eco.pooledValue > 0" class="combo-stat">
+                  <span class="combo-stat-label">Pooled Value</span>
+                  <span class="combo-stat-value gain">{{ formatCurrency(eco.pooledValue) }}</span>
+                </div>
+              </div>
+              <p class="eco-highlight">{{ eco.highlight }}</p>
+              <ChevronDown :size="14" stroke-width="2" :class="['eco-chevron', { rotated: expandedEco === eco.name }]" />
+
+              <!-- Expanded detail -->
+              <div v-if="expandedEco === eco.name" class="eco-detail" @click.stop>
+                <div v-for="c in eco.cards" :key="c.name" class="eco-card-row">
+                  <span :class="['eco-card-required', { optional: !c.required }]">{{ c.required ? '●' : '○' }}</span>
+                  <span class="eco-card-name">{{ c.name }}</span>
+                  <span class="eco-card-role">{{ c.role }}</span>
+                </div>
+                <div v-if="eco.poolNote" class="eco-pool-note">
+                  {{ eco.poolNote }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Category Table View -->
@@ -307,7 +380,7 @@
 
       <!-- Card Stack View -->
       <div v-if="activeView === 'cards'" class="card-stack">
-        <div v-if="!report?.byCard || Object.keys(report.byCard).length === 0" class="empty-section">
+        <div v-if="!activeReport?.byCard || Object.keys(activeReport.byCard).length === 0" class="empty-section">
           No card assignments yet.
         </div>
         <template v-else>
@@ -542,22 +615,25 @@
 
       <!-- Points & Credits View -->
       <div v-if="activeView === 'points'" class="points-view">
-        <div v-if="pointsPrograms.length === 0 && creditsSummary.length === 0" class="empty-section">
+        <div v-if="pooledPointsPrograms.length === 0 && creditsSummary.length === 0" class="empty-section">
           No points or credit data available. Use cards with rewards programs to see redemption strategies.
         </div>
 
-        <template v-if="pointsPrograms.length > 0">
+        <template v-if="pooledPointsPrograms.length > 0">
           <h4 class="block-title">
             <Gift :size="16" stroke-width="2" />
             Points & Redemption Strategy
           </h4>
-          <p class="block-subtitle">Maximize the value of your earned rewards</p>
+          <p class="block-subtitle">Pooled ecosystem rewards across personal & business cards</p>
 
           <div class="points-grid">
-            <div v-for="program in pointsPrograms" :key="program.name" class="points-card">
+            <div v-for="program in pooledPointsPrograms" :key="program.name" class="points-card">
               <div class="points-card-header">
                 <span class="points-program-name">{{ program.name }}</span>
                 <span class="points-balance">{{ program.points.toLocaleString() }} {{ program.unit }}</span>
+              </div>
+              <div v-if="program.contributingCards.length > 1" class="pool-note">
+                Pooled from: {{ program.contributingCards.join(', ') }}
               </div>
               <div class="redemption-options">
                 <div
@@ -572,6 +648,9 @@
                   </div>
                   <span class="redemption-value" :class="{ 'best-value': opt.best }">{{ formatCurrency(opt.value) }}</span>
                 </div>
+              </div>
+              <div v-if="program.poolNote" class="eco-pool-note" style="margin-top: 8px;">
+                {{ program.poolNote }}
               </div>
             </div>
           </div>
@@ -634,14 +713,14 @@ import {
   CreditCard, Settings, Plus, ArrowRight, Loader2,
   LayoutList, BarChart3, Wallet, BookOpen,
   TrendingUp, Gift, Zap, AlertTriangle,
-  ChevronDown, PlusCircle, CheckCircle, Circle,
+  ChevronDown, PlusCircle, CheckCircle, Circle, Layers,
 } from 'lucide-vue-next'
 import { useCreditCardStore } from '@/stores/creditCardStore'
 import { useBudgetStore } from '@/stores/budget'
 import { useSettingsStore } from '@/stores/settings'
 import { useCardOptimizer } from '@/composables/useCardOptimizer'
 import { formatCurrency } from '@/utils/formatters'
-import { creditCards, getBestCardForCategory, marketCards } from '@/utils/creditCardData'
+import { creditCards, getBestCardForCategory, marketCards, cardEcosystems, pointsEcosystems } from '@/utils/creditCardData'
 import CardManager from '@/components/CardManager.vue'
 
 const cardStore = useCreditCardStore()
@@ -658,6 +737,7 @@ const periods = [
 ]
 const selectedPeriod = ref('3m')
 const cardFilter = ref('all')
+const showFutureState = ref(false)
 
 const periodLabel = computed(() => {
   const p = periods.find(p => p.key === selectedPeriod.value)
@@ -667,23 +747,28 @@ const periodLabel = computed(() => {
 
 const {
   report,
+  activeReport,
   recommendations,
   cheatSheet,
+  futureReport,
   isAnalyzing,
   totalMissedRewards,
   optimizationScore,
+  globalOptimizationScore,
   totalOptimalRewards,
   totalSpend,
+  futureRewardsGain,
   topCategories,
   filteredTransactions,
   runAnalysis,
-} = useCardOptimizer(selectedPeriod, cardFilter)
+} = useCardOptimizer(selectedPeriod, cardFilter, showFutureState)
 
 const showCardManager = ref(false)
 const activeView = ref('recommendations')
 const expandedCat = ref(null)
 const expandedCard = ref(null)
 const expandedRec = ref(null)
+const expandedEco = ref(null)
 
 const views = [
   { key: 'recommendations', label: 'Recommendations', icon: Zap },
@@ -703,8 +788,8 @@ const ringOffset = computed(() => {
 const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12, 'all': 12 }
 
 const sortedCards = computed(() => {
-  if (!report.value?.byCard) return []
-  const byCard = Object.values(report.value.byCard)
+  if (!activeReport.value?.byCard) return []
+  const byCard = Object.values(activeReport.value.byCard)
   const months = PERIOD_MONTHS[selectedPeriod.value] || 3
   const proratedFactor = months / 12
 
@@ -828,6 +913,128 @@ const pointsPrograms = computed(() => {
   return programs.sort((a, b) => b.bestValue - a.bestValue)
 })
 
+// Pooled points programs — aggregate cards in the same ecosystem
+const pooledPointsPrograms = computed(() => {
+  const txns = filteredTransactions.value
+  const cardSpendMap = {}
+  for (const t of txns) {
+    const cardName = t._budgetCard
+    if (!cardName) continue
+    if (!cardSpendMap[cardName]) cardSpendMap[cardName] = {}
+    const cat = t._budgetCategory || 'Other'
+    cardSpendMap[cardName][cat] = (cardSpendMap[cardName][cat] || 0) + t.amount
+  }
+
+  const programs = []
+  for (const [ecoName, eco] of Object.entries(pointsEcosystems)) {
+    let totalCashback = 0
+    const contributingCards = []
+
+    for (const cardName of eco.cards) {
+      const cardData = creditCards.find(c => c.name === cardName) || marketCards.find(c => c.name === cardName)
+      if (!cardData) continue
+      const spend = cardSpendMap[cardName]
+      if (!spend) continue
+
+      let cardCashback = 0
+      for (const [category, amount] of Object.entries(spend)) {
+        const rate = cardData.cashbackRates[category] || cardData.cashbackRates.default || 0
+        cardCashback += amount * rate
+      }
+      if (cardCashback > 0) {
+        totalCashback += cardCashback
+        contributingCards.push(cardName)
+      }
+    }
+
+    if (totalCashback <= 0) continue
+
+    const points = Math.round(totalCashback * 100)
+    const redemptions = eco.redemptions.map(r => ({
+      method: r.method,
+      rate: r.rate,
+      value: totalCashback * r.multiplier,
+      best: false,
+    }))
+    const maxValue = Math.max(...redemptions.map(r => r.value))
+    redemptions.forEach(r => { if (r.value === maxValue) r.best = true })
+
+    programs.push({
+      name: eco.program,
+      unit: eco.unit,
+      points,
+      redemptions,
+      bestValue: maxValue,
+      contributingCards,
+      poolNote: contributingCards.length > 1 ? eco.poolNote : null,
+    })
+  }
+  return programs.sort((a, b) => b.bestValue - a.bestValue)
+})
+
+// Card Ecosystem Combos — project value for each ecosystem based on user spending
+const filteredEcosystems = computed(() => {
+  const cats = topCategories.value
+  const months = selectedPeriod.value === 'all' ? 12 : (PERIOD_MONTHS[selectedPeriod.value] || 3)
+  const proratedFactor = months / 12
+  const filterType = cardFilter.value
+
+  return cardEcosystems
+    .filter(eco => {
+      if (filterType === 'all') return true
+      return eco.scope === filterType || eco.scope === 'combined'
+    })
+    .map(eco => {
+      // Calculate combined rewards if user had all cards in the ecosystem
+      let projectedRewards = 0
+      for (const cat of cats) {
+        const catName = formatCatName(cat.category)
+        let bestRate = 0
+        for (const ecoCard of eco.cards) {
+          const cardData = creditCards.find(c => c.name === ecoCard.name) || marketCards.find(c => c.name === ecoCard.name)
+          if (!cardData) continue
+          const rate = cardData.cashbackRates[catName] || cardData.cashbackRates.default || 0
+          if (rate > bestRate) bestRate = rate
+        }
+        projectedRewards += cat.spend * bestRate
+      }
+
+      // Factor in redemption multiplier from the points ecosystem
+      let pooledValue = 0
+      for (const [, ecosystem] of Object.entries(pointsEcosystems)) {
+        const ecoCardNames = eco.cards.map(c => c.name)
+        const overlap = ecosystem.cards.filter(c => ecoCardNames.includes(c))
+        if (overlap.length > 0) {
+          pooledValue = projectedRewards * (ecosystem.bestMultiplier - 1)
+          break
+        }
+      }
+
+      const proratedFee = eco.totalAnnualFee * proratedFactor
+      const netValue = projectedRewards + pooledValue - proratedFee
+
+      // Find the relevant pool note
+      let poolNote = null
+      for (const [, ecosystem] of Object.entries(pointsEcosystems)) {
+        const ecoCardNames = eco.cards.map(c => c.name)
+        if (ecosystem.cards.some(c => ecoCardNames.includes(c))) {
+          poolNote = ecosystem.poolNote
+          break
+        }
+      }
+
+      return {
+        ...eco,
+        projectedRewards,
+        pooledValue,
+        netValue,
+        poolNote,
+      }
+    })
+    .filter(eco => eco.projectedRewards > 0)
+    .sort((a, b) => b.netValue - a.netValue)
+})
+
 const creditsSummary = computed(() => {
   const mode = budgetStore.budgetMode
   const activeType = mode === 'family' ? 'personal' : mode
@@ -905,15 +1112,15 @@ function getCategoryBudget(plaidCategory) {
 }
 
 function getCategoryTransactions(plaidCategory) {
-  if (!report.value?.byCategory?.[plaidCategory]) return []
-  return report.value.byCategory[plaidCategory].transactions
+  if (!activeReport.value?.byCategory?.[plaidCategory]) return []
+  return activeReport.value.byCategory[plaidCategory].transactions
     .slice()
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 }
 
 function getCardTransactions(cardKey) {
-  if (!report.value?.analyses) return []
-  return report.value.analyses
+  if (!activeReport.value?.analyses) return []
+  return activeReport.value.analyses
     .filter(a => a.recommendedCard === cardKey)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 }
@@ -968,8 +1175,8 @@ function categoryIcon(cat) {
 }
 
 function getRecDetail(rec) {
-  if (rec.type === 'optimize' && rec.category && report.value?.byCategory?.[rec.category]) {
-    const catData = report.value.byCategory[rec.category]
+  if (rec.type === 'optimize' && rec.category && activeReport.value?.byCategory?.[rec.category]) {
+    const catData = activeReport.value.byCategory[rec.category]
     const suboptimal = catData.transactions
       .filter(t => !t.isOptimal && t.actualCard && t.missedRewards > 0)
       .sort((a, b) => b.missedRewards - a.missedRewards)
@@ -981,8 +1188,8 @@ function getRecDetail(rec) {
       topMissed: suboptimal,
     }
   }
-  if (rec.type === 'gap' && rec.category && report.value?.byCategory?.[rec.category]) {
-    const catData = report.value.byCategory[rec.category]
+  if (rec.type === 'gap' && rec.category && activeReport.value?.byCategory?.[rec.category]) {
+    const catData = activeReport.value.byCategory[rec.category]
     // Group by merchant to show top merchants
     const merchants = {}
     for (const t of catData.transactions) {
@@ -2321,6 +2528,205 @@ onMounted(async () => {
   color: var(--accent-teal);
 }
 
+/* ── Future State Toggle ── */
+.future-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.future-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-tertiary);
+  border-radius: 50%;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: rgba(20, 184, 166, 0.15);
+  border-color: var(--accent-teal);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+  background: var(--accent-teal);
+}
+
+/* ── Card Ecosystems ── */
+.eco-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.eco-card {
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  background-image: var(--gradient-card);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.eco-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.eco-expanded {
+  border-color: var(--accent-blue);
+}
+
+.eco-header {
+  margin-bottom: 12px;
+}
+
+.eco-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.eco-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.eco-scope-badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.eco-scope-personal { background: rgba(59, 130, 246, 0.12); color: #3B82F6; }
+.eco-scope-business { background: rgba(234, 179, 8, 0.12); color: #EAB308; }
+.eco-scope-combined { background: rgba(20, 184, 166, 0.12); color: var(--accent-teal); }
+
+.eco-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.eco-stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.eco-highlight {
+  font-size: 0.72rem;
+  color: var(--accent-blue);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.eco-chevron {
+  color: var(--text-tertiary);
+  float: right;
+  transition: transform 0.2s ease;
+}
+
+.eco-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.eco-detail {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-glass);
+  clear: both;
+}
+
+.eco-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.eco-card-required {
+  font-size: 0.6rem;
+  color: var(--accent-teal);
+  flex-shrink: 0;
+}
+
+.eco-card-required.optional {
+  color: var(--text-tertiary);
+}
+
+.eco-card-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 140px;
+}
+
+.eco-card-role {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.eco-pool-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(20, 184, 166, 0.04);
+  border: 1px solid rgba(20, 184, 166, 0.1);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  color: var(--accent-teal);
+  line-height: 1.4;
+}
+
+.pool-note {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
 /* ── Cheat Sheet ── */
 .cheatsheet-wrap {
   border: 1px solid var(--border-glass);
@@ -2441,6 +2847,10 @@ onMounted(async () => {
   }
 
   .points-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .eco-grid {
     grid-template-columns: 1fr;
   }
 }

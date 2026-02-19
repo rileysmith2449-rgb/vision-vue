@@ -48,14 +48,24 @@ function toCardKey(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
 }
 
-export function useCardOptimizer(periodRef, cardFilterRef) {
+export function useCardOptimizer(periodRef, cardFilterRef, showFutureRef) {
   const cardStore = useCreditCardStore()
   const budgetStore = useBudgetStore()
   const settingsStore = useSettingsStore()
 
+  // Current state analysis
   const report = ref(null)
   const recommendations = ref([])
   const cheatSheet = ref([])
+
+  // Future state analysis (current cards + market cards)
+  const futureReport = ref(null)
+  const futureRecommendations = ref([])
+  const futureCheatSheet = ref([])
+
+  // Global analysis (all known cards)
+  const globalReport = ref(null)
+
   const isAnalyzing = ref(false)
 
   const PERIOD_MONTHS = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 }
@@ -167,12 +177,43 @@ export function useCardOptimizer(periodRef, cardFilterRef) {
     })
   })
 
+  /** All known cards as portfolio-like entries (for future/global analysis) */
+  const allKnownCards = computed(() => {
+    const filter = cardFilterRef?.value || 'all'
+    return cardStore.allKnownCardKeys.map(key => ({ cardKey: key, active: true })).filter(c => {
+      if (filter === 'all') return true
+      const type = filter === 'personal' ? 'Personal' : 'Business'
+      const detail = cardStore.cardDetails[c.cardKey]
+      return detail?.cardType === type
+    })
+  })
+
+  /** Current portfolio + market cards merged (for future state) */
+  const futureCards = computed(() => {
+    const activeKeys = new Set(filteredActiveCards.value.map(c => c.cardKey))
+    const filter = cardFilterRef?.value || 'all'
+    const extra = cardStore.allKnownCardKeys
+      .filter(key => !activeKeys.has(key))
+      .filter(key => {
+        if (filter === 'all') return true
+        const type = filter === 'personal' ? 'Personal' : 'Business'
+        const detail = cardStore.cardDetails[key]
+        return detail?.cardType === type
+      })
+      .map(key => ({ cardKey: key, active: true }))
+    return [...filteredActiveCards.value, ...extra]
+  })
+
   function runAnalysis() {
     const active = filteredActiveCards.value
     if (active.length === 0) {
       report.value = null
       recommendations.value = []
       cheatSheet.value = []
+      futureReport.value = null
+      futureRecommendations.value = []
+      futureCheatSheet.value = []
+      globalReport.value = null
       return
     }
 
@@ -180,11 +221,33 @@ export function useCardOptimizer(periodRef, cardFilterRef) {
 
     try {
       const transactions = filteredTransactions.value
+
+      // Current state analysis
       const r = analyzeTransactions(transactions, cardStore.plaidMappings, active, cardStore.cardDetails)
       report.value = r
-
       recommendations.value = generateRecommendations(r, cardStore.cardDetails, cardStore.plaidMappings, active)
       cheatSheet.value = generateCheatSheet(cardStore.plaidMappings, active, cardStore.cardDetails)
+
+      // Future state analysis (all known cards matching filter)
+      const fCards = futureCards.value
+      if (fCards.length > active.length) {
+        const fr = analyzeTransactions(transactions, cardStore.plaidMappings, fCards, cardStore.cardDetails)
+        futureReport.value = fr
+        futureRecommendations.value = generateRecommendations(fr, cardStore.cardDetails, cardStore.plaidMappings, fCards)
+        futureCheatSheet.value = generateCheatSheet(cardStore.plaidMappings, fCards, cardStore.cardDetails)
+      } else {
+        futureReport.value = r
+        futureRecommendations.value = recommendations.value
+        futureCheatSheet.value = cheatSheet.value
+      }
+
+      // Global analysis — all known cards regardless of portfolio (for global score)
+      const gCards = allKnownCards.value
+      if (gCards.length > active.length) {
+        globalReport.value = analyzeTransactions(transactions, cardStore.plaidMappings, gCards, cardStore.cardDetails)
+      } else {
+        globalReport.value = r
+      }
     } finally {
       isAnalyzing.value = false
     }
@@ -197,22 +260,42 @@ export function useCardOptimizer(periodRef, cardFilterRef) {
     { immediate: false }
   )
 
-  // Computed helpers
-  const totalMissedRewards = computed(() => report.value?.totals?.missedRewards || 0)
+  // ── Computed helpers that switch based on future state toggle ──
+  const isFuture = computed(() => showFutureRef?.value || false)
+  const activeReport = computed(() => isFuture.value ? futureReport.value : report.value)
+  const activeRecommendations = computed(() => isFuture.value ? futureRecommendations.value : recommendations.value)
+  const activeCheatSheet = computed(() => isFuture.value ? futureCheatSheet.value : cheatSheet.value)
+
+  const totalMissedRewards = computed(() => activeReport.value?.totals?.missedRewards || 0)
 
   const optimizationScore = computed(() => {
-    if (!report.value?.totals) return 100
-    const { optimalRewards, actualRewards } = report.value.totals
+    if (!activeReport.value?.totals) return 100
+    const { optimalRewards } = activeReport.value.totals
     if (optimalRewards === 0) return 100
-    return Math.round((1 - (report.value.totals.missedRewards / optimalRewards)) * 100)
+    return Math.round((1 - (activeReport.value.totals.missedRewards / optimalRewards)) * 100)
   })
 
-  const totalOptimalRewards = computed(() => report.value?.totals?.optimalRewards || 0)
-  const totalSpend = computed(() => report.value?.totals?.spend || 0)
+  // Global score: actual rewards / theoretical max with all known cards
+  const globalOptimizationScore = computed(() => {
+    if (!report.value?.totals || !globalReport.value?.totals) return 100
+    const actual = report.value.totals.actualRewards
+    const globalOptimal = globalReport.value.totals.optimalRewards
+    if (globalOptimal === 0) return 100
+    return Math.round((actual / globalOptimal) * 100)
+  })
+
+  const totalOptimalRewards = computed(() => activeReport.value?.totals?.optimalRewards || 0)
+  const totalSpend = computed(() => activeReport.value?.totals?.spend || 0)
+
+  // Improvement from current → future
+  const futureRewardsGain = computed(() => {
+    if (!futureReport.value?.totals || !report.value?.totals) return 0
+    return futureReport.value.totals.optimalRewards - report.value.totals.optimalRewards
+  })
 
   const topCategories = computed(() => {
-    if (!report.value?.byCategory) return []
-    return Object.values(report.value.byCategory)
+    if (!activeReport.value?.byCategory) return []
+    return Object.values(activeReport.value.byCategory)
       .sort((a, b) => b.spend - a.spend)
       .slice(0, 10)
   })
@@ -223,13 +306,18 @@ export function useCardOptimizer(periodRef, cardFilterRef) {
 
   return {
     report,
-    recommendations,
-    cheatSheet,
+    activeReport,
+    recommendations: activeRecommendations,
+    cheatSheet: activeCheatSheet,
+    futureReport,
+    globalReport,
     isAnalyzing,
     totalMissedRewards,
     optimizationScore,
+    globalOptimizationScore,
     totalOptimalRewards,
     totalSpend,
+    futureRewardsGain,
     topCategories,
     filteredTransactions,
     runAnalysis,
