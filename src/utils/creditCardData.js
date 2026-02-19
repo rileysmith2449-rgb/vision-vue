@@ -139,15 +139,9 @@ export const marketCards = [
     type: 'personal',
     annualFee: 0,
     cashbackRates: {
-      'Dining & Food': 0.05,
-      'Shopping': 0.05,
-      'Transportation': 0.05,
-      'Entertainment': 0.05,
-      'Travel': 0.05,
-      'Bills & Utilities': 0.05,
       default: 0.01
     },
-    highlight: '5% on your top eligible spend category each cycle, no fee',
+    highlight: '5% on your top eligible spend category each cycle (up to $500), no fee',
     signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1500, months: 6 }
   },
   {
