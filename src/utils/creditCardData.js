@@ -95,7 +95,8 @@ export const marketCards = [
       'Travel': 0.03,
       default: 0.01
     },
-    highlight: '4x dining & groceries, 3x flights, MR transfer partners'
+    highlight: '4x dining & groceries, 3x flights, MR transfer partners',
+    signupBonus: { amount: 60000, type: 'MR pts', dollarValue: 900, spendRequired: 6000, months: 6 }
   },
   {
     name: 'Capital One Savor',
@@ -107,7 +108,8 @@ export const marketCards = [
       'Shopping': 0.03,
       default: 0.01
     },
-    highlight: '4% dining & entertainment, 3% grocery & streaming'
+    highlight: '4% dining & entertainment, 3% grocery & streaming',
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 3 }
   },
   {
     name: 'Wells Fargo Active Cash',
@@ -116,7 +118,8 @@ export const marketCards = [
     cashbackRates: {
       default: 0.02
     },
-    highlight: 'Flat 2% cash back on everything with no annual fee'
+    highlight: 'Flat 2% cash back on everything with no annual fee',
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 3 }
   },
   {
     name: 'Amex Blue Cash Preferred',
@@ -128,7 +131,8 @@ export const marketCards = [
       'Transportation': 0.03,
       default: 0.01
     },
-    highlight: '6% at U.S. supermarkets & streaming, 3% transit'
+    highlight: '6% at U.S. supermarkets & streaming, 3% transit',
+    signupBonus: { amount: 250, type: 'cash back', dollarValue: 250, spendRequired: 3000, months: 6 }
   },
   {
     name: 'Citi Custom Cash',
@@ -143,7 +147,8 @@ export const marketCards = [
       'Bills & Utilities': 0.05,
       default: 0.01
     },
-    highlight: '5% on your top eligible spend category each cycle, no fee'
+    highlight: '5% on your top eligible spend category each cycle, no fee',
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1500, months: 6 }
   },
   {
     name: 'US Bank Altitude Go',
@@ -155,7 +160,8 @@ export const marketCards = [
       'Transportation': 0.02,
       default: 0.01
     },
-    highlight: '4% dining, 2% groceries/gas/streaming, no fee'
+    highlight: '4% dining, 2% groceries/gas/streaming, no fee',
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1000, months: 3 }
   },
   // Business
   {
@@ -169,7 +175,8 @@ export const marketCards = [
       'Business': 0.03,
       default: 0.01
     },
-    highlight: '3x on travel, shipping, internet, phone & advertising'
+    highlight: '3x on travel, shipping, internet, phone & advertising',
+    signupBonus: { amount: 100000, type: 'UR pts', dollarValue: 1500, spendRequired: 8000, months: 3 }
   },
   {
     name: 'Ink Business Cash',
@@ -180,7 +187,8 @@ export const marketCards = [
       'Internet & Phone': 0.02,
       default: 0.01
     },
-    highlight: '2% office supplies & internet, no annual fee'
+    highlight: '2% office supplies & internet, no annual fee',
+    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 }
   },
   {
     name: 'Amex Business Gold',
@@ -192,7 +200,8 @@ export const marketCards = [
       'Meals & Entertainment': 0.03,
       default: 0.01
     },
-    highlight: '4x on top 2 spend categories each month, MR transfer partners'
+    highlight: '4x on top 2 spend categories each month, MR transfer partners',
+    signupBonus: { amount: 70000, type: 'MR pts', dollarValue: 1050, spendRequired: 10000, months: 3 }
   },
   {
     name: 'Amex Blue Business Plus',
@@ -201,7 +210,8 @@ export const marketCards = [
     cashbackRates: {
       default: 0.02
     },
-    highlight: '2x on all purchases up to $50K/yr with no annual fee'
+    highlight: '2x on all purchases up to $50K/yr with no annual fee',
+    signupBonus: { amount: 15000, type: 'MR pts', dollarValue: 225, spendRequired: 3000, months: 6 }
   },
   {
     name: 'Capital One Spark Cash Plus',
@@ -210,7 +220,8 @@ export const marketCards = [
     cashbackRates: {
       default: 0.02
     },
-    highlight: 'Unlimited 2% cash back on every business purchase'
+    highlight: 'Unlimited 2% cash back on every business purchase',
+    signupBonus: { amount: 1200, type: 'cash back', dollarValue: 1200, spendRequired: 30000, months: 3 }
   },
   // Merchant-specific
   {

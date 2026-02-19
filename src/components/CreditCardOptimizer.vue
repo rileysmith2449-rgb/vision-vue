@@ -473,6 +473,11 @@
               <div v-if="card.bestCategories.length" class="combo-categories">
                 <span v-for="cat in card.bestCategories" :key="cat" class="combo-cat-tag">{{ cat }}</span>
               </div>
+              <button
+                :class="['add-card-btn', { added: isCardInPortfolio(card.name) }]"
+                :disabled="isCardInPortfolio(card.name)"
+                @click.stop="addSuggestedCard(card.name)"
+              >{{ isCardInPortfolio(card.name) ? 'Added' : 'Add to Portfolio' }}</button>
             </div>
           </div>
         </div>
@@ -513,6 +518,11 @@
                   <span class="combo-stat-value gain">+{{ formatCurrency(card.netValue) }}</span>
                 </div>
               </div>
+              <button
+                :class="['add-card-btn', { added: isCardInPortfolio(card.cardName) }]"
+                :disabled="isCardInPortfolio(card.cardName)"
+                @click.stop="addSuggestedCard(card.cardName)"
+              >{{ isCardInPortfolio(card.cardName) ? 'Added' : 'Add to Portfolio' }}</button>
             </div>
           </div>
         </div>
@@ -588,20 +598,29 @@
           Add cards to see your personalized spend map.
         </div>
         <template v-else>
+          <!-- Combo Preview Banner -->
+          <div v-if="selectedCombo" class="combo-preview-banner">
+            <span>Previewing: <strong>{{ selectedCombo }}</strong></span>
+            <button class="combo-preview-close" @click="selectedCombo = null; expandedEco = null">&times;</button>
+          </div>
+
           <!-- Personal Section -->
-          <div v-if="spendMapGrouped.personal.length > 0" class="spendmap-section">
+          <div v-if="activeSpendMap.personal.length > 0" class="spendmap-section">
             <div class="spendmap-section-header">
               <span class="spendmap-dot spendmap-dot-personal"></span>
               <span class="spendmap-section-title">Personal</span>
             </div>
             <div class="spendmap-rows">
               <div
-                v-for="item in spendMapGrouped.personal"
+                v-for="item in activeSpendMap.personal"
                 :key="'p-' + item.plaidCategory"
-                class="spendmap-row"
+                :class="['spendmap-row', { 'spendmap-row-changed': item.changed }]"
               >
                 <span class="spendmap-icon">{{ item.icon }}</span>
-                <span class="spendmap-category">{{ item.displayName }}</span>
+                <span class="spendmap-category">
+                  {{ item.displayName }}
+                  <span v-if="item.changed" class="spendmap-prev">was {{ item.previousRate }}x {{ item.previousCard }}</span>
+                </span>
                 <span class="spendmap-rate-badge" :style="{ borderColor: item.color, color: item.color }">{{ item.earnMultiplier }}x</span>
                 <span class="spendmap-card">{{ item.cardName }}</span>
               </div>
@@ -609,19 +628,22 @@
           </div>
 
           <!-- Business Section -->
-          <div v-if="spendMapGrouped.business.length > 0" class="spendmap-section">
+          <div v-if="activeSpendMap.business.length > 0" class="spendmap-section">
             <div class="spendmap-section-header">
               <span class="spendmap-dot spendmap-dot-business"></span>
               <span class="spendmap-section-title">Business</span>
             </div>
             <div class="spendmap-rows">
               <div
-                v-for="item in spendMapGrouped.business"
+                v-for="item in activeSpendMap.business"
                 :key="'b-' + item.plaidCategory"
-                class="spendmap-row"
+                :class="['spendmap-row', { 'spendmap-row-changed': item.changed }]"
               >
                 <span class="spendmap-icon">{{ item.icon }}</span>
-                <span class="spendmap-category">{{ item.displayName }}</span>
+                <span class="spendmap-category">
+                  {{ item.displayName }}
+                  <span v-if="item.changed" class="spendmap-prev">was {{ item.previousRate }}x {{ item.previousCard }}</span>
+                </span>
                 <span class="spendmap-rate-badge" :style="{ borderColor: item.color, color: item.color }">{{ item.earnMultiplier }}x</span>
                 <span class="spendmap-card">{{ item.cardName }}</span>
               </div>
@@ -640,8 +662,8 @@
               <div
                 v-for="eco in filteredEcosystems"
                 :key="eco.name"
-                :class="['eco-card', { 'eco-expanded': expandedEco === eco.name }]"
-                @click="expandedEco = expandedEco === eco.name ? null : eco.name"
+                :class="['eco-card', { 'eco-expanded': expandedEco === eco.name, 'eco-previewing': selectedCombo === eco.name }]"
+                @click="toggleComboPreview(eco.name)"
               >
                 <div class="eco-header">
                   <div class="eco-title-row">
@@ -784,6 +806,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useCardOptimizer } from '@/composables/useCardOptimizer'
 import { formatCurrency } from '@/utils/formatters'
 import { creditCards, getBestCardForCategory, marketCards, cardEcosystems, pointsEcosystems, merchantCardMap } from '@/utils/creditCardData'
+import { generateCheatSheet } from '@/services/cardOptimizationService'
 import CardManager from '@/components/CardManager.vue'
 
 const cardStore = useCreditCardStore()
@@ -840,6 +863,11 @@ const expandedCat = ref(null)
 const expandedCard = ref(null)
 const expandedRec = ref(null)
 const expandedEco = ref(null)
+const selectedCombo = ref(null)
+
+function toCardKey(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
+}
 
 const views = [
   { key: 'spendmap', label: 'Spend Map', icon: Map },
@@ -905,6 +933,84 @@ const spendMapGrouped = computed(() => {
 
   return { personal, business }
 })
+
+// ── Combo Spend Map Preview ──
+const comboCheatSheet = computed(() => {
+  if (!selectedCombo.value) return []
+  const eco = cardEcosystems.find(e => e.name === selectedCombo.value)
+  if (!eco) return []
+
+  // Merge current portfolio + combo's cards
+  const existingKeys = new Set(cardStore.activeCards.map(c => c.cardKey))
+  const mergedCards = [...cardStore.activeCards]
+  for (const ecoCard of eco.cards) {
+    const key = toCardKey(ecoCard.name)
+    if (!existingKeys.has(key) && cardStore.plaidMappings[key]) {
+      mergedCards.push({ cardKey: key })
+    }
+  }
+
+  return generateCheatSheet(cardStore.plaidMappings, mergedCards, cardStore.cardDetails)
+})
+
+const comboSpendMapGrouped = computed(() => {
+  const items = comboCheatSheet.value
+  if (!items || items.length === 0) return { personal: [], business: [] }
+
+  // Build lookup from current spend map for diff comparison
+  const currentLookup = {}
+  for (const item of [...spendMapGrouped.value.personal, ...spendMapGrouped.value.business]) {
+    currentLookup[item.plaidCategory] = item
+  }
+
+  const personal = []
+  const business = []
+
+  for (const item of items) {
+    const cardKey = item.cardKey
+    const detail = cardStore.cardDetails[cardKey]
+    const cardType = detail?.cardType || 'Personal'
+    let primaryKey = 'OTHER'
+    for (const key of Object.keys(SPENDMAP_ICONS)) {
+      if (item.plaidCategory?.startsWith(key)) {
+        primaryKey = key
+        break
+      }
+    }
+    const icon = SPENDMAP_ICONS[primaryKey] || '📋'
+    const color = CARD_COLORS[cardKey] || detail?._color || 'var(--accent-teal)'
+
+    // Diff flags
+    const prev = currentLookup[item.plaidCategory]
+    const changed = prev && prev.cardKey !== item.cardKey
+    const previousCard = changed ? prev.cardName : null
+    const previousRate = changed ? prev.earnMultiplier : null
+
+    const entry = { ...item, icon, color, cardType, changed, previousCard, previousRate }
+
+    if (cardType === 'Business') {
+      business.push(entry)
+    } else {
+      personal.push(entry)
+    }
+  }
+
+  return { personal, business }
+})
+
+const activeSpendMap = computed(() => {
+  return selectedCombo.value ? comboSpendMapGrouped.value : spendMapGrouped.value
+})
+
+function toggleComboPreview(ecoName) {
+  if (selectedCombo.value === ecoName) {
+    selectedCombo.value = null
+    expandedEco.value = null
+  } else {
+    selectedCombo.value = ecoName
+    expandedEco.value = ecoName
+  }
+}
 
 const circumference = 2 * Math.PI * 52
 const ringOffset = computed(() => {
@@ -1418,6 +1524,16 @@ function recIcon(type) {
 function recTypeLabel(type) {
   const map = { optimize: 'Optimize', benefit: 'Benefit', signup: 'Signup Bonus', gap: 'Coverage Gap' }
   return map[type] || type
+}
+
+// ── Add to Portfolio (suggested cards) ──
+function isCardInPortfolio(cardName) {
+  return cardStore.portfolioCardKeys.includes(toCardKey(cardName))
+}
+
+async function addSuggestedCard(cardName) {
+  await cardStore.addCardToPortfolio(toCardKey(cardName))
+  runAnalysis()
 }
 
 function onCardManagerClose() {
@@ -3167,6 +3283,81 @@ onMounted(async () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
+}
+
+/* ── Combo Preview Banner ── */
+.combo-preview-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  margin-bottom: 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.combo-preview-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.combo-preview-close:hover {
+  color: var(--text-primary);
+}
+
+/* ── Spend Map Changed Rows ── */
+.spendmap-row-changed {
+  border-left: 3px solid var(--accent-blue);
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.spendmap-prev {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+/* ── Eco Previewing ── */
+.eco-previewing {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 1px var(--accent-blue), 0 0 12px rgba(59, 130, 246, 0.15);
+}
+
+/* ── Add to Portfolio Button ── */
+.add-card-btn {
+  margin-top: 10px;
+  padding: 5px 14px;
+  border: 1px solid var(--accent-blue);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--accent-blue);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-card-btn:hover:not(.added) {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.add-card-btn.added {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  cursor: default;
+  opacity: 0.8;
 }
 
 /* ── SUB Tracker ── */
