@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     res.json({ item_id })
   } catch (err) {
-    captureError(err, { label: 'exchange-token', userId, memberId })
+    await captureError(err, { label: 'exchange-token', userId, memberId })
     res.status(500).json({ error: 'Failed to exchange token' })
   }
 }

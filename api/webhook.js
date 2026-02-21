@@ -83,7 +83,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ received: true })
   } catch (err) {
-    captureError(err, { label: 'webhook' })
+    await captureError(err, { label: 'webhook' })
     // Still return 200 to avoid Plaid retries
     res.status(200).json({ received: true })
   }

@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     await deleteConnection(userId, memberId)
     res.json({ success: true })
   } catch (err) {
-    captureError(err, { label: 'disconnect', userId, memberId })
+    await captureError(err, { label: 'disconnect', userId, memberId })
     res.status(500).json({ error: 'Failed to disconnect' })
   }
 }

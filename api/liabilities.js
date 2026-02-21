@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const liabilities = mapPlaidLiabilities(response.data.liabilities)
     res.json({ liabilities })
   } catch (err) {
-    captureError(err, { label: 'liabilities', userId, memberId })
+    await captureError(err, { label: 'liabilities', userId, memberId })
     const plaidCode = err.response?.data?.error_code
     if (plaidCode === 'ITEM_LOGIN_REQUIRED') {
       return res.status(400).json({

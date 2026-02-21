@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     const transactions = mapPlaidTransactions(allTransactions, allAccounts)
     res.json({ transactions })
   } catch (err) {
-    captureError(err, { label: 'transactions', userId, memberId })
+    await captureError(err, { label: 'transactions', userId, memberId })
     const plaidCode = err.response?.data?.error_code
     if (plaidCode === 'ITEM_LOGIN_REQUIRED') {
       return res.status(400).json({

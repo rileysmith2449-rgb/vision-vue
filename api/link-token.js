@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
     res.json({ link_token: response.data.link_token })
   } catch (err) {
-    captureError(err, { label: 'link-token', userId: req.query.member })
+    await captureError(err, { label: 'link-token', userId: req.query.member })
     res.status(500).json({ error: 'Failed to create link token' })
   }
 }
