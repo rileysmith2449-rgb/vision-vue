@@ -6,11 +6,12 @@ export const usePlaidStore = defineStore('plaid', () => {
   const isLinking = ref(false)
   const error = ref(null)
   const itemId = ref(null)
+  const loginRequired = ref(false)
 
   // Per-member connections for family mode
   const memberConnections = ref({
-    mine: { isConnected: false, isLinking: false, error: null, itemId: null },
-    yours: { isConnected: false, isLinking: false, error: null, itemId: null }
+    mine: { isConnected: false, isLinking: false, error: null, itemId: null, loginRequired: false },
+    yours: { isConnected: false, isLinking: false, error: null, itemId: null, loginRequired: false }
   })
 
   function getAuthHeaders() {
@@ -46,6 +47,18 @@ export const usePlaidStore = defineStore('plaid', () => {
     return data.link_token
   }
 
+  async function createUpdateLinkToken(memberId) {
+    const params = new URLSearchParams({ update: 'true' })
+    if (memberId) params.set('member', memberId)
+    const res = await fetch(`/api/link-token?${params}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to create update link token')
+    const data = await res.json()
+    return data.link_token
+  }
+
   async function exchangeToken(publicToken, memberId) {
     if (memberId) {
       memberConnections.value[memberId].error = null
@@ -74,7 +87,15 @@ export const usePlaidStore = defineStore('plaid', () => {
     const res = await fetch(`/api/transactions?${params}`, {
       headers: getAuthHeaders(),
     })
-    if (!res.ok) throw new Error('Failed to fetch transactions')
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      if (data.code === 'ITEM_LOGIN_REQUIRED') {
+        if (memberId) memberConnections.value[memberId].loginRequired = true
+        else loginRequired.value = true
+        throw new Error('Bank connection expired')
+      }
+      throw new Error('Failed to fetch transactions')
+    }
     const data = await res.json()
     return data.transactions
   }
@@ -85,7 +106,15 @@ export const usePlaidStore = defineStore('plaid', () => {
     const res = await fetch(`/api/holdings?${params}`, {
       headers: getAuthHeaders(),
     })
-    if (!res.ok) throw new Error('Failed to fetch holdings')
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      if (data.code === 'ITEM_LOGIN_REQUIRED') {
+        if (memberId) memberConnections.value[memberId].loginRequired = true
+        else loginRequired.value = true
+        throw new Error('Bank connection expired')
+      }
+      throw new Error('Failed to fetch holdings')
+    }
     const data = await res.json()
     return data.holdings
   }
@@ -96,7 +125,15 @@ export const usePlaidStore = defineStore('plaid', () => {
     const res = await fetch(`/api/accounts?${params}`, {
       headers: getAuthHeaders(),
     })
-    if (!res.ok) throw new Error('Failed to fetch accounts')
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      if (data.code === 'ITEM_LOGIN_REQUIRED') {
+        if (memberId) memberConnections.value[memberId].loginRequired = true
+        else loginRequired.value = true
+        throw new Error('Bank connection expired')
+      }
+      throw new Error('Failed to fetch accounts')
+    }
     const data = await res.json()
     return data.accounts
   }
@@ -107,9 +144,33 @@ export const usePlaidStore = defineStore('plaid', () => {
     const res = await fetch(`/api/liabilities?${params}`, {
       headers: getAuthHeaders(),
     })
-    if (!res.ok) throw new Error('Failed to fetch liabilities')
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      if (data.code === 'ITEM_LOGIN_REQUIRED') {
+        if (memberId) memberConnections.value[memberId].loginRequired = true
+        else loginRequired.value = true
+        throw new Error('Bank connection expired')
+      }
+      throw new Error('Failed to fetch liabilities')
+    }
     const data = await res.json()
     return data.liabilities
+  }
+
+  async function checkWebhookStatus(memberId) {
+    const params = new URLSearchParams()
+    if (memberId) params.set('member', memberId)
+    const res = await fetch(`/api/webhook-status?${params}`, {
+      headers: getAuthHeaders(),
+    })
+    if (!res.ok) return { hasUpdates: false, flags: [] }
+    const result = await res.json()
+    const hasLoginRequired = result.flags.some(f => f.type === 'login_required')
+    if (hasLoginRequired) {
+      if (memberId) memberConnections.value[memberId].loginRequired = true
+      else loginRequired.value = true
+    }
+    return result
   }
 
   async function disconnect(memberId) {
@@ -132,14 +193,17 @@ export const usePlaidStore = defineStore('plaid', () => {
     isLinking,
     error,
     itemId,
+    loginRequired,
     memberConnections,
     getAuthHeaders,
     createLinkToken,
+    createUpdateLinkToken,
     exchangeToken,
     fetchTransactions,
     fetchHoldings,
     fetchAccounts,
     fetchLiabilities,
+    checkWebhookStatus,
     disconnect,
   }
 })

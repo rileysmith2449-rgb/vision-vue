@@ -23,6 +23,13 @@
             </div>
           </div>
 
+          <!-- Re-auth banner -->
+          <div v-if="plaidStore.memberConnections[id].loginRequired" class="reauth-banner">
+            <AlertTriangle :size="16" />
+            <span>Your bank connection has expired.</span>
+            <button class="reauth-btn" @click="handleReauth(id)">Reconnect</button>
+          </div>
+
           <!-- Error message -->
           <p v-if="plaidStore.memberConnections[id].error" class="error-text">{{ plaidStore.memberConnections[id].error }}</p>
 
@@ -59,6 +66,13 @@
           </div>
         </div>
 
+        <!-- Re-auth banner -->
+        <div v-if="plaidStore.loginRequired" class="reauth-banner">
+          <AlertTriangle :size="16" />
+          <span>Your bank connection has expired.</span>
+          <button class="reauth-btn" @click="handleReauth()">Reconnect</button>
+        </div>
+
         <!-- Error message -->
         <p v-if="plaidStore.error" class="error-text">{{ plaidStore.error }}</p>
 
@@ -84,7 +98,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { CheckCircle, Link as LinkIcon, Loader2 } from 'lucide-vue-next'
+import { AlertTriangle, CheckCircle, Link as LinkIcon, Loader2 } from 'lucide-vue-next'
 import Card from '@/components/common/Card.vue'
 import { usePlaidStore } from '@/stores/plaid'
 import { usePortfolioStore } from '@/stores/portfolio'
@@ -176,6 +190,49 @@ async function handleConnect(memberId) {
     } else {
       plaidStore.error = err.message
       plaidStore.isLinking = false
+    }
+  }
+}
+
+async function handleReauth(memberId) {
+  try {
+    const linkToken = await plaidStore.createUpdateLinkToken(memberId)
+
+    if (!window.Plaid) {
+      throw new Error('Plaid SDK not loaded yet. Please try again.')
+    }
+
+    const handler = window.Plaid.create({
+      token: linkToken,
+      onSuccess: async () => {
+        if (memberId) {
+          plaidStore.memberConnections[memberId].loginRequired = false
+        } else {
+          plaidStore.loginRequired = false
+        }
+        await Promise.all([
+          portfolioStore.loadFromPlaid(),
+          budgetStore.loadFromPlaid(),
+        ])
+      },
+      onExit: (err) => {
+        if (err) {
+          const msg = err.display_message || err.error_message
+          if (memberId) {
+            plaidStore.memberConnections[memberId].error = msg
+          } else {
+            plaidStore.error = msg
+          }
+        }
+      },
+    })
+
+    handler.open()
+  } catch (err) {
+    if (memberId) {
+      plaidStore.memberConnections[memberId].error = err.message
+    } else {
+      plaidStore.error = err.message
     }
   }
 }
@@ -289,6 +346,37 @@ async function handleDisconnect(memberId) {
 .disconnect-btn:hover {
   border-color: var(--negative);
   color: var(--negative);
+}
+
+.reauth-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-sm);
+  color: #fcd34d;
+  font-size: 0.82rem;
+}
+
+.reauth-btn {
+  margin-left: auto;
+  padding: 5px 12px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.reauth-btn:hover {
+  background: rgba(251, 191, 36, 0.25);
 }
 
 .error-text {

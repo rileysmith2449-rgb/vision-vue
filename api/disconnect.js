@@ -1,6 +1,8 @@
 import { plaidClient } from './_lib/plaid.js'
 import { getUserId } from './_lib/auth.js'
+import { withRetry } from './_lib/retry.js'
 import { getConnection, deleteConnection } from './_lib/kv.js'
+import { captureError } from './_lib/sentry.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,7 +17,10 @@ export default async function handler(req, res) {
     const conn = await getConnection(userId, memberId)
     if (conn?.accessToken) {
       try {
-        await plaidClient.itemRemove({ access_token: conn.accessToken })
+        await withRetry(
+          () => plaidClient.itemRemove({ access_token: conn.accessToken }),
+          { maxRetries: 1, label: 'itemRemove' }
+        )
       } catch {
         // Best-effort removal — don't fail the disconnect if itemRemove errors
       }
@@ -24,7 +29,7 @@ export default async function handler(req, res) {
     await deleteConnection(userId, memberId)
     res.json({ success: true })
   } catch (err) {
-    console.error('Error disconnecting:', err.response?.data || err.message)
+    captureError(err, { label: 'disconnect', userId, memberId })
     res.status(500).json({ error: 'Failed to disconnect' })
   }
 }

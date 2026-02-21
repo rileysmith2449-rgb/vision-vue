@@ -1,7 +1,9 @@
 import { plaidClient } from './_lib/plaid.js'
 import { getUserId } from './_lib/auth.js'
+import { withRetry } from './_lib/retry.js'
 import { getConnection } from './_lib/kv.js'
 import { mapPlaidLiabilities } from './_lib/mappers.js'
+import { captureError } from './_lib/sentry.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -17,14 +19,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No account connected. Link an account first.' })
     }
 
-    const response = await plaidClient.liabilitiesGet({
-      access_token: conn.accessToken,
-    })
+    const response = await withRetry(
+      () => plaidClient.liabilitiesGet({ access_token: conn.accessToken }),
+      { label: 'liabilitiesGet' }
+    )
 
     const liabilities = mapPlaidLiabilities(response.data.liabilities)
     res.json({ liabilities })
   } catch (err) {
-    console.error('Error fetching liabilities:', err.response?.data || err.message)
+    captureError(err, { label: 'liabilities', userId, memberId })
+    const plaidCode = err.response?.data?.error_code
+    if (plaidCode === 'ITEM_LOGIN_REQUIRED') {
+      return res.status(400).json({
+        error: 'Bank connection expired',
+        code: 'ITEM_LOGIN_REQUIRED',
+        member: memberId,
+      })
+    }
     res.status(500).json({ error: 'Failed to fetch liabilities' })
   }
 }

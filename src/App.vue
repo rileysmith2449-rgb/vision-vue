@@ -15,6 +15,7 @@
       </div>
     </div>
     <main class="main-content" :class="{ 'main-content--full': isFullScreenPage }">
+      <ReauthBanner v-if="!isFullScreenPage" />
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -31,6 +32,7 @@ import { useRoute } from 'vue-router'
 import { useViewportStore } from '@/stores/viewport'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import MobileNav from '@/components/layout/MobileNav.vue'
+import ReauthBanner from '@/components/banking/ReauthBanner.vue'
 
 const route = useRoute()
 const viewportStore = useViewportStore()
