@@ -89,21 +89,21 @@
             </div>
           </div>
 
-          <div class="timeline-item" :class="{ completed: isPast('2026-03-08') }">
+          <div class="timeline-item" :class="{ completed: isPast('2026-03-07') }">
             <div class="timeline-marker"></div>
             <div class="timeline-content">
-              <span class="timeline-date">Mar 7 &ndash; 8</span>
-              <h3>Legal Review &amp; Compliance Submission</h3>
+              <span class="timeline-date">Mar 7</span>
+              <h3>Legal Review &amp; Compliance</h3>
               <p>Final review of all legal documents before store submission:</p>
               <div class="substeps">
                 <h4>Legal Checklist</h4>
                 <ol>
-                  <li><strong>Terms of Service</strong> &mdash; Review and finalize ToS covering account security, Plaid data access, limitation of liability, and the "not financial advice" disclaimer.</li>
-                  <li><strong>Privacy Policy</strong> &mdash; Confirm compliance with App Store and Google Play requirements. Verify disclosures for Plaid data collection, Descope authentication, Sentry error tracking, and Vercel analytics.</li>
-                  <li><strong>Financial Disclaimer</strong> &mdash; Ensure all screens clearly state that Vision Finance is an informational tool and does not provide financial, investment, or tax advice.</li>
-                  <li><strong>Data Deletion Policy</strong> &mdash; Apple and Google both require a way for users to request account and data deletion. Verify the flow works end-to-end.</li>
-                  <li><strong>Third-Party Licenses</strong> &mdash; Audit open-source dependencies for license compliance. Include attributions where required.</li>
-                  <li><strong>App Privacy Labels</strong> &mdash; Complete Apple's App Privacy questionnaire and Google's Data Safety form accurately based on actual data practices.</li>
+                  <li><strong>Terms of Service</strong> &mdash; Review and finalize ToS.</li>
+                  <li><strong>Privacy Policy</strong> &mdash; Confirm compliance with App Store and Google Play requirements.</li>
+                  <li><strong>Financial Disclaimer</strong> &mdash; Ensure all screens state that Vision Finance does not provide financial, investment, or tax advice.</li>
+                  <li><strong>Data Deletion Policy</strong> &mdash; Required by both stores. Verify the deletion flow works end-to-end.</li>
+                  <li><strong>Third-Party License Audit</strong> &mdash; Audit open-source dependencies for license compliance.</li>
+                  <li><strong>App Privacy Labels</strong> (Apple) &amp; <strong>Data Safety Form</strong> (Google) &mdash; Complete accurately based on actual data practices.</li>
                 </ol>
               </div>
             </div>
@@ -112,7 +112,7 @@
           <div class="timeline-item" :class="{ completed: isPast('2026-03-10') }">
             <div class="timeline-marker"></div>
             <div class="timeline-content">
-              <span class="timeline-date">Mar 9 &ndash; 10</span>
+              <span class="timeline-date">Mar 8 &ndash; 10</span>
               <h3>App Store Submission</h3>
               <p>Prepare App Store listing &mdash; screenshots, description, privacy policy link. Submit to Apple for review. Upload Android build to Google Play Console.</p>
             </div>
