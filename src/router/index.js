@@ -29,6 +29,12 @@ const router = createRouter({
       meta: { title: 'Terms of Service', public: true }
     },
     {
+      path: '/finapp-launch-calendar',
+      name: 'launch-calendar',
+      component: () => import('@/views/LaunchCalendarView.vue'),
+      meta: { title: 'Launch Calendar', public: true }
+    },
+    {
       path: '/onboarding',
       name: 'onboarding',
       component: () => import('@/views/OnboardingView.vue'),
