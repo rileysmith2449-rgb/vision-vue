@@ -9,10 +9,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const userId = getUserId(req)
+  const memberId = req.body?.member || 'default'
+
   try {
-    const userId = getUserId(req)
-    const { public_token, member } = req.body
-    const memberId = member || 'default'
+    const { public_token } = req.body
 
     const response = await withRetry(
       () => plaidClient.itemPublicTokenExchange({ public_token }),

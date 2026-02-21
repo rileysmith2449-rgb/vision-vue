@@ -10,10 +10,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  try {
-    const userId = getUserId(req)
-    const memberId = req.query.member || 'default'
+  const userId = getUserId(req)
+  const memberId = req.query.member || 'default'
 
+  try {
     // Update mode: create link token with existing access_token for re-auth
     if (req.query.update === 'true') {
       const conn = await getConnection(userId, memberId)
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
     res.json({ link_token: response.data.link_token })
   } catch (err) {
-    await captureError(err, { label: 'link-token', userId: req.query.member })
+    await captureError(err, { label: 'link-token', userId, memberId })
     res.status(500).json({ error: 'Failed to create link token' })
   }
 }

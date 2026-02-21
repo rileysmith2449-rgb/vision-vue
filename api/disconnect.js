@@ -9,11 +9,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  try {
-    const userId = getUserId(req)
-    const { member } = req.body || {}
-    const memberId = member || 'default'
+  const userId = getUserId(req)
+  const memberId = req.body?.member || 'default'
 
+  try {
     const conn = await getConnection(userId, memberId)
     if (conn?.accessToken) {
       try {

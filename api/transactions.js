@@ -10,9 +10,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const userId = getUserId(req)
+  const memberId = req.query.member || 'default'
+
   try {
-    const userId = getUserId(req)
-    const memberId = req.query.member || 'default'
     const start = req.query.start
     const end = req.query.end
 
