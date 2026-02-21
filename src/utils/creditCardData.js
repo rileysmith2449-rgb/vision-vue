@@ -24,7 +24,14 @@ export const creditCards = [
       default: 0.015
     },
     statementCredits: [],
-    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 15 }
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 15 },
+    network: 'Visa',
+    perks: ['3% dining & drugstores', '1.5% on everything else', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: 4,
+    applicationNotes: 'Good catch-all card. Apply after Sapphire Preferred to pool UR points.',
   },
   {
     name: 'Chase Sapphire Preferred',
@@ -40,7 +47,14 @@ export const creditCards = [
     statementCredits: [
       { name: 'Hotel Credit', amount: 50, used: false }
     ],
-    signupBonus: { amount: 60000, type: 'points', dollarValue: 900, spendRequired: 4000, months: 3 }
+    signupBonus: { amount: 60000, type: 'points', dollarValue: 900, spendRequired: 4000, months: 3 },
+    network: 'Visa',
+    perks: ['3x dining & streaming', '2x travel', '1.25x portal redemption', '$50 hotel credit', 'Transfer to 14+ airline/hotel partners'],
+    transferPartners: ['United', 'Hyatt', 'Southwest', 'British Airways', 'Air France/KLM'],
+    portalRate: 1.25,
+    counts524: true,
+    applicationPriority: 1,
+    applicationNotes: 'Apply first — highest SUB value in Chase ecosystem. Consider downgrading to Freedom Flex after year 1 to avoid fee.',
   },
   {
     name: 'Chase Business Unlimited',
@@ -51,7 +65,14 @@ export const creditCards = [
       default: 0.015
     },
     statementCredits: [],
-    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 }
+    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 },
+    network: 'Visa',
+    perks: ['1.5% on everything', 'No annual fee', 'Pool with personal UR cards'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: 5,
+    applicationNotes: 'Business cards do not count toward 5/24. Apply between personal cards to space out Chase apps.',
   },
   {
     name: 'Amex Hilton Aspire',
@@ -67,8 +88,116 @@ export const creditCards = [
       { name: 'Hilton Resort Credit', amount: 250, used: false },
       { name: 'Airline Credit', amount: 250, used: false }
     ],
-    signupBonus: { amount: 175000, type: 'points', dollarValue: 875, spendRequired: 6000, months: 6 }
-  }
+    signupBonus: { amount: 175000, type: 'points', dollarValue: 875, spendRequired: 6000, months: 6 },
+    network: 'Amex',
+    perks: ['Hilton Diamond status', '$250 resort credit', '$250 airline credit', '7x Hilton purchases', '14x at Hilton'],
+    transferPartners: [],
+    portalRate: 0.5,
+    counts524: false,
+    applicationPriority: null,
+    applicationNotes: 'Amex cards do not count toward 5/24 but Amex has its own lifetime language rules.',
+  },
+  {
+    name: 'Chase Sapphire Reserve',
+    type: 'personal',
+    annualFee: 550,
+    color: '#1A2744',
+    cashbackRates: {
+      'Travel': 0.03,
+      'Dining & Food': 0.03,
+      default: 0.01
+    },
+    statementCredits: [
+      { name: 'Travel Credit', amount: 300, used: false }
+    ],
+    signupBonus: { amount: 60000, type: 'points', dollarValue: 900, spendRequired: 4000, months: 3 },
+    network: 'Visa',
+    perks: ['3x travel & dining', '$300 travel credit', '1.5x portal redemption', 'Priority Pass lounge access', 'Transfer to 14+ partners'],
+    transferPartners: ['United', 'Hyatt', 'Southwest', 'British Airways', 'Air France/KLM'],
+    portalRate: 1.5,
+    counts524: true,
+    applicationPriority: null,
+    applicationNotes: 'Upgrade path from Sapphire Preferred after year 1. Cannot hold both Sapphire cards simultaneously.',
+  },
+  {
+    name: 'Chase Freedom Flex',
+    type: 'personal',
+    annualFee: 0,
+    color: '#1A3C6E',
+    cashbackRates: {
+      'Dining & Food': 0.03,
+      default: 0.01
+    },
+    statementCredits: [],
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 15 },
+    network: 'Mastercard',
+    perks: ['5% rotating categories (quarterly)', '3% dining & drugstores', '1% everything else', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: 5,
+    applicationNotes: 'Great companion to Sapphire Preferred. Also a common downgrade target from Sapphire Preferred to keep the credit line.',
+  },
+  {
+    name: 'Chase Ink Business Preferred',
+    type: 'business',
+    annualFee: 95,
+    color: '#0A2540',
+    cashbackRates: {
+      'Travel': 0.03,
+      'Internet & Phone': 0.03,
+      'Office & Software': 0.03,
+      'Business': 0.03,
+      default: 0.01
+    },
+    statementCredits: [],
+    signupBonus: { amount: 100000, type: 'UR pts', dollarValue: 1500, spendRequired: 8000, months: 3 },
+    network: 'Visa',
+    perks: ['3x travel, shipping, internet, phone, advertising', 'Cell phone protection', '1.25x portal redemption', 'Pool UR with personal cards'],
+    transferPartners: ['United', 'Hyatt', 'Southwest', 'British Airways'],
+    portalRate: 1.25,
+    counts524: false,
+    applicationPriority: 2,
+    applicationNotes: 'Highest SUB in Chase business lineup. Apply early — business cards do not count toward 5/24.',
+  },
+  {
+    name: 'Chase Ink Business Cash',
+    type: 'business',
+    annualFee: 0,
+    color: '#0A2540',
+    cashbackRates: {
+      'Office & Software': 0.05,
+      'Internet & Phone': 0.05,
+      default: 0.01
+    },
+    statementCredits: [],
+    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 },
+    network: 'Visa',
+    perks: ['5% office supplies & internet (up to $25K/yr)', '2% gas & dining (up to $25K/yr)', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: 3,
+    applicationNotes: 'Strong no-fee business card. Wait 90 days after last Chase application.',
+  },
+  {
+    name: 'Chase Ink Business Unlimited',
+    type: 'business',
+    annualFee: 0,
+    color: '#0A2540',
+    cashbackRates: {
+      default: 0.015
+    },
+    statementCredits: [],
+    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 },
+    network: 'Visa',
+    perks: ['1.5% on everything', 'No annual fee', 'Pool with personal UR cards'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: 6,
+    applicationNotes: 'Business catch-all card. Apply after other Ink cards.',
+  },
 ]
 
 export function getUpgradeRecommendation(card, annualSpendOnBonusCategories) {
@@ -96,7 +225,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '4x dining & groceries, 3x flights, MR transfer partners',
-    signupBonus: { amount: 60000, type: 'MR pts', dollarValue: 900, spendRequired: 6000, months: 6 }
+    signupBonus: { amount: 60000, type: 'MR pts', dollarValue: 900, spendRequired: 6000, months: 6 },
+    network: 'Amex',
+    perks: ['4x restaurants & U.S. supermarkets', '3x flights', '$120 dining credit', '$120 Uber Cash', 'MR transfer partners'],
+    transferPartners: ['Delta', 'ANA', 'Hilton', 'Marriott', 'British Airways'],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: null,
+    applicationNotes: 'Amex does not count toward Chase 5/24. Good to apply after Chase cards are done.',
   },
   {
     name: 'Capital One Savor',
@@ -109,7 +245,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '4% dining & entertainment, 3% grocery & streaming',
-    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 3 }
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 3 },
+    network: 'Visa',
+    perks: ['4% dining & entertainment', '3% grocery & streaming', '1% everything else'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: null,
+    applicationNotes: 'Counts toward 5/24 — apply after Chase cards.',
   },
   {
     name: 'Wells Fargo Active Cash',
@@ -119,7 +262,14 @@ export const marketCards = [
       default: 0.02
     },
     highlight: 'Flat 2% cash back on everything with no annual fee',
-    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 3 }
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 500, months: 3 },
+    network: 'Visa',
+    perks: ['Flat 2% on everything', 'No annual fee', 'Cell phone protection'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: null,
+    applicationNotes: 'Counts toward 5/24.',
   },
   {
     name: 'Amex Blue Cash Preferred',
@@ -132,7 +282,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '6% at U.S. supermarkets & streaming, 3% transit',
-    signupBonus: { amount: 250, type: 'cash back', dollarValue: 250, spendRequired: 3000, months: 6 }
+    signupBonus: { amount: 250, type: 'cash back', dollarValue: 250, spendRequired: 3000, months: 6 },
+    network: 'Amex',
+    perks: ['6% at U.S. supermarkets (up to $6K/yr)', '6% streaming', '3% transit & gas', 'No foreign transaction fees'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: null,
+    applicationNotes: 'Amex does not count toward 5/24.',
   },
   {
     name: 'Citi Custom Cash',
@@ -142,7 +299,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '5% on your top eligible spend category each cycle (up to $500), no fee',
-    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1500, months: 6 }
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1500, months: 6 },
+    network: 'Mastercard',
+    perks: ['5% on top spending category each cycle (up to $500)', 'Citi Entertainment access', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: null,
+    applicationNotes: 'Counts toward 5/24.',
   },
   {
     name: 'US Bank Altitude Go',
@@ -155,7 +319,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '4% dining, 2% groceries/gas/streaming, no fee',
-    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1000, months: 3 }
+    signupBonus: { amount: 200, type: 'cash back', dollarValue: 200, spendRequired: 1000, months: 3 },
+    network: 'Visa',
+    perks: ['4% dining', '2% groceries, gas, streaming', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: null,
+    applicationNotes: 'Counts toward 5/24.',
   },
   // Business
   {
@@ -170,7 +341,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '3x on travel, shipping, internet, phone & advertising',
-    signupBonus: { amount: 100000, type: 'UR pts', dollarValue: 1500, spendRequired: 8000, months: 3 }
+    signupBonus: { amount: 100000, type: 'UR pts', dollarValue: 1500, spendRequired: 8000, months: 3 },
+    network: 'Visa',
+    perks: ['3x travel, shipping, internet, phone, advertising', 'Cell phone protection', '1.25x portal redemption'],
+    transferPartners: ['United', 'Hyatt', 'Southwest', 'British Airways'],
+    portalRate: 1.25,
+    counts524: false,
+    applicationPriority: 2,
+    applicationNotes: 'Business cards do not count toward 5/24. Highest SUB in Chase business lineup.',
   },
   {
     name: 'Ink Business Cash',
@@ -182,7 +360,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '2% office supplies & internet, no annual fee',
-    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 }
+    signupBonus: { amount: 750, type: 'cash back', dollarValue: 750, spendRequired: 6000, months: 3 },
+    network: 'Visa',
+    perks: ['5% office supplies & internet (up to $25K/yr)', '2% gas & dining (up to $25K/yr)', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: 3,
+    applicationNotes: 'Does not count toward 5/24. Wait 90 days after last Chase app.',
   },
   {
     name: 'Amex Business Gold',
@@ -195,7 +380,14 @@ export const marketCards = [
       default: 0.01
     },
     highlight: '4x on top 2 spend categories each month, MR transfer partners',
-    signupBonus: { amount: 70000, type: 'MR pts', dollarValue: 1050, spendRequired: 10000, months: 3 }
+    signupBonus: { amount: 70000, type: 'MR pts', dollarValue: 1050, spendRequired: 10000, months: 3 },
+    network: 'Amex',
+    perks: ['4x on top 2 categories each month (up to $150K/yr)', 'MR transfer partners', 'Flexible payment'],
+    transferPartners: ['Delta', 'ANA', 'Hilton', 'Marriott'],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: null,
+    applicationNotes: 'Amex does not count toward 5/24.',
   },
   {
     name: 'Amex Blue Business Plus',
@@ -205,7 +397,14 @@ export const marketCards = [
       default: 0.02
     },
     highlight: '2x on all purchases up to $50K/yr with no annual fee',
-    signupBonus: { amount: 15000, type: 'MR pts', dollarValue: 225, spendRequired: 3000, months: 6 }
+    signupBonus: { amount: 15000, type: 'MR pts', dollarValue: 225, spendRequired: 3000, months: 6 },
+    network: 'Amex',
+    perks: ['2x on all purchases up to $50K/yr', 'No annual fee', 'MR ecosystem'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: null,
+    applicationNotes: 'Amex does not count toward 5/24.',
   },
   {
     name: 'Capital One Spark Cash Plus',
@@ -215,7 +414,14 @@ export const marketCards = [
       default: 0.02
     },
     highlight: 'Unlimited 2% cash back on every business purchase',
-    signupBonus: { amount: 1200, type: 'cash back', dollarValue: 1200, spendRequired: 30000, months: 3 }
+    signupBonus: { amount: 1200, type: 'cash back', dollarValue: 1200, spendRequired: 30000, months: 3 },
+    network: 'Visa',
+    perks: ['Unlimited 2% on everything', 'No preset spending limit'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: null,
+    applicationNotes: 'Counts toward 5/24.',
   },
   // Merchant-specific
   {
@@ -231,6 +437,13 @@ export const marketCards = [
     highlight: '5% back at Amazon & Whole Foods, 2% dining/gas/transit',
     merchantCard: true,
     merchants: ['amazon'],
+    network: 'Visa',
+    perks: ['5% at Amazon & Whole Foods', '2% restaurants, gas stations, transit', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: true,
+    applicationPriority: null,
+    applicationNotes: 'Counts toward 5/24. Best for heavy Amazon shoppers.',
   },
   {
     name: 'Amazon Business Prime Card',
@@ -244,6 +457,13 @@ export const marketCards = [
     highlight: '5% back at Amazon Business, 2% on office supplies',
     merchantCard: true,
     merchants: ['amazon'],
+    network: 'Visa',
+    perks: ['5% at Amazon Business & Whole Foods', '2% office supplies, gas stations', 'No annual fee'],
+    transferPartners: [],
+    portalRate: 1.0,
+    counts524: false,
+    applicationPriority: null,
+    applicationNotes: 'Business card — does not count toward 5/24.',
   },
 ]
 
@@ -259,7 +479,7 @@ export const pointsEcosystems = {
   'Chase Ultimate Rewards': {
     program: 'Chase Ultimate Rewards',
     unit: 'UR pts',
-    cards: ['Chase Sapphire Preferred', 'Chase Freedom Unlimited', 'Chase Business Unlimited', 'Chase Ink Business Preferred', 'Ink Business Cash'],
+    cards: ['Chase Sapphire Preferred', 'Chase Sapphire Reserve', 'Chase Freedom Unlimited', 'Chase Freedom Flex', 'Chase Business Unlimited', 'Chase Ink Business Preferred', 'Chase Ink Business Cash', 'Chase Ink Business Unlimited', 'Ink Business Cash'],
     redemptions: [
       { method: 'Statement Credit', multiplier: 1.0, rate: '1¢/pt' },
       { method: 'Chase Travel Portal (Preferred)', multiplier: 1.25, rate: '1.25¢/pt', requiresCard: 'Chase Sapphire Preferred' },

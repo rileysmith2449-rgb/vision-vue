@@ -64,6 +64,14 @@ function buildLocalCardDetail(card) {
     })),
     spendBonusCategory: [],
     _color: card.color,
+    // New metadata fields
+    network: card.network || null,
+    perks: card.perks || [],
+    transferPartners: card.transferPartners || [],
+    portalRate: card.portalRate ?? null,
+    counts524: card.counts524 ?? null,
+    applicationPriority: card.applicationPriority ?? null,
+    applicationNotes: card.applicationNotes || null,
   }
 }
 
