@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import * as Sentry from '@sentry/vue'
 import descope from '@descope/vue-sdk'
+import { Capacitor } from '@capacitor/core'
 import App from './App.vue'
 import router from './router'
 import './assets/styles/main.css'
@@ -30,3 +31,12 @@ app.use(descope, {
 })
 app.use(router)
 app.mount('#app')
+
+if (Capacitor.isNativePlatform()) {
+  import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+    StatusBar.setStyle({ style: Style.Dark })
+  })
+  import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+    SplashScreen.hide()
+  })
+}

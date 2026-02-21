@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isLocalDev } from '@/utils/platform'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -142,7 +143,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (!to.meta.public && !authStore.isAuthenticated) {
     next('/login')
-  } else if ((to.name === 'login' || to.name === 'sign-up') && authStore.isAuthenticated && window.location.hostname !== 'localhost') {
+  } else if ((to.name === 'login' || to.name === 'sign-up') && authStore.isAuthenticated && !isLocalDev) {
     next('/')
   } else if (authStore.isAuthenticated && localStorage.getItem('vision-settings-configured') !== 'true' && to.name !== 'onboarding') {
     next('/onboarding')

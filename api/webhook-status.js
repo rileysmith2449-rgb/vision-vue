@@ -1,5 +1,6 @@
 import { getUserId } from './_lib/auth.js'
 import { getConnection, getWebhookFlag } from './_lib/kv.js'
+import { withCors } from './_lib/cors.js'
 
 const FLAG_TYPES = [
   'transactions_update',
@@ -10,7 +11,7 @@ const FLAG_TYPES = [
   'login_required',
 ]
 
-export default async function handler(req, res) {
+export default withCors(async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -37,4 +38,4 @@ export default async function handler(req, res) {
     console.error('[webhook-status] Error:', err.message)
     res.status(500).json({ error: 'Failed to check webhook status' })
   }
-}
+})

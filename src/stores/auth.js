@@ -2,8 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useSession, useUser, useDescope } from '@descope/vue-sdk'
 import router from '@/router'
-
-const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+import { isLocalDev } from '@/utils/platform'
 
 export const useAuthStore = defineStore('auth', () => {
   if (isLocalDev) {

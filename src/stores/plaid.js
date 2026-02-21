@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { API_BASE } from '@/utils/platform'
 
 export const usePlaidStore = defineStore('plaid', () => {
   const isConnected = ref(false)
@@ -34,7 +35,7 @@ export const usePlaidStore = defineStore('plaid', () => {
     } else {
       error.value = null
     }
-    const url = memberId ? `/api/link-token?member=${memberId}` : '/api/link-token'
+    const url = memberId ? `${API_BASE}/api/link-token?member=${memberId}` : `${API_BASE}/api/link-token`
     const res = await fetch(url, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -50,7 +51,7 @@ export const usePlaidStore = defineStore('plaid', () => {
   async function createUpdateLinkToken(memberId) {
     const params = new URLSearchParams({ update: 'true' })
     if (memberId) params.set('member', memberId)
-    const res = await fetch(`/api/link-token?${params}`, {
+    const res = await fetch(`${API_BASE}/api/link-token?${params}`, {
       method: 'POST',
       headers: getAuthHeaders(),
     })
@@ -65,7 +66,7 @@ export const usePlaidStore = defineStore('plaid', () => {
     } else {
       error.value = null
     }
-    const res = await fetch('/api/exchange-token', {
+    const res = await fetch(`${API_BASE}/api/exchange-token`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ public_token: publicToken, member: memberId || undefined }),
@@ -84,7 +85,7 @@ export const usePlaidStore = defineStore('plaid', () => {
   async function fetchTransactions(memberId, start, end) {
     const params = new URLSearchParams({ start, end })
     if (memberId) params.set('member', memberId)
-    const res = await fetch(`/api/transactions?${params}`, {
+    const res = await fetch(`${API_BASE}/api/transactions?${params}`, {
       headers: getAuthHeaders(),
     })
     if (!res.ok) {
@@ -103,7 +104,7 @@ export const usePlaidStore = defineStore('plaid', () => {
   async function fetchHoldings(memberId) {
     const params = new URLSearchParams()
     if (memberId) params.set('member', memberId)
-    const res = await fetch(`/api/holdings?${params}`, {
+    const res = await fetch(`${API_BASE}/api/holdings?${params}`, {
       headers: getAuthHeaders(),
     })
     if (!res.ok) {
@@ -122,7 +123,7 @@ export const usePlaidStore = defineStore('plaid', () => {
   async function fetchAccounts(memberId) {
     const params = new URLSearchParams()
     if (memberId) params.set('member', memberId)
-    const res = await fetch(`/api/accounts?${params}`, {
+    const res = await fetch(`${API_BASE}/api/accounts?${params}`, {
       headers: getAuthHeaders(),
     })
     if (!res.ok) {
@@ -141,7 +142,7 @@ export const usePlaidStore = defineStore('plaid', () => {
   async function fetchLiabilities(memberId) {
     const params = new URLSearchParams()
     if (memberId) params.set('member', memberId)
-    const res = await fetch(`/api/liabilities?${params}`, {
+    const res = await fetch(`${API_BASE}/api/liabilities?${params}`, {
       headers: getAuthHeaders(),
     })
     if (!res.ok) {
@@ -160,7 +161,7 @@ export const usePlaidStore = defineStore('plaid', () => {
   async function checkWebhookStatus(memberId) {
     const params = new URLSearchParams()
     if (memberId) params.set('member', memberId)
-    const res = await fetch(`/api/webhook-status?${params}`, {
+    const res = await fetch(`${API_BASE}/api/webhook-status?${params}`, {
       headers: getAuthHeaders(),
     })
     if (!res.ok) return { hasUpdates: false, flags: [] }
@@ -174,7 +175,7 @@ export const usePlaidStore = defineStore('plaid', () => {
   }
 
   async function disconnect(memberId) {
-    await fetch('/api/disconnect', {
+    await fetch(`${API_BASE}/api/disconnect`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ member: memberId || undefined }),

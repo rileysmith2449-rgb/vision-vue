@@ -4,8 +4,9 @@ import { withRetry } from './_lib/retry.js'
 import { getConnection } from './_lib/kv.js'
 import { captureError } from './_lib/sentry.js'
 import { Products, CountryCode } from 'plaid'
+import { withCors } from './_lib/cors.js'
 
-export default async function handler(req, res) {
+export default withCors(async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -54,4 +55,4 @@ export default async function handler(req, res) {
     await captureError(err, { label: 'link-token', userId, memberId })
     res.status(500).json({ error: 'Failed to create link token' })
   }
-}
+})

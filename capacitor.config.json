@@ -1,0 +1,16 @@
+{
+  "appId": "app.visionfinance.vision",
+  "appName": "Vision",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    },
+    "StatusBar": {
+      "style": "DARK"
+    },
+    "Keyboard": {
+      "resize": "body"
+    }
+  }
+}

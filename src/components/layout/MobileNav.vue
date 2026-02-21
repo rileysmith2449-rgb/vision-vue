@@ -39,13 +39,14 @@ function isActive(link) {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 68px;
+  height: calc(68px + env(safe-area-inset-bottom, 0px));
   background: var(--bg-base);
   border-top: 1px solid var(--border-glass);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-around;
   padding: 0 8px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 100;
 }
 

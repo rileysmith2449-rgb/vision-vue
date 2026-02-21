@@ -62,6 +62,7 @@ onUnmounted(() => {
     justify-content: center;
     width: 100%;
     padding: 24px 20px;
+    padding-top: calc(24px + env(safe-area-inset-top, 0px));
     background: var(--bg-base);
     border-bottom: 1px solid var(--border-subtle);
   }
